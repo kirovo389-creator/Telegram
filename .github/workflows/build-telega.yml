@@ -25,10 +25,12 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sync upstream source and brand as Telega
+      - name: Sync upstream source and apply Telega defaults
         shell: bash
         run: |
           set -euo pipefail
+          git fetch origin main
+          git reset --hard origin/main
           cp README.md /tmp/telega-readme.md
           cp .github/workflows/build-telega.yml /tmp/build-telega.yml
           git fetch --depth=1 https://github.com/DrKLO/Telegram.git master
@@ -42,6 +44,25 @@ jobs:
           if [ -f TMessagesProj_App/google-services.json ]; then
             sed -i 's/org\.telegram\.messenger/org.telega.messenger/g' TMessagesProj_App/google-services.json
           fi
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("TMessagesProj/src/main/java/org/telegram/ui/ActionBar/Theme.java")
+          s = p.read_text()
+          old = """        if (applyingTheme == null) {
+                    applyingTheme = defaultTheme;
+                } else {
+                    currentDayTheme = applyingTheme;
+                }"""
+          new = """        if (applyingTheme == null) {
+                    applyingTheme = currentNightTheme != null ? currentNightTheme : defaultTheme;
+                    currentDayTheme = applyingTheme;
+                } else {
+                    currentDayTheme = applyingTheme;
+                }"""
+          if old not in s:
+              raise SystemExit("Could not find default theme initialization block; refusing unsafe patch")
+          p.write_text(s.replace(old, new, 1))
+          PY
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
