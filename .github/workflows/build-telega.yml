@@ -49,16 +49,16 @@ jobs:
           p = Path("TMessagesProj/src/main/java/org/telegram/ui/ActionBar/Theme.java")
           s = p.read_text()
           old = """        if (applyingTheme == null) {
-                    applyingTheme = defaultTheme;
-                } else {
-                    currentDayTheme = applyingTheme;
-                }"""
+            applyingTheme = defaultTheme;
+        } else {
+            currentDayTheme = applyingTheme;
+        }"""
           new = """        if (applyingTheme == null) {
-                    applyingTheme = currentNightTheme != null ? currentNightTheme : defaultTheme;
-                    currentDayTheme = applyingTheme;
-                } else {
-                    currentDayTheme = applyingTheme;
-                }"""
+            applyingTheme = currentNightTheme != null ? currentNightTheme : defaultTheme;
+            currentDayTheme = applyingTheme;
+        } else {
+            currentDayTheme = applyingTheme;
+        }"""
           if old not in s:
               raise SystemExit("Could not find default theme initialization block; refusing unsafe patch")
           p.write_text(s.replace(old, new, 1))
