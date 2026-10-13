@@ -2,19 +2,19 @@
 
 Telega is an unofficial Android client project based on [Telegram for Android](https://github.com/DrKLO/Telegram). It is not affiliated with Telegram.
 
-## Start the import/build
+## Build and releases
 
-1. Open the [Actions tab](https://github.com/kirovo389-creator/Telegram/actions).
-2. Select **Telega Android build**.
-3. Press **Run workflow** on branch `main`.
+The GitHub Actions workflow imports upstream source, applies the Telega app label/package, initializes submodules, builds a debug APK, uploads an artifact, and publishes a prerelease when the build succeeds.
 
-The workflow imports the upstream source, applies the Telega app label/package, initializes submodules, attempts an Android debug APK build, and publishes the APK as a prerelease if the build succeeds.
+- [Build history and logs](https://github.com/kirovo389-creator/Telegram/actions)
+- [Published releases](https://github.com/kirovo389-creator/Telegram/releases)
 
-## Current limitations
+## Current development status
 
-- No APK or release is verified yet; the workflow must run successfully first.
-- The custom feature to retain deleted messages in a translucent style has **not** been implemented yet.
-- The current workflow changes the app label/package only; a custom dark-first interface still needs source-level implementation and testing.
+- The upstream source has been imported.
+- The automated build is being debugged; there is no verified APK release yet.
+- Retaining deleted messages in a translucent style has not been implemented yet.
+- A custom dark-first interface still needs source-level implementation and testing.
 
 ## License
 
