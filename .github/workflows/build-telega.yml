@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - ".github/workflows/build-telega.yml"
+      - "README.md"
 
 permissions:
   contents: write
@@ -24,7 +25,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sync upstream Telegram source into this empty project
+      - name: Sync upstream Telegram source into this project
         shell: bash
         run: |
           set -euo pipefail
@@ -35,24 +36,21 @@ jobs:
           mkdir -p .github/workflows
           cp /tmp/telega-readme.md README.md
           cp /tmp/build-telega.yml .github/workflows/build-telega.yml
-          if grep -q '^APP_PACKAGE=' gradle.properties; then
-            sed -i 's/^APP_PACKAGE=.*/APP_PACKAGE=org.telega.messenger/' gradle.properties
-          else
-            echo 'APP_PACKAGE=org.telega.messenger' >> gradle.properties
-          fi
-          if [ -f TMessagesProj/src/main/res/values/strings.xml ]; then
-            sed -i 's/<string name="AppName">Telegram<\/string>/<string name="AppName">Telega<\/string>/' TMessagesProj/src/main/res/values/strings.xml
-            sed -i 's/<string name="AppNameBeta">Telegram Beta<\/string>/<string name="AppNameBeta">Telega Beta<\/string>/' TMessagesProj/src/main/res/values/strings.xml
+          sed -i 's/^APP_PACKAGE=.*/APP_PACKAGE=org.telega.messenger/' gradle.properties
+          sed -i 's/<string name="AppName">Telegram<\/string>/<string name="AppName">Telega<\/string>/' TMessagesProj/src/main/res/values/strings.xml
+          sed -i 's/<string name="AppNameBeta">Telegram Beta<\/string>/<string name="AppNameBeta">Telega Beta<\/string>/' TMessagesProj/src/main/res/values/strings.xml
+          if [ -f TMessagesProj_App/google-services.json ]; then
+            sed -i 's/org\.telegram\.messenger/org.telega.messenger/g' TMessagesProj_App/google-services.json
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if ! git diff --cached --quiet; then
-            git commit -m "Import upstream Telegram source and brand as Telega"
+            git commit -m "Import upstream source and configure Telega"
             git push origin HEAD:main
           fi
 
-      - name: Set up Java 21
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -64,12 +62,12 @@ jobs:
 
       - name: Install Android SDK and NDK
         run: |
-          sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018"
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
 
       - name: Initialize source submodules
         run: git submodule update --init --recursive --depth=1
 
-      - name: Build Telega APK
+      - name: Build Telega debug APK
         run: |
           chmod +x gradlew
           ./gradlew :TMessagesProj_App:assembleAfatDebug --stacktrace
@@ -83,9 +81,8 @@ jobs:
           test -n "$APK"
           mkdir -p release-assets
           cp "$APK" release-assets/Telega-debug.apk
-          echo "path=release-assets/Telega-debug.apk" >> "$GITHUB_OUTPUT"
 
-      - name: Upload APK as workflow artifact
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: Telega-debug-apk
@@ -93,7 +90,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Publish GitHub Release
+      - name: Publish GitHub prerelease
         uses: softprops/action-gh-release@v2
         with:
           tag_name: telega-build-${{ github.run_number }}
