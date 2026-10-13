@@ -1,0 +1,103 @@
+name: Telega Android build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/build-telega.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: telega-android-build
+  cancel-in-progress: false
+
+jobs:
+  sync-build-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout Telega repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync upstream Telegram source into this empty project
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp README.md /tmp/telega-readme.md
+          cp .github/workflows/build-telega.yml /tmp/build-telega.yml
+          git fetch --depth=1 https://github.com/DrKLO/Telegram.git master
+          git read-tree --reset -u FETCH_HEAD
+          mkdir -p .github/workflows
+          cp /tmp/telega-readme.md README.md
+          cp /tmp/build-telega.yml .github/workflows/build-telega.yml
+          if grep -q '^APP_PACKAGE=' gradle.properties; then
+            sed -i 's/^APP_PACKAGE=.*/APP_PACKAGE=org.telega.messenger/' gradle.properties
+          else
+            echo 'APP_PACKAGE=org.telega.messenger' >> gradle.properties
+          fi
+          if [ -f TMessagesProj/src/main/res/values/strings.xml ]; then
+            sed -i 's/<string name="AppName">Telegram<\/string>/<string name="AppName">Telega<\/string>/' TMessagesProj/src/main/res/values/strings.xml
+            sed -i 's/<string name="AppNameBeta">Telegram Beta<\/string>/<string name="AppNameBeta">Telega Beta<\/string>/' TMessagesProj/src/main/res/values/strings.xml
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Import upstream Telegram source and brand as Telega"
+            git push origin HEAD:main
+          fi
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK and NDK
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018"
+
+      - name: Initialize source submodules
+        run: git submodule update --init --recursive --depth=1
+
+      - name: Build Telega APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :TMessagesProj_App:assembleAfatDebug --stacktrace
+
+      - name: Locate APK
+        id: apk
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="$(find TMessagesProj_App/build/outputs -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          mkdir -p release-assets
+          cp "$APK" release-assets/Telega-debug.apk
+          echo "path=release-assets/Telega-debug.apk" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Telega-debug-apk
+          path: release-assets/Telega-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: telega-build-${{ github.run_number }}
+          name: Telega build ${{ github.run_number }}
+          prerelease: true
+          generate_release_notes: true
+          files: release-assets/Telega-debug.apk
