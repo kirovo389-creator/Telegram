@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sync upstream Telegram source into this project
+      - name: Sync upstream source and brand as Telega
         shell: bash
         run: |
           set -euo pipefail
@@ -50,6 +50,13 @@ jobs:
             git push origin HEAD:main
           fi
 
+      - name: Configure Android SDK paths
+        shell: bash
+        run: |
+          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
+          echo "/usr/local/lib/android/sdk/cmdline-tools/16.0/bin" >> "$GITHUB_PATH"
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -57,11 +64,10 @@ jobs:
           java-version: "21"
           cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install Android SDK and NDK
+        shell: bash
         run: |
+          yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
 
       - name: Initialize source submodules
@@ -73,7 +79,6 @@ jobs:
           ./gradlew :TMessagesProj_App:assembleAfatDebug --stacktrace
 
       - name: Locate APK
-        id: apk
         shell: bash
         run: |
           set -euo pipefail
