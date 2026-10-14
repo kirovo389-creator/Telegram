@@ -339,6 +339,23 @@ public class StarsIntroActivity extends GradientHeaderActivity implements Notifi
         starBalanceTitleView.setText(LocaleController.getString(R.string.YourStarsBalance));
         starBalanceTitleView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2, resourceProvider));
         balanceLayout.addView(starBalanceTitleView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER, 24, 0, 24, 0));
+        TextView telegaLocalStarsView = new TextView(getContext());
+        telegaLocalStarsView.setText("⭐ Telega Stars: " + TelegaLocalGiftsActivity.getBalance(currentAccount) + "  ·  Локальные подарки");
+        telegaLocalStarsView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+        telegaLocalStarsView.setGravity(Gravity.CENTER);
+        telegaLocalStarsView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourceProvider));
+        telegaLocalStarsView.setPadding(dp(12), dp(12), dp(12), dp(12));
+        telegaLocalStarsView.setBackground(Theme.createRoundRectDrawable(dp(14), Theme.getColor(Theme.key_dialogBackground, resourceProvider)));
+        telegaLocalStarsView.setOnClickListener(v -> {
+            BaseFragment lastFragment = LaunchActivity.getLastFragment();
+            if (lastFragment != null) {
+                BaseFragment.BottomSheetParams params = new BaseFragment.BottomSheetParams();
+                params.transitionFromLeft = true;
+                params.allowNestedScroll = false;
+                lastFragment.showAsSheet(new TelegaLocalGiftsActivity(), params);
+            }
+        });
+        balanceLayout.addView(telegaLocalStarsView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER, 20, dp(12), 20, 0));
 
         FrameLayout buttonsLayout = new FrameLayout(getContext());
 
