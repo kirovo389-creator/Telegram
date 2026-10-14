@@ -83,6 +83,7 @@ import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.SvgHelper;
 import org.telegram.messenger.UserConfig;
+import org.telegram.messenger.TelegaLocalStatus;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
 import org.telegram.messenger.utils.DrawableUtils;
@@ -2098,6 +2099,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                 }
                 getMessagesController().updateEmojiStatus(0, new_emoji_status, gift);
             }
+            saveTelegaProfileStyle(me, profilePage.selectedColor, profilePage.selectedEmoji);
             getMessagesController().putUser(me, false);
             getUserConfig().saveConfig(true);
             finishFragment();
@@ -2105,6 +2107,26 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
         }
         applying = true;
         getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_EMOJI_STATUS);
+    }
+
+    private void saveTelegaProfileStyle(TLRPC.User me, int color, long backgroundEmojiId) {
+        if (me == null) return;
+        TLRPC.UserFull full = getMessagesController().getUserFull(me.id);
+        if (full == null) return;
+        String about = full.about == null ? "" : full.about;
+        String newAbout = TelegaLocalStatus.updateProfileStyle(about, color, backgroundEmojiId);
+        if (about.equals(newAbout)) return;
+        TL_account.updateProfile request = new TL_account.updateProfile();
+        request.flags |= 4;
+        request.about = newAbout;
+        getConnectionsManager().sendRequest(request, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            if (error != null) {
+                FileLog.e("Telega profile style save failed: " + error.text);
+                return;
+            }
+            full.about = newAbout;
+            getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
+        }), ConnectionsManager.RequestFlagFailOnServerErrors);
     }
 
     private void showBulletin() {

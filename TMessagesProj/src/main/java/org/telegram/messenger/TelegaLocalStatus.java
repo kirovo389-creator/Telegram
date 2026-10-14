@@ -12,18 +12,46 @@ public final class TelegaLocalStatus {
 
     private TelegaLocalStatus() {}
 
-    public static String update(String about, long documentId, int until) {
-        String clean = strip(about == null ? "" : about);
-        if (documentId == 0) {
-            return clean;
-        }
-        String payload = PREFIX + Long.toString(documentId, 36) + "." + Integer.toString(Math.max(0, until), 36);
+    private static String encodePayload(String clean, long documentId, int until, int color, long backgroundEmojiId) {
+        if (documentId == 0 && color < 0 && backgroundEmojiId == 0) return clean;
+        String payload = PREFIX + Long.toString(Math.max(0, documentId), 36) + "." + Integer.toString(Math.max(0, until), 36) + "." + Integer.toString(color + 1, 36) + "." + Long.toString(Math.max(0, backgroundEmojiId), 36);
         StringBuilder hidden = new StringBuilder();
-        for (int i = 0; i < payload.length(); i++) {
-            hidden.appendCodePoint(TAG_BASE + payload.charAt(i));
-        }
+        for (int i = 0; i < payload.length(); i++) hidden.appendCodePoint(TAG_BASE + payload.charAt(i));
         hidden.appendCodePoint(TAG_END);
         return clean + hidden;
+    }
+
+    public static String update(String about, long documentId, int until) {
+        String source = about == null ? "" : about;
+        int color = getProfileColor(source);
+        long backgroundEmojiId = getProfileEmoji(source);
+        String clean = strip(source);
+        return encodePayload(clean, documentId, until, color, backgroundEmojiId);
+    }
+
+    public static String updateProfileStyle(String about, int color, long backgroundEmojiId) {
+        String source = about == null ? "" : about;
+        long documentId = getDocumentId(source);
+        int until = getUntil(source);
+        return encodePayload(strip(source), documentId, until, color, backgroundEmojiId);
+    }
+
+    public static int getProfileColor(String about) {
+        String[] parts = getParts(about);
+        if (parts == null || parts.length < 5) return -1;
+        try { return Integer.parseInt(parts[3], 36) - 1; } catch (Throwable ignore) { return -1; }
+    }
+
+    public static long getProfileEmoji(String about) {
+        String[] parts = getParts(about);
+        if (parts == null || parts.length < 5) return 0;
+        try { return Long.parseLong(parts[4], 36); } catch (Throwable ignore) { return 0; }
+    }
+
+    private static String[] getParts(String about) {
+        String payload = getPayload(about);
+        if (payload == null || !payload.startsWith(PREFIX)) return null;
+        return payload.split("\\.", -1);
     }
 
     public static String strip(String about) {
@@ -43,10 +71,8 @@ public final class TelegaLocalStatus {
     }
 
     public static long getDocumentId(String about) {
-        String payload = getPayload(about);
-        if (payload == null || !payload.startsWith(PREFIX)) return 0;
-        String[] parts = payload.split("\\.", -1);
-        if (parts.length != 3) return 0;
+        String[] parts = getParts(about);
+        if (parts == null || parts.length < 3) return 0;
         try {
             return Long.parseLong(parts[1], 36);
         } catch (Throwable ignore) {
@@ -55,10 +81,8 @@ public final class TelegaLocalStatus {
     }
 
     public static int getUntil(String about) {
-        String payload = getPayload(about);
-        if (payload == null || !payload.startsWith(PREFIX)) return 0;
-        String[] parts = payload.split("\\.", -1);
-        if (parts.length != 3) return 0;
+        String[] parts = getParts(about);
+        if (parts == null || parts.length < 3) return 0;
         try {
             return Integer.parseInt(parts[2], 36);
         } catch (Throwable ignore) {
