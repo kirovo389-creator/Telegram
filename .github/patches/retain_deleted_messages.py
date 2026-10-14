@@ -84,17 +84,39 @@ controller.write_text(source, encoding="utf-8")
 
 s = cell.read_text(encoding="utf-8")
 if "TelegaDeletedMessages.isDeleted" not in s:
-    method_start = s.find("setMessageObject(")
-    search_start = method_start if method_start >= 0 else 0
-    assignment_match = re.search(r"(?:this\.)?currentMessageObject\s*=\s*[^;]+;", s[search_start:])
-    if assignment_match is None:
-        assignment_match = re.search(r"(?:this\.)?currentMessageObject\s*=\s*[^;]+;", s)
-        search_start = 0
-    if assignment_match is None:
-        print("ERROR: ChatMessageCell message binding anchor not found; no currentMessageObject assignment", file=sys.stderr)
+    # Anchor to the actual method declaration. Searching for the first textual
+    # occurrence of setMessageObject( can land on a call site and inject code
+    # after an unrelated return, producing Java's "unreachable statement".
+    method_match = re.search(
+        r"(?:public|protected)\\s+void\\s+setMessageObject\\s*\\([^)]*\\)\\s*\\{",
+        s
+    )
+    if method_match is None:
+        print("ERROR: ChatMessageCell setMessageObject method not found", file=sys.stderr)
         sys.exit(1)
-    assignment_pos = search_start + assignment_match.start()
-    after = search_start + assignment_match.end()
+
+    method_open = s.find("{", method_match.start())
+    depth = 0
+    method_end = -1
+    for i in range(method_open, len(s)):
+        if s[i] == "{":
+            depth += 1
+        elif s[i] == "}":
+            depth -= 1
+            if depth == 0:
+                method_end = i
+                break
+    if method_end < 0:
+        print("ERROR: could not find setMessageObject method end", file=sys.stderr)
+        sys.exit(1)
+
+    method_body = s[method_open + 1:method_end]
+    assignment_match = re.search(r"(?:this\\.)?currentMessageObject\\s*=\\s*[^;]+;", method_body)
+    if assignment_match is None:
+        print("ERROR: setMessageObject has no currentMessageObject assignment", file=sys.stderr)
+        sys.exit(1)
+
+    after = method_open + 1 + assignment_match.end()
     visual_check = """
         boolean telegaDeletedMessage = currentMessageObject != null
                 && currentMessageObject.messageOwner != null
