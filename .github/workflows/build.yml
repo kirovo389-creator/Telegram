@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: \${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Calculate release version
         shell: bash
@@ -129,10 +129,10 @@ jobs:
       - name: Configure release signing
         shell: bash
         env:
-          KEYSTORE_BASE64: \${{ secrets.KEYSTORE_BASE64 || secrets.TELEGA_KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: \${{ secrets.KEYSTORE_PASSWORD || secrets.TELEGA_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: \${{ secrets.KEY_ALIAS || secrets.TELEGA_KEY_ALIAS }}
-          KEY_PASSWORD: \${{ secrets.KEY_PASSWORD || secrets.TELEGA_KEY_PASSWORD }}
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 || secrets.TELEGA_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD || secrets.TELEGA_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS || secrets.TELEGA_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || secrets.TELEGA_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           if [ -n "\${KEYSTORE_BASE64:-}" ]; then
@@ -170,10 +170,10 @@ jobs:
       - name: Build optimized Telega Beta APK
         shell: bash
         env:
-          KEYSTORE_BASE64: \${{ secrets.KEYSTORE_BASE64 || secrets.TELEGA_KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: \${{ secrets.KEYSTORE_PASSWORD || secrets.TELEGA_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: \${{ secrets.KEY_ALIAS || secrets.TELEGA_KEY_ALIAS }}
-          KEY_PASSWORD: \${{ secrets.KEY_PASSWORD || secrets.TELEGA_KEY_PASSWORD }}
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 || secrets.TELEGA_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD || secrets.TELEGA_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS || secrets.TELEGA_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || secrets.TELEGA_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           chmod +x gradlew
@@ -208,7 +208,7 @@ jobs:
 
       - name: Publish GitHub Release
         env:
-          GH_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
