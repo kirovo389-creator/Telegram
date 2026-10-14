@@ -30,11 +30,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "\${GITHUB_REF_TYPE:-branch}" == "tag" ]]; then
+          if [[ "${GITHUB_REF_TYPE:-branch}" == "tag" ]]; then
             release_tag="$GITHUB_REF_NAME"
             app_version_name="$GITHUB_REF_NAME"
           else
-            release_tag="telega-build-\${GITHUB_RUN_NUMBER}"
+            release_tag="telega-build-${GITHUB_RUN_NUMBER}"
             app_version_name="$release_tag"
           fi
           base_version_code=$((7175 + GITHUB_RUN_NUMBER))
@@ -65,8 +65,8 @@ jobs:
           cp /tmp/telega-preserve/README.md README.md
           mkdir -p .github/patches .github/workflows
           sed -i "s/^APP_PACKAGE=.*/APP_PACKAGE=org.telega.messenger/" gradle.properties
-          sed -i "s/^APP_VERSION_CODE=.*/APP_VERSION_CODE=\${TELEGA_BASE_VERSION_CODE}/" gradle.properties
-          sed -i "s/^APP_VERSION_NAME=.*/APP_VERSION_NAME=\${TELEGA_VERSION_NAME}/" gradle.properties
+          sed -i "s/^APP_VERSION_CODE=.*/APP_VERSION_CODE=${TELEGA_BASE_VERSION_CODE}/" gradle.properties
+          sed -i "s/^APP_VERSION_NAME=.*/APP_VERSION_NAME=${TELEGA_VERSION_NAME}/" gradle.properties
 
           patches=(
             .github/patches/retain_deleted_messages.py
@@ -85,7 +85,7 @@ jobs:
             .github/patches/telega_ota_hardening.py
             .github/patches/telega_build_config.py
           )
-          for patch in "\${patches[@]}"; do
+          for patch in "${patches[@]}"; do
             test -f "$patch"
             python3 "$patch"
           done
@@ -135,10 +135,10 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || secrets.TELEGA_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          if [ -n "\${KEYSTORE_BASE64:-}" ]; then
-            test -n "\${KEYSTORE_PASSWORD:-}"
-            test -n "\${KEY_ALIAS:-}"
-            test -n "\${KEY_PASSWORD:-}"
+          if [ -n "${KEYSTORE_BASE64:-}" ]; then
+            test -n "${KEYSTORE_PASSWORD:-}"
+            test -n "${KEY_ALIAS:-}"
+            test -n "${KEY_PASSWORD:-}"
             echo "$KEYSTORE_BASE64" | base64 --decode > TMessagesProj/config/release.keystore
             echo "Stable release keystore loaded from Actions secrets."
           else
@@ -177,7 +177,7 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x gradlew
-          if [ -n "\${KEYSTORE_BASE64:-}" ]; then
+          if [ -n "${KEYSTORE_BASE64:-}" ]; then
             ./gradlew :TMessagesProj_App:assembleAfatRelease --stacktrace \
               -PRELEASE_STORE_PASSWORD="$KEYSTORE_PASSWORD" \
               -PRELEASE_KEY_ALIAS="$KEY_ALIAS" \
