@@ -142,6 +142,8 @@ anchor = "    private void updateProfileData(boolean animated) {"
 if anchor not in p:
     anchor = "    private void updateProfileData() {"
 if anchor not in p:
+    anchor = "    private void updateProfileData(boolean reload) {"
+if anchor not in p:
     print("ERROR: ProfileActivity updateProfileData anchor not found", file=sys.stderr)
     sys.exit(1)
 style = '''        if (user != null && userInfo != null) {
