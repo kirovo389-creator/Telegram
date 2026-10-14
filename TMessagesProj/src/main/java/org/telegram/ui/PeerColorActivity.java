@@ -2111,22 +2111,40 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
 
     private void saveTelegaProfileStyle(TLRPC.User me, int color, long backgroundEmojiId) {
         if (me == null) return;
+        // Keep a durable device-side copy even if Telegram does not accept the bio metadata.
+        ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + me.id, Context.MODE_PRIVATE)
+                .edit().putInt("color", color).putLong("backgroundEmoji", backgroundEmojiId).apply();
+        if (me.profile_color == null) me.profile_color = new TLRPC.TL_peerColor();
+        if (color >= 0) {
+            me.profile_color.flags |= 1;
+            me.profile_color.color = color;
+        }
+        if (backgroundEmojiId > 0) {
+            me.profile_color.flags |= 2;
+            me.profile_color.background_emoji_id = backgroundEmojiId;
+        }
         TLRPC.UserFull full = getMessagesController().getUserFull(me.id);
-        if (full == null) return;
+        if (full == null) {
+            getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
+            return;
+        }
         String about = full.about == null ? "" : full.about;
         String newAbout = TelegaLocalStatus.updateProfileStyle(about, color, backgroundEmojiId);
-        if (about.equals(newAbout)) return;
-        TL_account.updateProfile request = new TL_account.updateProfile();
-        request.flags |= 4;
-        request.about = newAbout;
-        getConnectionsManager().sendRequest(request, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
-            if (error != null) {
-                Log.e("Telega", "Profile style save failed: " + error.text);
-                return;
-            }
-            full.about = newAbout;
+        if (!about.equals(newAbout)) {
+            TL_account.updateProfile request = new TL_account.updateProfile();
+            request.flags |= 4;
+            request.about = newAbout;
+            getConnectionsManager().sendRequest(request, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+                if (error != null) {
+                    Log.e("Telega", "Profile style metadata sync failed: " + error.text);
+                    return;
+                }
+                full.about = newAbout;
+                getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
+            }));
+        } else {
             getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
-        }));
+        }
     }
 
     private void showBulletin() {

@@ -11350,6 +11350,24 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     }
                 }
             }
+            int telegaProfileColor = userInfo == null ? -1 : TelegaLocalStatus.getProfileColor(userInfo.about);
+            long telegaBackgroundEmoji = userInfo == null ? 0 : TelegaLocalStatus.getProfileEmoji(userInfo.about);
+            if (user.id == UserConfig.getInstance(currentAccount).getClientUserId()) {
+                android.content.SharedPreferences telegaStylePrefs = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + user.id, 0);
+                if (telegaStylePrefs.contains("color")) telegaProfileColor = telegaStylePrefs.getInt("color", -1);
+                if (telegaStylePrefs.contains("backgroundEmoji")) telegaBackgroundEmoji = telegaStylePrefs.getLong("backgroundEmoji", 0);
+            }
+            if (telegaProfileColor >= 0 || telegaBackgroundEmoji != 0) {
+                if (user.profile_color == null) user.profile_color = new TLRPC.TL_peerColor();
+                if (telegaProfileColor >= 0) {
+                    user.profile_color.flags |= 1;
+                    user.profile_color.color = telegaProfileColor;
+                }
+                if (telegaBackgroundEmoji != 0) {
+                    user.profile_color.flags |= 2;
+                    user.profile_color.background_emoji_id = telegaBackgroundEmoji;
+                }
+            }
             shortStatus = user.photo != null && user.photo.personal;
             TLRPC.FileLocation photoBig = null;
             if (user.photo != null) {
