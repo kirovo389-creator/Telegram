@@ -11909,10 +11909,17 @@ public class ChatActivityEnterView extends FrameLayout implements
                         long customDocumentId = document != null ? document.id : documentId;
                         SpannableStringBuilder inserted = new SpannableStringBuilder(fallbackEmoji);
                         if (customDocumentId > 0) {
+                            // Keep the animated span while typing; invisible metadata is appended after the visible grapheme.
+                            AnimatedEmojiSpan telegaInputSpan = document != null
+                                    ? new AnimatedEmojiSpan(document, messageEditText.getPaint().getFontMetricsInt())
+                                    : new AnimatedEmojiSpan(customDocumentId, messageEditText.getPaint().getFontMetricsInt());
+                            telegaInputSpan.fromEmojiKeyboard = true;
+                            telegaInputSpan.cacheType = AnimatedEmojiDrawable.getCacheTypeForEnterView();
+                            inserted.setSpan(telegaInputSpan, 0, fallbackEmoji.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                             inserted.append(org.telegram.messenger.TelegaCustomEmoji.encode(customDocumentId, fallbackEmoji.length()));
                         }
                         messageEditText.setText(messageEditText.getText().insert(i, inserted));
-                        messageEditText.setSelection(i + inserted.length(), i + inserted.length());
+                        messageEditText.setSelection(i + fallbackEmoji.length(), i + fallbackEmoji.length());
                     } catch (Exception e) {
                         FileLog.e(e);
                     } finally {

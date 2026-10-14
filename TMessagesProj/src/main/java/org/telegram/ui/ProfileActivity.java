@@ -11296,6 +11296,28 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             return;
         }
 
+        if (nameTextView != null) {
+            boolean telegaOwnProfile = userId == UserConfig.getInstance(currentAccount).getClientUserId();
+            android.graphics.drawable.Drawable telegaRight = nameTextView.getCompoundDrawablesRelative()[2];
+            if (telegaOwnProfile && org.telegram.messenger.TelegaFeatures.isBadgeEnabled()) {
+                if (!(telegaRight instanceof org.telegram.ui.Components.TelegaBadgeDrawable)) {
+                    nameTextView.setCompoundDrawablePadding(AndroidUtilities.dp(3));
+                    nameTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                            nameTextView.getCompoundDrawablesRelative()[0],
+                            nameTextView.getCompoundDrawablesRelative()[1],
+                            new org.telegram.ui.Components.TelegaBadgeDrawable(),
+                            nameTextView.getCompoundDrawablesRelative()[3]);
+                }
+            } else if (telegaRight instanceof org.telegram.ui.Components.TelegaBadgeDrawable) {
+                nameTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                        nameTextView.getCompoundDrawablesRelative()[0],
+                        nameTextView.getCompoundDrawablesRelative()[1],
+                        null,
+                        nameTextView.getCompoundDrawablesRelative()[3]);
+            }
+        }
+
+
         if (userInfo != null && userId != 0) {
             TLRPC.User telegaNameUser = getMessagesController().getUser(userId);
             int telegaNameColor = TelegaLocalStatus.getNameColor(userInfo.about);

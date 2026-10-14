@@ -57,6 +57,11 @@ public class TelegaSettingsActivity extends BaseFragment {
                 TelegaFeatures.isAntiSoundEnabled(),
                 (button, enabled) -> TelegaFeatures.setAntiSoundEnabled(enabled));
 
+        addToggle(context, list, "Значок Telega",
+                "Пульсирующий значок рядом с твоим именем в собственном профиле.",
+                TelegaFeatures.isBadgeEnabled(),
+                (button, enabled) -> TelegaFeatures.setBadgeEnabled(enabled));
+
         fragmentView = scroll;
         return fragmentView;
     }
@@ -67,7 +72,10 @@ public class TelegaSettingsActivity extends BaseFragment {
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(13), AndroidUtilities.dp(16), AndroidUtilities.dp(13));
-        row.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        GradientDrawable rowBackground = new GradientDrawable();
+        rowBackground.setColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        rowBackground.setCornerRadius(AndroidUtilities.dp(12));
+        row.setBackground(rowBackground);
         LinearLayout textColumn = new LinearLayout(context);
         textColumn.setOrientation(LinearLayout.VERTICAL);
         TextView titleView = new TextView(context);
@@ -93,7 +101,7 @@ public class TelegaSettingsActivity extends BaseFragment {
         row.addView(toggle, toggleParams);
         row.setOnClickListener(v -> toggle.setChecked(!toggle.isChecked()));
         LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(-1, -2);
-        rowParams.bottomMargin = AndroidUtilities.dp(1);
+        rowParams.setMargins(AndroidUtilities.dp(12), 0, AndroidUtilities.dp(12), AndroidUtilities.dp(8));
         parent.addView(row, rowParams);
     }
 }

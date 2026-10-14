@@ -3,6 +3,7 @@ package org.telegram.messenger;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.util.Log;
 
 import org.telegram.tgnet.ConnectionsManager;
@@ -21,6 +22,7 @@ public final class TelegaFeatures {
     private static final int TAG_BASE = 0xE0000;
     private static final int TAG_END = 0xE007F;
     private static final String ARTICLE_TAG = "TELEGA_ARTICLE_V1";
+    private static final String LIST_TAG = "TELEGA_LIST_V1";
 
     private TelegaFeatures() {}
 
@@ -45,12 +47,47 @@ public final class TelegaFeatures {
     }
     public static void setAutoArchiveEnabled(boolean enabled) {
         prefs().edit().putBoolean("auto_archive", enabled).apply();
+        if (enabled) markExistingDialogsHandled(UserConfig.selectedAccount);
     }
     public static boolean isAntiSoundEnabled() {
         return prefs().getBoolean("anti_sound", false);
     }
     public static void setAntiSoundEnabled(boolean enabled) {
         prefs().edit().putBoolean("anti_sound", enabled).apply();
+        if (enabled) markExistingDialogsHandled(UserConfig.selectedAccount);
+    }
+
+    public static boolean isBadgeEnabled() {
+        return prefs().getBoolean("telega_badge", false);
+    }
+    public static void setBadgeEnabled(boolean enabled) {
+        prefs().edit().putBoolean("telega_badge", enabled).apply();
+        AndroidUtilities.runOnUIThread(() -> {
+            try {
+                NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
+            } catch (Throwable ignored) {}
+        });
+    }
+
+    /** Snapshot current dialogs when the user enables these toggles, so old chats aren't swept into Archive. */
+    public static void markExistingDialogsHandled(int account) {
+        try {
+            Object controller = MessagesController.getInstance(account);
+            java.lang.reflect.Field field = controller.getClass().getDeclaredField("dialogs_dict");
+            field.setAccessible(true);
+            Object dialogs = field.get(controller);
+            java.lang.reflect.Method size = dialogs.getClass().getMethod("size");
+            java.lang.reflect.Method keyAt = dialogs.getClass().getMethod("keyAt", int.class);
+            int count = ((Number) size.invoke(dialogs)).intValue();
+            SharedPreferences.Editor editor = prefs().edit();
+            for (int i = 0; i < count; i++) {
+                long dialogId = ((Number) keyAt.invoke(dialogs, i)).longValue();
+                editor.putBoolean("handled_" + account + "_" + dialogId, true);
+            }
+            editor.apply();
+        } catch (Throwable error) {
+            Log.w("Telega", "Could not snapshot existing dialogs before enabling automation", error);
+        }
     }
 
     /** Prevent server read receipts and online-status renewals while Ghost mode is on. */
@@ -81,7 +118,7 @@ public final class TelegaFeatures {
         final boolean mute = archive || isAntiSoundEnabled();
         AndroidUtilities.runOnUIThread(() -> {
             try {
-                if (mute) NotificationsController.getInstance(account).muteDialog(dialogId, 0, true);
+                if (mute) NotificationsController.getInstance(account).muteDialog(dialogId, Integer.MAX_VALUE, true);
             } catch (Throwable error) {
                 Log.w("Telega", "Unable to mute new dialog", error);
             }
@@ -93,7 +130,12 @@ public final class TelegaFeatures {
 
     private static void tryArchiveDialog(int account, long dialogId) {
         try {
-            Class<?> requestClass = Class.forName("org.telegram.tgnet.TLRPC$TL_messages_editPeerFolders");
+            Class<?> requestClass;
+            try {
+                requestClass = Class.forName("org.telegram.tgnet.TLRPC$TL_folders_editPeerFolders");
+            } catch (ClassNotFoundException missingFoldersNamespace) {
+                requestClass = Class.forName("org.telegram.tgnet.TLRPC$TL_messages_editPeerFolders");
+            }
             Object request = requestClass.getDeclaredConstructor().newInstance();
             Field peersField = requestClass.getField("folder_peers");
             Class<?> folderPeerClass = Class.forName("org.telegram.tgnet.TLRPC$TL_inputFolderPeer");
@@ -130,10 +172,21 @@ public final class TelegaFeatures {
     /** Fallback transport: ordinary text plus an invisible marker; Telega renders it as an article. */
     public static String encodeArticle(String text) {
         String clean = text == null ? "" : text;
-        return "Статья: " + clean + hiddenTag(ARTICLE_TAG);
+        boolean listContent = false;
+        String[] lines = clean.split("\\r?\\n");
+        int listMarkers = 0;
+        for (String line : lines) {
+            String item = line.trim();
+            if (item.matches("^(?:[•●▪◦☐☑-]\\s+|[0-9]{1,3}[.)]\\s+).+")) {
+                listMarkers++;
+            }
+        }
+        listContent = listMarkers >= 2 || clean.contains("☐") || clean.contains("☑");
+        String prefix = listContent ? "Список: " : "Статья: ";
+        return prefix + clean + hiddenTag(listContent ? LIST_TAG : ARTICLE_TAG);
     }
 
-    /** Returns cleaned article text when the Telega marker is present; otherwise null. */
+    /** Removes Telega article/list metadata while preserving the ordinary fallback text. */
     public static String decodeArticle(String text) {
         if (text == null || text.isEmpty() || text.codePointBefore(text.length()) != TAG_END) return null;
         int cursor = text.length() - Character.charCount(TAG_END);
@@ -150,7 +203,8 @@ public final class TelegaFeatures {
             decoded.append((char) (cp - TAG_BASE));
             i += Character.charCount(cp);
         }
-        if (!ARTICLE_TAG.equals(decoded.toString())) return null;
+        String marker = decoded.toString();
+        if (!ARTICLE_TAG.equals(marker) && !LIST_TAG.equals(marker)) return null;
         return text.substring(0, start);
     }
 }

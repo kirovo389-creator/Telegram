@@ -81,6 +81,18 @@ public final class TelegaFeatures {
         if (enabled) markExistingDialogsHandled(UserConfig.selectedAccount);
     }
 
+    public static boolean isBadgeEnabled() {
+        return prefs().getBoolean("telega_badge", false);
+    }
+    public static void setBadgeEnabled(boolean enabled) {
+        prefs().edit().putBoolean("telega_badge", enabled).apply();
+        AndroidUtilities.runOnUIThread(() -> {
+            try {
+                NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
+            } catch (Throwable ignored) {}
+        });
+    }
+
     /** Snapshot current dialogs when the user enables these toggles, so old chats aren't swept into Archive. */
     public static void markExistingDialogsHandled(int account) {
         try {
