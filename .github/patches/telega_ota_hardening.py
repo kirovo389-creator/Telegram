@@ -71,9 +71,9 @@ version_block = r"""                PackageInfo installedInfo;
 
                 String tag = release.optString("tag_name", "");
                 if (tag.isEmpty() || release.optBoolean("draft", false) || release.optBoolean("prerelease", false)) return;
-                if (tag.equals(installedVersionName)) return;
                 long candidateVersionCode = parseVersionCode(release.optString("body", ""));
                 if (candidateVersionCode <= 0) candidateVersionCode = versionCodeFromTag(tag);
+                if (tag.equals(installedVersionName) && candidateVersionCode <= 0) return;
                 if (candidateVersionCode <= installedVersionCode) return;
 
                 JSONArray assets = release.optJSONArray("assets");
