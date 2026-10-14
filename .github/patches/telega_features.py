@@ -226,19 +226,19 @@ public class TelegaSettingsActivity extends BaseFragment {
         addToggle(context, list, "Удалённые сообщения",
                 "Оставлять у себя сообщения, которые собеседник удалил для всех.",
                 TelegaFeatures.isDeletedMessagesEnabled(currentAccount),
-                TelegaFeatures::setDeletedMessagesEnabled);
+                (button, enabled) -> TelegaFeatures.setDeletedMessagesEnabled(enabled));
         addToggle(context, list, "Призрак",
                 "Не отправлять отметки о прочтении и не обновлять онлайн-статус. Серверные ограничения всё равно действуют.",
                 TelegaFeatures.isGhostModeEnabled(),
-                TelegaFeatures::setGhostModeEnabled);
+                (button, enabled) -> TelegaFeatures.setGhostModeEnabled(enabled));
         addToggle(context, list, "Auto Archive",
                 "Автоматически архивировать новые группы, каналы и ботов и отключать им звук.",
                 TelegaFeatures.isAutoArchiveEnabled(),
-                TelegaFeatures::setAutoArchiveEnabled);
+                (button, enabled) -> TelegaFeatures.setAutoArchiveEnabled(enabled));
         addToggle(context, list, "Анти звук",
                 "Автоматически отключать уведомления у новых групп, каналов и ботов.",
                 TelegaFeatures.isAntiSoundEnabled(),
-                TelegaFeatures::setAntiSoundEnabled);
+                (button, enabled) -> TelegaFeatures.setAntiSoundEnabled(enabled));
 
         fragmentView = scroll;
         return fragmentView;
@@ -356,7 +356,7 @@ send_helper_path.write_text(sh, encoding="utf-8")
 for path in [rich_editor_path, rich_layout_path]:
     src = path.read_text(encoding="utf-8")
     old = "enterView.sendConvertedRichAsSimple(listView.toSimpleMessage(), notify, scheduleDate, scheduleRepeatPeriod);"
-    new = "enterView.sendConvertedRichAsSimple(org.telegram.messenger.TelegaFeatures.encodeArticle(listView.toSimpleMessage()), notify, scheduleDate, scheduleRepeatPeriod);"
+    new = "enterView.sendConvertedRichAsSimple(org.telegram.messenger.TelegaFeatures.encodeArticle(listView.toSimpleMessage().toString()), notify, scheduleDate, scheduleRepeatPeriod);"
     if old in src:
         src = src.replace(old, new, 1)
     elif "TelegaFeatures.encodeArticle(listView.toSimpleMessage())" not in src:
