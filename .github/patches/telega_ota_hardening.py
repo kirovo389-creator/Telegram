@@ -129,10 +129,21 @@ helpers = r"""
     }
 
     private static long versionCodeFromTag(String tag) {
-        if (tag == null || !tag.startsWith("telega-build-")) return -1L;
+        if (tag == null) return -1L;
+        String prefix;
+        long versionBase;
+        if (tag.startsWith("telega-v2-build-")) {
+            prefix = "telega-v2-build-";
+            versionBase = 7274L;
+        } else if (tag.startsWith("telega-build-")) {
+            prefix = "telega-build-";
+            versionBase = 7175L;
+        } else {
+            return -1L;
+        }
         try {
-            long run = Long.parseLong(tag.substring("telega-build-".length()));
-            return (7175L + run) * 10L + 9L;
+            long run = Long.parseLong(tag.substring(prefix.length()));
+            return (versionBase + run) * 10L + 9L;
         } catch (NumberFormatException ignored) {
             return -1L;
         }
