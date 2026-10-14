@@ -57,6 +57,71 @@ public final class TelegaFeatures {
         if (enabled) markExistingDialogsHandled(UserConfig.selectedAccount);
     }
 
+    public static boolean isAutoProxyEnabled() {
+        return SharedConfig.proxyRotationEnabled;
+    }
+
+    public static boolean setAutoProxyEnabled(boolean enabled) {
+        SharedConfig.loadProxyList();
+        if (enabled && SharedConfig.proxyList.size() < 2) return false;
+        if (enabled && !SharedConfig.isProxyEnabled()) {
+            SharedConfig.ProxyInfo selected = SharedConfig.currentProxy;
+            if (selected == null || !SharedConfig.proxyList.contains(selected)) {
+                selected = SharedConfig.proxyList.isEmpty() ? null : SharedConfig.proxyList.get(0);
+            }
+            if (selected == null) return false;
+            SharedConfig.currentProxy = selected;
+            SharedPreferences.Editor editor = MessagesController.getGlobalMainSettings().edit();
+            selected.settings.toSharedPreferences(editor);
+            editor.putBoolean("proxy_enabled", true);
+            editor.apply();
+            ConnectionsManager.setProxySettings(true, selected.settings);
+        }
+        SharedConfig.proxyRotationEnabled = enabled;
+        SharedConfig.saveConfig();
+        NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.proxySettingsChanged);
+        return true;
+    }
+
+    /**
+     * Clear reaction counters for dialogs with unread reactions. The server-side
+     * messages.readReactions call is used, rather than only hiding the local badge.
+     */
+    public static void markAllUnreadReactionsAsRead(int account) {
+        final long now = System.currentTimeMillis();
+        final String lastKey = "auto_read_reactions_" + account;
+        if (now - prefs().getLong(lastKey, 0) < 60_000L) return;
+        try {
+            Object controller = MessagesController.getInstance(account);
+            Field dialogsField = controller.getClass().getDeclaredField("dialogs_dict");
+            dialogsField.setAccessible(true);
+            Object dialogs = dialogsField.get(controller);
+            Method sizeMethod = dialogs.getClass().getMethod("size");
+            Method valueAtMethod = dialogs.getClass().getMethod("valueAt", int.class);
+            Method getInputPeer = controller.getClass().getMethod("getInputPeer", long.class);
+            Field unreadField = TLRPC.Dialog.class.getField("unread_reactions_count");
+            Field idField = TLRPC.Dialog.class.getField("id");
+            Class<?> requestClass = Class.forName("org.telegram.tgnet.TLRPC$TL_messages_readReactions");
+            Field peerField = requestClass.getField("peer");
+            int size = ((Number) sizeMethod.invoke(dialogs)).intValue();
+            for (int i = 0; i < size; i++) {
+                Object value = valueAtMethod.invoke(dialogs, i);
+                if (!(value instanceof TLRPC.Dialog)) continue;
+                TLRPC.Dialog dialog = (TLRPC.Dialog) value;
+                if (unreadField.getInt(dialog) <= 0) continue;
+                long dialogId = idField.getLong(dialog);
+                Object peer = getInputPeer.invoke(controller, dialogId);
+                if (peer == null) continue;
+                Object request = requestClass.getDeclaredConstructor().newInstance();
+                peerField.set(request, peer);
+                ConnectionsManager.getInstance(account).sendRequest((TLObject) request, (response, error) -> {});
+            }
+            prefs().edit().putLong(lastKey, now).apply();
+        } catch (Throwable error) {
+            Log.w("Telega", "Could not automatically mark unread reactions as read", error);
+        }
+    }
+
     public static boolean isBadgeEnabled() {
         return prefs().getBoolean("telega_badge", false);
     }
@@ -98,7 +163,6 @@ public final class TelegaFeatures {
         return name.contains("readhistory")
                 || name.contains("readmessagecontents")
                 || name.contains("readmentions")
-                || name.contains("readreactions")
                 || name.contains("readdiscussion")
                 || name.contains("readencryptedhistory")
                 || name.contains("readstories");

@@ -558,6 +558,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
         checkCurrentAccount();
         updateCurrentConnectionState(currentAccount);
+        getWindow().getDecorView().postDelayed(this::showTelegaChangelogIfNeeded, 1200);
+        getWindow().getDecorView().postDelayed(() -> org.telegram.messenger.TelegaFeatures.markAllUnreadReactionsAsRead(currentAccount), 1800);
         getWindow().getDecorView().postDelayed(this::showTelegaChannelPromptIfNeeded, 900);
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.closeOtherAppActivities, this);
 
@@ -6990,6 +6992,39 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                         android.util.Log.e("Telega", "Unable to open TelegaForks channel", e);
                     }
                 })
+                .show();
+    }
+
+
+    private void showTelegaChangelogIfNeeded() {
+        if (isFinishing() || isDestroyed() || passcodeDialog != null
+                || org.telegram.messenger.UserConfig.getInstance(currentAccount).getClientUserId() == 0) return;
+        final android.content.SharedPreferences prefs = ApplicationLoader.applicationContext.getSharedPreferences("telega_changelog", 0);
+        long version;
+        try {
+            android.content.pm.PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
+            version = android.os.Build.VERSION.SDK_INT >= 28 ? info.getLongVersionCode() : info.versionCode;
+        } catch (Throwable error) {
+            version = org.telegram.messenger.BuildVars.BUILD_VERSION_STRING.hashCode();
+        }
+        if (prefs.getLong("last_version", Long.MIN_VALUE) == version) return;
+        prefs.edit().putLong("last_version", version).apply();
+        new AlertDialog.Builder(this)
+                .setTitle("Что нового в Telega Beta")
+                .setMessage("• Обновлён раздел «Настройки Telega».\n\n"
+                        + "• Auto Proxy переключает только между прокси, которые ты сам сохранил.\n\n"
+                        + "• Счётчик непрочитанных реакций скрывается, а приложение отправляет запрос на их прочтение.\n\n"
+                        + "• Обычные статьи и списки отправляются через совместимый текстовый режим.\n\n"
+                        + "• Исправления стабильности и интерфейса.")
+                .setNeutralButton("Канал TelegaForks", (dialog, which) -> {
+                    try {
+                        startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                                android.net.Uri.parse("https://t.me/TelegaForks")));
+                    } catch (Throwable error) {
+                        android.util.Log.w("Telega", "Unable to open channel link", error);
+                    }
+                })
+                .setPositiveButton("Понятно", null)
                 .show();
     }
 

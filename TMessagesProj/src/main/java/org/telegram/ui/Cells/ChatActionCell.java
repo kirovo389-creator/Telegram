@@ -4442,7 +4442,8 @@ public class ChatActionCell extends BaseCell implements DownloadController.FileD
         }
         float y = getY() + reactionsLayoutInBubble.y;
         if (y > clipTop && y + reactionsLayoutInBubble.height - AndroidUtilities.dp(16) < clipBottom) {
-            return true;
+            markReactionsAsRead();
+            return false;
         }
         return false;
     }

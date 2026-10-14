@@ -1978,6 +1978,18 @@ public class RichEditor extends BaseFragment implements NotificationCenter.Notif
         if (!listView.hasAnyText()) return;
         if (listView.hasPendingUploads()) return;
         if (!listView.isWithinLimits()) { updateSendButtonEnabled(); return; }
+        if (listView.isSimpleConvertible()) {
+            final ChatActivityEnterView telegaFallbackEnterView = chatActivity.getChatActivityEnterView();
+            if (telegaFallbackEnterView != null) {
+                sent = true;
+                if (onSentCallback != null) onSentCallback.run();
+                telegaFallbackEnterView.sendConvertedRichAsSimple(
+                        org.telegram.messenger.TelegaFeatures.encodeArticle(listView.toSimpleMessage().toString()),
+                        notify, scheduleDate, scheduleRepeatPeriod);
+                finishFragment();
+                return;
+            }
+        }
         if (!MessagesController.getInstance(currentAccount).richEditorAllowed()) {
             final ChatActivityEnterView enterView = chatActivity.getChatActivityEnterView();
             if (enterView == null) return;

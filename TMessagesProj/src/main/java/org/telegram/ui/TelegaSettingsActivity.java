@@ -10,6 +10,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
@@ -39,6 +40,21 @@ public class TelegaSettingsActivity extends BaseFragment {
         LinearLayout list = new LinearLayout(context);
         list.setOrientation(LinearLayout.VERTICAL);
         list.setPadding(0, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(20));
+        // TELEGA_BETA_SETTINGS_HEADER
+        TextView pageTitle = new TextView(context);
+        pageTitle.setText("TELEGA BETA");
+        pageTitle.setTextSize(23);
+        pageTitle.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        pageTitle.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        pageTitle.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(14), AndroidUtilities.dp(20), 0);
+        list.addView(pageTitle, new LinearLayout.LayoutParams(-1, -2));
+        TextView pageSubtitle = new TextView(context);
+        pageSubtitle.setText("Приватность, автоматизация и дополнительные возможности");
+        pageSubtitle.setTextSize(13);
+        pageSubtitle.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
+        pageSubtitle.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(4), AndroidUtilities.dp(20), AndroidUtilities.dp(14));
+        list.addView(pageSubtitle, new LinearLayout.LayoutParams(-1, -2));
+
         scroll.addView(list, new ScrollView.LayoutParams(-1, -2));
 
         addToggle(context, list, "Удалённые сообщения",
@@ -49,6 +65,16 @@ public class TelegaSettingsActivity extends BaseFragment {
                 "Не отправлять отметки о прочтении и не обновлять онлайн-статус. Серверные ограничения всё равно действуют.",
                 TelegaFeatures.isGhostModeEnabled(),
                 (button, enabled) -> TelegaFeatures.setGhostModeEnabled(enabled));
+        addToggle(context, list, "Auto Proxy",
+                "Автоматически переключается между сохранёнными прокси при проблемах с соединением. Нужно минимум два прокси, добавленных тобой.",
+                TelegaFeatures.isAutoProxyEnabled(),
+                (button, enabled) -> {
+                    if (!TelegaFeatures.setAutoProxyEnabled(enabled)) {
+                        button.setChecked(false);
+                        Toast.makeText(context, "Добавь минимум два прокси в настройках прокси Telegram", Toast.LENGTH_LONG).show();
+                    }
+                });
+
         addToggle(context, list, "Auto Archive",
                 "Автоматически архивировать новые группы, каналы и ботов и отключать им звук.",
                 TelegaFeatures.isAutoArchiveEnabled(),

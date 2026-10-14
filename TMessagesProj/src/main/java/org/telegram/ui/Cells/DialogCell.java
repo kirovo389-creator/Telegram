@@ -3338,6 +3338,8 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                 reactionMentionCount = forumTopic.unread_reactions_count;
                 pollVotesMentionCount = forumTopic.unread_poll_votes_count;
             }
+            // Telega: reaction counters are auto-read and hidden.
+            reactionMentionCount = 0;
             if (dialogsType == DialogsActivity.DIALOGS_TYPE_ADD_USERS_TO) {
                 drawPin = false;
             }

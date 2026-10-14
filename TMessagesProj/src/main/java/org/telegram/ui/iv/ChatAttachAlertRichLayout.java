@@ -823,6 +823,16 @@ public class ChatAttachAlertRichLayout extends ChatAttachAlert.AttachAlertLayout
             updateSendButtonEnabled();
             return false;
         }
+        if (listView.isSimpleConvertible() && parentAlert.baseFragment instanceof ChatActivity) {
+            final ChatActivityEnterView telegaFallbackEnterView = ((ChatActivity) parentAlert.baseFragment).getChatActivityEnterView();
+            if (telegaFallbackEnterView != null) {
+                telegaFallbackEnterView.sendConvertedRichAsSimple(
+                        org.telegram.messenger.TelegaFeatures.encodeArticle(listView.toSimpleMessage().toString()),
+                        notify, scheduleDate, scheduleRepeatPeriod);
+                parentAlert.dismiss(true);
+                return true;
+            }
+        }
         if (!MessagesController.getInstance(currentAccount).richEditorAllowed()) {
             // non-premium user with non-lossy content: send it as a simple message via the composer
             if (parentAlert.baseFragment instanceof ChatActivity) {
