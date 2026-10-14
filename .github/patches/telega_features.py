@@ -346,7 +346,7 @@ if "TELEGA_PREMIUM_STICKER_FALLBACK" not in sh:
         // TELEGA_PREMIUM_STICKER_FALLBACK: non-Premium accounts send fallback text plus invisible sticker metadata.
         TLRPC.User telegaActualUser = UserConfig.getInstance(currentAccount).getCurrentUser();
         if (document != null && MessageObject.isPremiumSticker(document) && (telegaActualUser == null || !telegaActualUser.premium)) {
-            String telegaFallback = MessageObject.findAnimatedEmojiEmoticon(document, parentObject, currentAccount);
+            String telegaFallback = MessageObject.findAnimatedEmojiEmoticon(document, null, currentAccount);
             if (telegaFallback == null || telegaFallback.length() == 0) telegaFallback = "✨";
             String telegaTransport = telegaFallback + TelegaCustomEmoji.encode(document.id, telegaFallback.length());
             sendMessage(SendMessageParams.of(telegaTransport, peer));
