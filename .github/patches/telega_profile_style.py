@@ -94,13 +94,13 @@ if "import org.telegram.messenger.TelegaLocalStatus;" not in c:
     if marker not in c:
         print("ERROR: PeerColorActivity import anchor not found", file=sys.stderr)
         sys.exit(1)
-    c = c.replace(marker, marker + "\\nimport org.telegram.messenger.TelegaLocalStatus;", 1)
+    c = c.replace(marker, marker + "\nimport org.telegram.messenger.TelegaLocalStatus;", 1)
 
 call = "            getMessagesController().putUser(me, false);"
 if call not in c:
     print("ERROR: PeerColorActivity apply/save anchor not found", file=sys.stderr)
     sys.exit(1)
-c = c.replace(call, "            saveTelegaProfileStyle(me, profilePage.selectedColor, profilePage.selectedEmoji);\\n" + call, 1)
+c = c.replace(call, "            saveTelegaProfileStyle(me, profilePage.selectedColor, profilePage.selectedEmoji);\n" + call, 1)
 method_anchor = "    private void showBulletin() {"
 method = '''    private void saveTelegaProfileStyle(TLRPC.User me, int color, long backgroundEmojiId) {
         if (me == null) return;
@@ -135,7 +135,7 @@ if "import org.telegram.messenger.TelegaLocalStatus;" not in p:
     if marker not in p:
         print("ERROR: ProfileActivity import anchor not found", file=sys.stderr)
         sys.exit(1)
-    p = p.replace(marker, marker + "\\nimport org.telegram.messenger.TelegaLocalStatus;", 1)
+    p = p.replace(marker, marker + "\nimport org.telegram.messenger.TelegaLocalStatus;", 1)
 
 # Apply the stored profile style to the viewed user before profile rows/backgrounds are refreshed.
 anchor = "    private void updateProfileData(boolean animated) {"
@@ -160,6 +160,6 @@ style = '''        if (user != null && userInfo != null) {
             }
         }
 '''
-p = p.replace(anchor, anchor + "\\n" + style, 1)
+p = p.replace(anchor, anchor + "\n" + style, 1)
 profile.write_text(p, encoding="utf-8")
 print("Telega shared profile color/background emoji patch applied.")
