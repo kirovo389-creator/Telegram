@@ -69,12 +69,35 @@ public final class TelegaFeatures {
     }
     public static void setAutoArchiveEnabled(boolean enabled) {
         prefs().edit().putBoolean("auto_archive", enabled).apply();
+        if (enabled) markExistingDialogsHandled(UserConfig.selectedAccount);
     }
     public static boolean isAntiSoundEnabled() {
         return prefs().getBoolean("anti_sound", false);
     }
     public static void setAntiSoundEnabled(boolean enabled) {
         prefs().edit().putBoolean("anti_sound", enabled).apply();
+        if (enabled) markExistingDialogsHandled(UserConfig.selectedAccount);
+    }
+
+    /** Snapshot current dialogs when the user enables these toggles, so old chats aren't swept into Archive. */
+    public static void markExistingDialogsHandled(int account) {
+        try {
+            Object controller = MessagesController.getInstance(account);
+            java.lang.reflect.Field field = controller.getClass().getDeclaredField("dialogs_dict");
+            field.setAccessible(true);
+            Object dialogs = field.get(controller);
+            java.lang.reflect.Method size = dialogs.getClass().getMethod("size");
+            java.lang.reflect.Method keyAt = dialogs.getClass().getMethod("keyAt", int.class);
+            int count = ((Number) size.invoke(dialogs)).intValue();
+            SharedPreferences.Editor editor = prefs().edit();
+            for (int i = 0; i < count; i++) {
+                long dialogId = ((Number) keyAt.invoke(dialogs, i)).longValue();
+                editor.putBoolean("handled_" + account + "_" + dialogId, true);
+            }
+            editor.apply();
+        } catch (Throwable error) {
+            Log.w("Telega", "Could not snapshot existing dialogs before enabling automation", error);
+        }
     }
 
     /** Prevent server read receipts and online-status renewals while Ghost mode is on. */
@@ -117,7 +140,12 @@ public final class TelegaFeatures {
 
     private static void tryArchiveDialog(int account, long dialogId) {
         try {
-            Class<?> requestClass = Class.forName("org.telegram.tgnet.TLRPC$TL_messages_editPeerFolders");
+            Class<?> requestClass;
+            try {
+                requestClass = Class.forName("org.telegram.tgnet.TLRPC$TL_folders_editPeerFolders");
+            } catch (ClassNotFoundException missingFoldersNamespace) {
+                requestClass = Class.forName("org.telegram.tgnet.TLRPC$TL_messages_editPeerFolders");
+            }
             Object request = requestClass.getDeclaredConstructor().newInstance();
             Field peersField = requestClass.getField("folder_peers");
             Class<?> folderPeerClass = Class.forName("org.telegram.tgnet.TLRPC$TL_inputFolderPeer");
