@@ -11905,20 +11905,14 @@ public class ChatActivityEnterView extends FrameLayout implements
                     }
                     try {
                         innerTextChange = 2;
-                        SpannableString emoji = new SpannableString(emoticon == null ? "\uD83D\uDE00" : emoticon);
-                        AnimatedEmojiSpan span;
-                        if (document != null) {
-                            span = new AnimatedEmojiSpan(document, messageEditText.getPaint().getFontMetricsInt());
-                        } else {
-                            span = new AnimatedEmojiSpan(documentId, messageEditText.getPaint().getFontMetricsInt());
+                        String fallbackEmoji = emoticon == null ? "\uD83D\uDE00" : emoticon;
+                        long customDocumentId = document != null ? document.id : documentId;
+                        SpannableStringBuilder inserted = new SpannableStringBuilder(fallbackEmoji);
+                        if (customDocumentId > 0) {
+                            inserted.append(org.telegram.messenger.TelegaCustomEmoji.encode(customDocumentId, fallbackEmoji.length()));
                         }
-                        if (!isRecent) {
-                            span.fromEmojiKeyboard = true;
-                        }
-                        span.cacheType = AnimatedEmojiDrawable.getCacheTypeForEnterView();
-                        emoji.setSpan(span, 0, emoji.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                        messageEditText.setText(messageEditText.getText().insert(i, emoji));
-                        messageEditText.setSelection(i + emoji.length(), i + emoji.length());
+                        messageEditText.setText(messageEditText.getText().insert(i, inserted));
+                        messageEditText.setSelection(i + inserted.length(), i + inserted.length());
                     } catch (Exception e) {
                         FileLog.e(e);
                     } finally {

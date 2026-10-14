@@ -6116,6 +6116,36 @@ public class MessageObject {
             messageText = "";
         }
 
+        // Decode Telega custom-emoji metadata before normal text layout. The
+        // Telegram server stores/sends only fallback emoji plus invisible tags.
+        if (messageOwner != null && messageText.length() > 0) {
+            TelegaCustomEmoji.Decoded telegaDecoded = TelegaCustomEmoji.decode(messageText.toString());
+            if (!telegaDecoded.entities.isEmpty()) {
+                messageText = telegaDecoded.text;
+                if (messageOwner.entities == null) {
+                    messageOwner.entities = new ArrayList<>();
+                }
+                for (TLRPC.TL_messageEntityCustomEmoji telegaEntity : telegaDecoded.entities) {
+                    boolean replaced = false;
+                    for (int entityIndex = 0; entityIndex < messageOwner.entities.size(); entityIndex++) {
+                        TLRPC.MessageEntity existing = messageOwner.entities.get(entityIndex);
+                        if (existing instanceof TLRPC.TL_messageEntityCustomEmoji && existing.offset == telegaEntity.offset && existing.length == telegaEntity.length) {
+                            messageOwner.entities.set(entityIndex, telegaEntity);
+                            replaced = true;
+                            break;
+                        }
+                    }
+                    if (!replaced) {
+                        int insertAt = 0;
+                        while (insertAt < messageOwner.entities.size() && messageOwner.entities.get(insertAt).offset <= telegaEntity.offset) {
+                            insertAt++;
+                        }
+                        messageOwner.entities.add(insertAt, telegaEntity);
+                    }
+                }
+            }
+        }
+
         isEmbedVideoCached = null;
         cachedStartsTimestamp = null;
         cachedSavedTimestamp = null;
