@@ -94,7 +94,7 @@ if "TelegaDeletedMessages.isDeleted" not in s:
     visual_check = """
         boolean telegaDeletedMessage = currentMessageObject != null
                 && currentMessageObject.messageOwner != null
-                && TelegaDeletedMessages.isDeleted(UserConfig.selectedAccount,
+                && org.telegram.messenger.TelegaDeletedMessages.isDeleted(org.telegram.messenger.UserConfig.selectedAccount,
                     currentMessageObject.messageOwner.dialog_id, currentMessageObject.messageOwner.id);
         setAlpha(telegaDeletedMessage ? 0.58f : 1.0f);
 """
@@ -102,12 +102,12 @@ if "TelegaDeletedMessages.isDeleted" not in s:
 
     draw_code = """
         if (currentMessageObject != null && currentMessageObject.messageOwner != null
-                && TelegaDeletedMessages.isDeleted(UserConfig.selectedAccount,
+                && org.telegram.messenger.TelegaDeletedMessages.isDeleted(org.telegram.messenger.UserConfig.selectedAccount,
                     currentMessageObject.messageOwner.dialog_id, currentMessageObject.messageOwner.id)) {
             android.graphics.Paint telegaDeletedPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-            telegaDeletedPaint.setTextSize(AndroidUtilities.dp(14));
+            telegaDeletedPaint.setTextSize(org.telegram.messenger.AndroidUtilities.dp(14));
             telegaDeletedPaint.setColor(0xFFE05D5D);
-            canvas.drawText("🗑", getWidth() - AndroidUtilities.dp(26), AndroidUtilities.dp(22), telegaDeletedPaint);
+            canvas.drawText("🗑", getWidth() - org.telegram.messenger.AndroidUtilities.dp(26), org.telegram.messenger.AndroidUtilities.dp(22), telegaDeletedPaint);
         }
 """
     dispatch_match = re.search(r"(?:@Override\s*)?protected void dispatchDraw\(android\.graphics\.Canvas canvas\)\s*\{|(?:@Override\s*)?protected void dispatchDraw\(Canvas canvas\)\s*\{", s)
