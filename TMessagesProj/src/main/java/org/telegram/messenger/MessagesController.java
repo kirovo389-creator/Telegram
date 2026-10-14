@@ -18835,16 +18835,7 @@ public class MessagesController extends BaseController implements NotificationCe
                 }
                 dialogs_read_outbox_max.put(dialogId, Math.max(value, update.max_id));
             } else if (baseUpdate instanceof TL_update.TL_updateDeleteMessages) {
-                TL_update.TL_updateDeleteMessages update = (TL_update.TL_updateDeleteMessages) baseUpdate;
-                if (deletedMessages == null) {
-                    deletedMessages = new LongSparseArray<>();
-                }
-                ArrayList<Integer> arrayList = deletedMessages.get(0);
-                if (arrayList == null) {
-                    arrayList = new ArrayList<>();
-                    deletedMessages.put(0, arrayList);
-                }
-                arrayList.addAll(update.messages);
+                // Telega: keep a local copy when a regular message is deleted remotely.
             } else if (baseUpdate instanceof TL_update.TL_updateDeleteQuickReplyMessages) {
                 TL_update.TL_updateDeleteQuickReplyMessages update = (TL_update.TL_updateDeleteQuickReplyMessages) baseUpdate;
                 if (deletedQuickReplyMessages == null) {
@@ -19357,20 +19348,7 @@ public class MessagesController extends BaseController implements NotificationCe
                 }
                 dialogs_read_outbox_max.put(dialogId, Math.max(value, update.max_id));
             } else if (baseUpdate instanceof TL_update.TL_updateDeleteChannelMessages) {
-                TL_update.TL_updateDeleteChannelMessages update = (TL_update.TL_updateDeleteChannelMessages) baseUpdate;
-                if (BuildVars.LOGS_ENABLED) {
-                    FileLog.d(baseUpdate + " channelId = " + update.channel_id);
-                }
-                if (deletedMessages == null) {
-                    deletedMessages = new LongSparseArray<>();
-                }
-                long dialogId = -update.channel_id;
-                ArrayList<Integer> arrayList = deletedMessages.get(dialogId);
-                if (arrayList == null) {
-                    arrayList = new ArrayList<>();
-                    deletedMessages.put(dialogId, arrayList);
-                }
-                arrayList.addAll(update.messages);
+                // Telega: keep a local copy when a channel message is deleted remotely.
             } else if (baseUpdate instanceof TL_update.TL_updateChannel) {
                 if (BuildVars.LOGS_ENABLED) {
                     TL_update.TL_updateChannel update = (TL_update.TL_updateChannel) baseUpdate;
