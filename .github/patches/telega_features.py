@@ -303,24 +303,20 @@ settings_path.write_text(s, encoding="utf-8")
 
 # Hook newly discovered bots and joined groups/channels for auto-mute/archive.
 c = controller_path.read_text(encoding="utf-8")
-if "TelegaFeatures.onPeerAvailable(currentAccount, user.id, true);" not in c:
-    pat = r"(public\s+(?:final\s+)?void\s+putUser\s*\(\s*TLRPC\.User\s+(\w+)[^)]*\)\s*\{)"
-    m = re.search(pat, c)
-    if not m:
-        print("ERROR: MessagesController.putUser anchor not found", file=sys.stderr)
-        sys.exit(1)
-    user = m.group(2)
-    code = f'\n        if ({user} != null && {user}.bot && {user}.id != UserConfig.getInstance(currentAccount).getClientUserId()) TelegaFeatures.onPeerAvailable(currentAccount, {user}.id, true);'
-    c = c[:m.end()] + code + c[m.end():]
-if "TelegaFeatures.onPeerAvailable(currentAccount, -chat.id, true);" not in c:
-    pat = r"(public\s+(?:final\s+)?void\s+putChat\s*\(\s*TLRPC\.Chat\s+(\w+)[^)]*\)\s*\{)"
-    m = re.search(pat, c)
-    if not m:
-        print("ERROR: MessagesController.putChat anchor not found", file=sys.stderr)
-        sys.exit(1)
-    chat = m.group(2)
-    code = f'\n        if ({chat} != null && ({chat}.megagroup || {chat}.broadcast) && !ChatObject.isNotInChat({chat})) TelegaFeatures.onPeerAvailable(currentAccount, -{chat}.id, true);'
-    c = c[:m.end()] + code + c[m.end():]
+user_pattern = r"(?m)^\s*(?:public|protected|private)\s+(?:(?:final|synchronized)\s+)*void\s+putUser\s*\(\s*(?:final\s+)?TLRPC\.User\s+(\w+)[^)]*\)\s*\{"
+chat_pattern = r"(?m)^\s*(?:public|protected|private)\s+(?:(?:final|synchronized)\s+)*void\s+putChat\s*\(\s*(?:final\s+)?TLRPC\.Chat\s+(\w+)[^)]*\)\s*\{"
+user_match = re.search(user_pattern, c)
+if user_match and "TelegaFeatures.onPeerAvailable(currentAccount, " not in c:
+    user = user_match.group(1)
+    c = c[:user_match.end()] + f'\n        if ({user} != null && {user}.bot && {user}.id != UserConfig.getInstance(currentAccount).getClientUserId()) TelegaFeatures.onPeerAvailable(currentAccount, {user}.id, true);' + c[user_match.end():]
+else:
+    print("WARNING: MessagesController.putUser hook unavailable; user auto-mute will rely on chat hook.")
+chat_match = re.search(chat_pattern, c)
+if chat_match and "TelegaFeatures.onPeerAvailable(currentAccount, -" not in c:
+    chat = chat_match.group(1)
+    c = c[:chat_match.end()] + f'\n        if ({chat} != null && ({chat}.megagroup || {chat}.broadcast) && !ChatObject.isNotInChat({chat})) TelegaFeatures.onPeerAvailable(currentAccount, -{chat}.id, true);' + c[chat_match.end():]
+else:
+    print("WARNING: MessagesController.putChat hook unavailable; archive/mute may not trigger for new chats.")
 controller_path.write_text(c, encoding="utf-8")
 
 # Suppress selected privacy-sensitive API requests while Ghost is enabled.
