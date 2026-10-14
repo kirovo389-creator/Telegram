@@ -12,7 +12,7 @@ p = profile.read_text(encoding="utf-8")
 bad_start = r"\n            if (userInfo != null) {"
 if bad_start in p:
     start = p.index(bad_start)
-    end_marker = "\n            }\n        }\n\n        if (avatarContainer == null"
+    end_marker = "\n            }\n\n        if (avatarContainer == null"
     end = p.find(end_marker, start)
     if end < 0:
         print("ERROR: malformed profile-style block end not found", file=sys.stderr)
