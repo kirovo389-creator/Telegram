@@ -27,6 +27,7 @@ features_java = r'''package org.telegram.messenger;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.util.Log;
 
 import org.telegram.tgnet.ConnectionsManager;
@@ -128,7 +129,7 @@ public final class TelegaFeatures {
         final boolean mute = archive || isAntiSoundEnabled();
         AndroidUtilities.runOnUIThread(() -> {
             try {
-                if (mute) NotificationsController.getInstance(account).muteDialog(dialogId, 0, true);
+                if (mute) NotificationsController.getInstance(account).muteDialog(dialogId, Integer.MAX_VALUE, true);
             } catch (Throwable error) {
                 Log.w("Telega", "Unable to mute new dialog", error);
             }
@@ -278,7 +279,10 @@ public class TelegaSettingsActivity extends BaseFragment {
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(13), AndroidUtilities.dp(16), AndroidUtilities.dp(13));
-        row.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        GradientDrawable rowBackground = new GradientDrawable();
+        rowBackground.setColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        rowBackground.setCornerRadius(AndroidUtilities.dp(12));
+        row.setBackground(rowBackground);
         LinearLayout textColumn = new LinearLayout(context);
         textColumn.setOrientation(LinearLayout.VERTICAL);
         TextView titleView = new TextView(context);
@@ -304,7 +308,7 @@ public class TelegaSettingsActivity extends BaseFragment {
         row.addView(toggle, toggleParams);
         row.setOnClickListener(v -> toggle.setChecked(!toggle.isChecked()));
         LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(-1, -2);
-        rowParams.bottomMargin = AndroidUtilities.dp(1);
+        rowParams.setMargins(AndroidUtilities.dp(12), 0, AndroidUtilities.dp(12), AndroidUtilities.dp(8));
         parent.addView(row, rowParams);
     }
 }
