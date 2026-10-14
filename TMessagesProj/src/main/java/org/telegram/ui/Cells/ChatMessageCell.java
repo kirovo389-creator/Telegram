@@ -29599,7 +29599,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             telegaDeletedPaint.setStyle(android.graphics.Paint.Style.STROKE);
             telegaDeletedPaint.setStrokeWidth(org.telegram.messenger.AndroidUtilities.dp(1.25f));
             telegaDeletedPaint.setStrokeCap(android.graphics.Paint.Cap.ROUND);
-            float telegaTrashX = org.telegram.messenger.AndroidUtilities.dp(10);
+            float telegaTrashX = getWidth() - org.telegram.messenger.AndroidUtilities.dp(29);
             float telegaTrashY = getHeight() - org.telegram.messenger.AndroidUtilities.dp(16);
             float telegaTrashW = org.telegram.messenger.AndroidUtilities.dp(8);
             float telegaTrashH = org.telegram.messenger.AndroidUtilities.dp(9);
