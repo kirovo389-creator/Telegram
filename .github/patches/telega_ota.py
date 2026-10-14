@@ -287,7 +287,6 @@ public final class TelegaOtaUpdater {
             result.putExtra("sessionId", sessionId);
             int flags = PendingIntent.FLAG_UPDATE_CURRENT;
             if (Build.VERSION.SDK_INT >= 31) flags |= PendingIntent.FLAG_MUTABLE;
-            else if (Build.VERSION.SDK_INT >= 23) flags |= PendingIntent.FLAG_IMMUTABLE;
             PendingIntent pending = PendingIntent.getBroadcast(context, sessionId, result, flags);
             session.commit(pending.getIntentSender());
         }
@@ -384,7 +383,7 @@ xml = manifest.read_text(encoding="utf-8")
 if "android.permission.INTERNET" not in xml:
     xml = re.sub(r"(<manifest\\b[^>]*>)", r'\\1\n    <uses-permission android:name="android.permission.INTERNET" />', xml, count=1)
 if "android.permission.REQUEST_INSTALL_PACKAGES" not in xml:
-    xml = re.sub(r"(    <uses-permission android:name="android\\.permission\\.INTERNET"\\s*/>)",
+    xml = re.sub(r'(    <uses-permission android:name="android\\.permission\\.INTERNET"\\s*/>)',
                  r'\\1\n    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />', xml, count=1)
 if "TelegaInstallReceiver" not in xml:
     app_close = xml.find("</application>")
