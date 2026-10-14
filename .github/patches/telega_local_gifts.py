@@ -109,7 +109,7 @@ public class TelegaLocalGiftsActivity extends BaseFragment {
             button.setGravity(Gravity.CENTER_VERTICAL);
             button.setPadding(AndroidUtilities.dp(16), 0, AndroidUtilities.dp(16), 0);
             button.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourceProvider));
-            button.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(14), Theme.getColor(Theme.key_windowBackgroundWhiteGray, resourceProvider)));
+            button.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(14), Theme.getColor(Theme.key_dialogBackground, resourceProvider)));
             button.setOnClickListener(v -> selectRecipient(index));
             layout.addView(button, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 54, 0, 0, 0, 10));
         }
@@ -171,7 +171,7 @@ addition = '''
         telegaLocalStarsView.setGravity(Gravity.CENTER);
         telegaLocalStarsView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourceProvider));
         telegaLocalStarsView.setPadding(dp(12), dp(12), dp(12), dp(12));
-        telegaLocalStarsView.setBackground(Theme.createRoundRectDrawable(dp(14), Theme.getColor(Theme.key_windowBackgroundWhiteGray, resourceProvider)));
+        telegaLocalStarsView.setBackground(Theme.createRoundRectDrawable(dp(14), Theme.getColor(Theme.key_dialogBackground, resourceProvider)));
         telegaLocalStarsView.setOnClickListener(v -> {
             BaseFragment lastFragment = LaunchActivity.getLastFragment();
             if (lastFragment != null) {
