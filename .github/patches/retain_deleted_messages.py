@@ -87,7 +87,7 @@ if "TelegaDeletedMessages.isDeleted" not in s:
     # Search every overload: some setMessageObject overloads only delegate to
     # another overload and do not assign currentMessageObject themselves.
     method_pattern = re.compile(
-        r"(?:public|protected)\\s+void\\s+setMessageObject\\s*\\([^)]*\\)\\s*\\{"
+        r"(?:public|protected)\s+void\s+setMessageObject\s*\([^)]*\)\s*\{"
     )
     after = -1
     for method_match in method_pattern.finditer(s):
@@ -106,7 +106,7 @@ if "TelegaDeletedMessages.isDeleted" not in s:
             continue
         method_body = s[method_open + 1:method_end]
         assignment_match = re.search(
-            r"(?:this\\.)?currentMessageObject\\s*=\\s*[^;]+;", method_body
+            r"(?:this\.)?currentMessageObject\s*=\s*[^;]+;", method_body
         )
         if assignment_match is not None:
             after = method_open + 1 + assignment_match.end()
