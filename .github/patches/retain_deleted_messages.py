@@ -88,7 +88,7 @@ if "TelegaDeletedMessages.isDeleted" not in s:
     # occurrence of setMessageObject( can land on a call site and inject code
     # after an unrelated return, producing Java's "unreachable statement".
     method_match = re.search(
-        r"(?:public|protected)\\s+void\\s+setMessageObject\\s*\\([^)]*\\)\\s*\\{",
+        r"(?:public|protected)\s+void\s+setMessageObject\s*\([^)]*\)\s*\\{",
         s
     )
     if method_match is None:
@@ -111,7 +111,7 @@ if "TelegaDeletedMessages.isDeleted" not in s:
         sys.exit(1)
 
     method_body = s[method_open + 1:method_end]
-    assignment_match = re.search(r"(?:this\\.)?currentMessageObject\\s*=\\s*[^;]+;", method_body)
+    assignment_match = re.search(r"(?:this\.)?currentMessageObject\s*=\s*[^;]+;", method_body)
     if assignment_match is None:
         print("ERROR: setMessageObject has no currentMessageObject assignment", file=sys.stderr)
         sys.exit(1)
