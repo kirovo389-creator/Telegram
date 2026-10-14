@@ -17,7 +17,6 @@ concurrency:
 
 jobs:
   sync-build-release:
-    if: false # Temporarily pause builds while implementing Telega custom emoji support.
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
