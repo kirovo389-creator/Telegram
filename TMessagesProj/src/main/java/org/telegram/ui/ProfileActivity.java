@@ -11334,7 +11334,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             TLRPC.User user = getMessagesController().getUser(userId);
             if (user == null) {
                 return;
-            }\n            if (userInfo != null) {
+            }
+            if (userInfo != null) {
                 int telegaProfileColor = TelegaLocalStatus.getProfileColor(userInfo.about);
                 long telegaBackgroundEmoji = TelegaLocalStatus.getProfileEmoji(userInfo.about);
                 if (telegaProfileColor >= 0 || telegaBackgroundEmoji != 0) {

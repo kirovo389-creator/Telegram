@@ -2121,12 +2121,12 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
         request.about = newAbout;
         getConnectionsManager().sendRequest(request, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
             if (error != null) {
-                FileLog.e("Telega profile style save failed: " + error.text);
+                Log.e("Telega", "Profile style save failed: " + error.text);
                 return;
             }
             full.about = newAbout;
             getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
-        }), ConnectionsManager.RequestFlagFailOnServerErrors);
+        }));
     }
 
     private void showBulletin() {
