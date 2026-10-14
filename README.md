@@ -12,9 +12,9 @@ The GitHub Actions workflow imports upstream source, applies the Telega app labe
 ## Current development status
 
 - The upstream source has been imported.
-- The automated build is being debugged; there is no verified APK release yet.
-- Retaining deleted messages in a translucent style has not been implemented yet.
-- A custom dark-first interface still needs source-level implementation and testing.
+- Telega Local Premium is enabled by default for signed-in accounts in the client-side UI.
+- This does not grant an official Telegram Premium subscription; Telegram servers still enforce server-side restrictions.
+- Cross-device Telega-only statuses require a shared data channel. The current build does not silently modify users' Telegram profiles to fake one.
 
 ## License
 
