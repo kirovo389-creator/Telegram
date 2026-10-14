@@ -72,7 +72,7 @@ patterns = [
     ),
 ]
 for pattern, replacement_body, label in patterns:
-    match = re.search(pattern, source, count=1, flags=re.S)
+    match = re.search(pattern, source, flags=re.S)
     if not match:
         print(f"ERROR: could not patch {label}; upstream source layout changed", file=sys.stderr)
         sys.exit(1)
