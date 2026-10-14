@@ -59,7 +59,9 @@ jobs:
           cp -a .github /tmp/telega-preserve/github
           cp README.md /tmp/telega-preserve/README.md
           git fetch --depth=1 https://github.com/DrKLO/Telegram.git master
-          git read-tree --reset -u FETCH_HEAD
+          git read-tree --reset FETCH_HEAD
+          git checkout-index --all --force
+          git clean -fdx
           rm -rf .github
           cp -a /tmp/telega-preserve/github .github
           cp /tmp/telega-preserve/README.md README.md
