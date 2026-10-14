@@ -84,47 +84,8 @@ controller.write_text(source, encoding="utf-8")
 
 s = cell.read_text(encoding="utf-8")
 if "TelegaDeletedMessages.isDeleted" not in s:
-    # Search every overload: some setMessageObject overloads only delegate to
-    # another overload and do not assign currentMessageObject themselves.
-    method_pattern = re.compile(
-        r"(?:public|protected)\s+void\s+setMessageObject\s*\([^)]*\)\s*\{"
-    )
-    after = -1
-    for method_match in method_pattern.finditer(s):
-        method_open = s.find("{", method_match.start())
-        depth = 0
-        method_end = -1
-        for i in range(method_open, len(s)):
-            if s[i] == "{":
-                depth += 1
-            elif s[i] == "}":
-                depth -= 1
-                if depth == 0:
-                    method_end = i
-                    break
-        if method_end < 0:
-            continue
-        method_body = s[method_open + 1:method_end]
-        assignment_match = re.search(
-            r"(?:this\.)?currentMessageObject\s*=\s*[^;]+;", method_body
-        )
-        if assignment_match is not None:
-            after = method_open + 1 + assignment_match.end()
-            break
-
-    if after < 0:
-        print("ERROR: no setMessageObject overload assigns currentMessageObject", file=sys.stderr)
-        sys.exit(1)
-
-    visual_check = """
-        boolean telegaDeletedMessage = currentMessageObject != null
-                && currentMessageObject.messageOwner != null
-                && org.telegram.messenger.TelegaDeletedMessages.isDeleted(org.telegram.messenger.UserConfig.selectedAccount,
-                    currentMessageObject.messageOwner.dialog_id, currentMessageObject.messageOwner.id);
-        setAlpha(telegaDeletedMessage ? 0.58f : 1.0f);
-"""
-    s = s[:after] + visual_check + s[after:]
-
+    # Apply translucency while drawing the cell's children. This avoids trying
+    # to inject code into a message-binding method whose upstream overloads vary.
     draw_code = """
         if (currentMessageObject != null && currentMessageObject.messageOwner != null
                 && org.telegram.messenger.TelegaDeletedMessages.isDeleted(org.telegram.messenger.UserConfig.selectedAccount,
@@ -135,7 +96,11 @@ if "TelegaDeletedMessages.isDeleted" not in s:
             canvas.drawText("🗑", getWidth() - org.telegram.messenger.AndroidUtilities.dp(26), org.telegram.messenger.AndroidUtilities.dp(22), telegaDeletedPaint);
         }
 """
-    dispatch_match = re.search(r"(?:@Override\s*)?protected void dispatchDraw\(android\.graphics\.Canvas canvas\)\s*\{|(?:@Override\s*)?protected void dispatchDraw\(Canvas canvas\)\s*\{", s)
+    dispatch_match = re.search(
+        r"(?:@Override\\s*)?protected void dispatchDraw\\(android\\.graphics\\.Canvas canvas\\)\\s*\\{|"
+        r"(?:@Override\\s*)?protected void dispatchDraw\\(Canvas canvas\\)\\s*\\{",
+        s
+    )
     if dispatch_match:
         method_open = s.find("{", dispatch_match.start())
         depth = 0
@@ -151,12 +116,43 @@ if "TelegaDeletedMessages.isDeleted" not in s:
         if method_end < 0:
             print("ERROR: could not find ChatMessageCell dispatchDraw end", file=sys.stderr)
             sys.exit(1)
-        s = s[:method_end] + draw_code + s[method_end:]
+
+        method_body = s[method_open:method_end + 1]
+        original_draw = "super.dispatchDraw(canvas);"
+        if original_draw not in method_body:
+            print("ERROR: dispatchDraw super call not found", file=sys.stderr)
+            sys.exit(1)
+        wrapped_draw = """
+        boolean telegaDeletedForDraw = currentMessageObject != null
+                && currentMessageObject.messageOwner != null
+                && org.telegram.messenger.TelegaDeletedMessages.isDeleted(org.telegram.messenger.UserConfig.selectedAccount,
+                    currentMessageObject.messageOwner.dialog_id, currentMessageObject.messageOwner.id);
+        if (telegaDeletedForDraw) {
+            int telegaLayer = canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), 148);
+            super.dispatchDraw(canvas);
+            canvas.restoreToCount(telegaLayer);
+        } else {
+            super.dispatchDraw(canvas);
+        }
+"""
+        method_body = method_body.replace(original_draw, wrapped_draw, 1)
+        method_body = method_body[:-1] + draw_code + "\\n    }"
+        s = s[:method_open] + method_body + s[method_end + 1:]
     else:
         dispatch = """
     @Override
     protected void dispatchDraw(android.graphics.Canvas canvas) {
-        super.dispatchDraw(canvas);
+        boolean telegaDeletedForDraw = currentMessageObject != null
+                && currentMessageObject.messageOwner != null
+                && org.telegram.messenger.TelegaDeletedMessages.isDeleted(org.telegram.messenger.UserConfig.selectedAccount,
+                    currentMessageObject.messageOwner.dialog_id, currentMessageObject.messageOwner.id);
+        if (telegaDeletedForDraw) {
+            int telegaLayer = canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), 148);
+            super.dispatchDraw(canvas);
+            canvas.restoreToCount(telegaLayer);
+        } else {
+            super.dispatchDraw(canvas);
+        }
 """ + draw_code + """    }
 
 """
