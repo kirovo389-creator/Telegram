@@ -47,7 +47,6 @@ jobs:
           if [ -f TMessagesProj_App/google-services.json ]; then
             sed -i 's/org\.telegram\.messenger/org.telega.messenger/g' TMessagesProj_App/google-services.json
           fi
-          python3 -c 'from pathlib import Path; p=Path("TMessagesProj/src/main/java/org/telegram/ui/ActionBar/Theme.java"); s=p.read_text(); old="        if (applyingTheme == null) {\\n            applyingTheme = defaultTheme;\\n        } else {\\n            currentDayTheme = applyingTheme;\\n        }"; new="        if (applyingTheme == null) {\\n            applyingTheme = currentNightTheme != null ? currentNightTheme : defaultTheme;\\n            currentDayTheme = applyingTheme;\\n        } else {\\n            currentDayTheme = applyingTheme;\\n        }"; assert old in s, "default theme block not found"; p.write_text(s.replace(old,new,1))'
           python3 .github/patches/retain_deleted_messages.py
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
