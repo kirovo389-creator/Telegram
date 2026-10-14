@@ -33,11 +33,13 @@ jobs:
           git reset --hard origin/main
           cp README.md /tmp/telega-readme.md
           cp .github/workflows/build-telega.yml /tmp/build-telega.yml
+          cp .github/patches/retain_deleted_messages.py /tmp/retain_deleted_messages.py
           git fetch --depth=1 https://github.com/DrKLO/Telegram.git master
           git read-tree --reset -u FETCH_HEAD
-          mkdir -p .github/workflows
+          mkdir -p .github/workflows .github/patches
           cp /tmp/telega-readme.md README.md
           cp /tmp/build-telega.yml .github/workflows/build-telega.yml
+          cp /tmp/retain_deleted_messages.py .github/patches/retain_deleted_messages.py
           sed -i 's/^APP_PACKAGE=.*/APP_PACKAGE=org.telega.messenger/' gradle.properties
           sed -i 's/<string name="AppName">Telegram<\/string>/<string name="AppName">Telega<\/string>/' TMessagesProj/src/main/res/values/strings.xml
           sed -i 's/<string name="AppNameBeta">Telegram Beta<\/string>/<string name="AppNameBeta">Telega Beta<\/string>/' TMessagesProj/src/main/res/values/strings.xml
@@ -45,6 +47,7 @@ jobs:
             sed -i 's/org\.telegram\.messenger/org.telega.messenger/g' TMessagesProj_App/google-services.json
           fi
           python3 -c 'from pathlib import Path; p=Path("TMessagesProj/src/main/java/org/telegram/ui/ActionBar/Theme.java"); s=p.read_text(); old="        if (applyingTheme == null) {\\n            applyingTheme = defaultTheme;\\n        } else {\\n            currentDayTheme = applyingTheme;\\n        }"; new="        if (applyingTheme == null) {\\n            applyingTheme = currentNightTheme != null ? currentNightTheme : defaultTheme;\\n            currentDayTheme = applyingTheme;\\n        } else {\\n            currentDayTheme = applyingTheme;\\n        }"; assert old in s, "default theme block not found"; p.write_text(s.replace(old,new,1))'
+          python3 .github/patches/retain_deleted_messages.py
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
