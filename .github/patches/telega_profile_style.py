@@ -137,31 +137,30 @@ if "import org.telegram.messenger.TelegaLocalStatus;" not in p:
         sys.exit(1)
     p = p.replace(marker, marker + "\nimport org.telegram.messenger.TelegaLocalStatus;", 1)
 
-# Apply the stored profile style to the viewed user before profile rows/backgrounds are refreshed.
-anchor = "    private void updateProfileData(boolean animated) {"
+# Apply the shared style only after the viewed user object is available.
+anchor = """if (userId != 0) {
+            TLRPC.User user = getMessagesController().getUser(userId);
+            if (user == null) {
+                return;
+            }"""
+style = """if (userInfo != null) {
+                int telegaProfileColor = TelegaLocalStatus.getProfileColor(userInfo.about);
+                long telegaBackgroundEmoji = TelegaLocalStatus.getProfileEmoji(userInfo.about);
+                if (telegaProfileColor >= 0 || telegaBackgroundEmoji != 0) {
+                    if (user.profile_color == null) user.profile_color = new TLRPC.TL_peerColor();
+                    if (telegaProfileColor >= 0) {
+                        user.profile_color.flags |= 1;
+                        user.profile_color.color = telegaProfileColor;
+                    }
+                    if (telegaBackgroundEmoji != 0) {
+                        user.profile_color.flags |= 2;
+                        user.profile_color.background_emoji_id = telegaBackgroundEmoji;
+                    }
+                }
+            }"""
 if anchor not in p:
-    anchor = "    private void updateProfileData() {"
-if anchor not in p:
-    anchor = "    private void updateProfileData(boolean reload) {"
-if anchor not in p:
-    print("ERROR: ProfileActivity updateProfileData anchor not found", file=sys.stderr)
+    print("ERROR: ProfileActivity viewed-user anchor not found", file=sys.stderr)
     sys.exit(1)
-style = '''        if (user != null && userInfo != null) {
-            int telegaProfileColor = TelegaLocalStatus.getProfileColor(userInfo.about);
-            long telegaBackgroundEmoji = TelegaLocalStatus.getProfileEmoji(userInfo.about);
-            if (telegaProfileColor >= 0 || telegaBackgroundEmoji != 0) {
-                if (user.profile_color == null) user.profile_color = new TLRPC.TL_peerColor();
-                if (telegaProfileColor >= 0) {
-                    user.profile_color.flags |= 1;
-                    user.profile_color.color = telegaProfileColor;
-                }
-                if (telegaBackgroundEmoji != 0) {
-                    user.profile_color.flags |= 2;
-                    user.profile_color.background_emoji_id = telegaBackgroundEmoji;
-                }
-            }
-        }
-'''
-p = p.replace(anchor, anchor + "\n" + style, 1)
+p = p.replace(anchor, anchor + "\\n            " + style, 1)
 profile.write_text(p, encoding="utf-8")
 print("Telega shared profile color/background emoji patch applied.")
