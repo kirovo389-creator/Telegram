@@ -470,6 +470,12 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     public boolean checkUnreadPollVotes() {
         if (currentMessageObject == null || currentMessageObject.type != MessageObject.TYPE_POLL) {
             return false;
+        boolean telegaDeletedMessage = currentMessageObject != null
+                && currentMessageObject.messageOwner != null
+                && org.telegram.messenger.TelegaDeletedMessages.isDeleted(org.telegram.messenger.UserConfig.selectedAccount,
+                    currentMessageObject.messageOwner.dialog_id, currentMessageObject.messageOwner.id);
+        setAlpha(telegaDeletedMessage ? 0.58f : 1.0f);
+
         }
         TLRPC.MessageMedia m = MessageObject.getMedia(currentMessageObject.messageOwner);
         if (m instanceof TLRPC.TL_messageMediaPoll) {
@@ -29581,4 +29587,19 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         }
         return text;
     }
+
+    @Override
+    protected void dispatchDraw(android.graphics.Canvas canvas) {
+        super.dispatchDraw(canvas);
+
+        if (currentMessageObject != null && currentMessageObject.messageOwner != null
+                && org.telegram.messenger.TelegaDeletedMessages.isDeleted(org.telegram.messenger.UserConfig.selectedAccount,
+                    currentMessageObject.messageOwner.dialog_id, currentMessageObject.messageOwner.id)) {
+            android.graphics.Paint telegaDeletedPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            telegaDeletedPaint.setTextSize(org.telegram.messenger.AndroidUtilities.dp(14));
+            telegaDeletedPaint.setColor(0xFFE05D5D);
+            canvas.drawText("🗑", getWidth() - org.telegram.messenger.AndroidUtilities.dp(26), org.telegram.messenger.AndroidUtilities.dp(22), telegaDeletedPaint);
+        }
+    }
+
 }

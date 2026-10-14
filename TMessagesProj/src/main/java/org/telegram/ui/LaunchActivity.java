@@ -557,6 +557,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
         checkCurrentAccount();
         updateCurrentConnectionState(currentAccount);
+        getWindow().getDecorView().postDelayed(this::showTelegaChannelPromptIfNeeded, 900);
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.closeOtherAppActivities, this);
 
         currentConnectionState = ConnectionsManager.getInstance(currentAccount).getConnectionState();
@@ -6965,6 +6966,31 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     }
 
     View feedbackView;
+
+
+    private void showTelegaChannelPromptIfNeeded() {
+        int account = currentAccount;
+        long userId = UserConfig.getInstance(account).getClientUserId();
+        if (userId == 0 || isFinishing() || isDestroyed() || passcodeDialog != null) return;
+        String prefKey = "shown_" + account + "_" + userId;
+        android.content.SharedPreferences prefs = ApplicationLoader.applicationContext.getSharedPreferences("telega_channel_prompt", 0);
+        if (prefs.getBoolean(prefKey, false)) return;
+        // Mark before showing to avoid duplicate prompts on rapid resume events.
+        prefs.edit().putBoolean(prefKey, true).apply();
+        new AlertDialog.Builder(this)
+                .setTitle("Поддержать Telega Beta")
+                .setMessage("Хочешь подписаться на канал TelegaForks и получать новости сборок?")
+                .setNegativeButton("Не сейчас", null)
+                .setPositiveButton("Открыть канал", (dialog, which) -> {
+                    try {
+                        startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                                android.net.Uri.parse("https://t.me/TelegaForks")));
+                    } catch (Exception e) {
+                        android.util.Log.e("Telega", "Unable to open TelegaForks channel", e);
+                    }
+                })
+                .show();
+    }
 
     @Override
     protected void onResume() {

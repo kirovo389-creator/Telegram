@@ -18835,7 +18835,12 @@ public class MessagesController extends BaseController implements NotificationCe
                 }
                 dialogs_read_outbox_max.put(dialogId, Math.max(value, update.max_id));
             } else if (baseUpdate instanceof TL_update.TL_updateDeleteMessages) {
-                // Telega: keep a local copy when a regular message is deleted remotely.
+                TL_update.TL_updateDeleteMessages telegaDeleteUpdate = (TL_update.TL_updateDeleteMessages) baseUpdate;
+                for (int telegaMessageId : telegaDeleteUpdate.messages) {
+                    TelegaDeletedMessages.mark(currentAccount, 0, telegaMessageId);
+                }
+                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
+                // Telega: intentionally retain the cached message and render it as deleted.
             } else if (baseUpdate instanceof TL_update.TL_updateDeleteQuickReplyMessages) {
                 TL_update.TL_updateDeleteQuickReplyMessages update = (TL_update.TL_updateDeleteQuickReplyMessages) baseUpdate;
                 if (deletedQuickReplyMessages == null) {
@@ -19348,7 +19353,13 @@ public class MessagesController extends BaseController implements NotificationCe
                 }
                 dialogs_read_outbox_max.put(dialogId, Math.max(value, update.max_id));
             } else if (baseUpdate instanceof TL_update.TL_updateDeleteChannelMessages) {
-                // Telega: keep a local copy when a channel message is deleted remotely.
+                TL_update.TL_updateDeleteChannelMessages telegaDeleteUpdate = (TL_update.TL_updateDeleteChannelMessages) baseUpdate;
+                long telegaDialogId = -telegaDeleteUpdate.channel_id;
+                for (int telegaMessageId : telegaDeleteUpdate.messages) {
+                    TelegaDeletedMessages.mark(currentAccount, telegaDialogId, telegaMessageId);
+                }
+                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
+                // Telega: intentionally retain the cached channel message and render it as deleted.
             } else if (baseUpdate instanceof TL_update.TL_updateChannel) {
                 if (BuildVars.LOGS_ENABLED) {
                     TL_update.TL_updateChannel update = (TL_update.TL_updateChannel) baseUpdate;
