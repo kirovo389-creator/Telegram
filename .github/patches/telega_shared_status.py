@@ -206,7 +206,7 @@ if "import org.telegram.messenger.TelegaLocalStatus;" not in b:
     if marker not in b:
         print("ERROR: ChangeBioActivity import anchor not found", file=sys.stderr)
         sys.exit(1)
-    b = b.replace(marker, marker + "\\nimport org.telegram.messenger.TelegaLocalStatus;", 1)
+    b = b.replace(marker, marker + "\nimport org.telegram.messenger.TelegaLocalStatus;", 1)
 
 old_current = "String currentName = userFull.about;"
 new_current = "String currentName = TelegaLocalStatus.strip(userFull.about);"
