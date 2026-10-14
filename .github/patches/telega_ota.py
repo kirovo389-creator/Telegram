@@ -42,9 +42,6 @@ public final class TelegaOtaUpdater {
     private TelegaOtaUpdater() {}
 
     public static void check(Context context) {
-        if (context == null || !BuildConfig.DEBUG && !BuildVars.DEBUG_VERSION) {
-            // Telega Beta releases are prereleases, but allow both debug and production variants.
-        }
         final Context app = context == null ? null : context.getApplicationContext();
         if (app == null) return;
         EXECUTOR.execute(() -> {
@@ -156,8 +153,19 @@ if anchor not in source:
     print("ERROR: LaunchActivity.onCreate anchor not found", file=sys.stderr)
     sys.exit(1)
 if "TelegaOtaUpdater.check(getApplicationContext())" not in source:
-    # Schedule after the Activity's superclass initialization, preserving existing startup.
-    source = source.replace(anchor, anchor + "\n        org.telegram.messenger.TelegaOtaUpdater.check(getApplicationContext());", 1)
+    # Place the network check after Activity superclass initialization.
+    super_anchor = "        super.onCreate(savedInstanceState);"
+    start = source.find(anchor)
+    end = source.find("\n    }", start)
+    if start < 0 or end < 0:
+        print("ERROR: cannot locate LaunchActivity.onCreate body", file=sys.stderr)
+        sys.exit(1)
+    body = source[start:end]
+    if super_anchor not in body:
+        print("ERROR: LaunchActivity super.onCreate anchor not found", file=sys.stderr)
+        sys.exit(1)
+    body = body.replace(super_anchor, super_anchor + "\n        org.telegram.messenger.TelegaOtaUpdater.check(getApplicationContext());", 1)
+    source = source[:start] + body + source[end:]
     launch.write_text(source, encoding="utf-8")
 
 manifest = Path("TMessagesProj/src/main/AndroidManifest.xml")
