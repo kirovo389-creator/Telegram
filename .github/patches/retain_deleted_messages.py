@@ -50,23 +50,23 @@ helper.write_text(helper_source, encoding="utf-8")
 source = controller.read_text(encoding="utf-8")
 patterns = [
     (
-        r"(\\} else if \\(baseUpdate instanceof TL_update\\.TL_updateDeleteMessages\\) \\{)(.*?)(\\n\\s*\\} else if \\(baseUpdate instanceof TL_update\\.TL_updateDeleteQuickReplyMessages\\))",
-        "                TL_update.TL_updateDeleteMessages telegaDeleteUpdate = (TL_update.TL_updateDeleteMessages) baseUpdate;\\n"
-        "                for (int telegaMessageId : telegaDeleteUpdate.messages) {\\n"
-        "                    TelegaDeletedMessages.mark(currentAccount, 0, telegaMessageId);\\n"
-        "                }\\n"
-        "                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);\\n"
+        r"(\} else if \(baseUpdate instanceof TL_update\.TL_updateDeleteMessages\) \{)(.*?)(\n\s*\} else if \(baseUpdate instanceof TL_update\.TL_updateDeleteQuickReplyMessages\))",
+        "                TL_update.TL_updateDeleteMessages telegaDeleteUpdate = (TL_update.TL_updateDeleteMessages) baseUpdate;\n"
+        "                for (int telegaMessageId : telegaDeleteUpdate.messages) {\n"
+        "                    TelegaDeletedMessages.mark(currentAccount, 0, telegaMessageId);\n"
+        "                }\n"
+        "                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);\n"
         "                // Telega: retain this message and mark it deleted.",
         "regular message deletion"
     ),
     (
-        r"(\\} else if \\(baseUpdate instanceof TL_update\\.TL_updateDeleteChannelMessages\\) \\{)(.*?)(\\n\\s*\\} else if \\(baseUpdate instanceof TL_update\\.TL_updateChannel\\))",
-        "                TL_update.TL_updateDeleteChannelMessages telegaDeleteUpdate = (TL_update.TL_updateDeleteChannelMessages) baseUpdate;\\n"
-        "                long telegaDialogId = -telegaDeleteUpdate.channel_id;\\n"
-        "                for (int telegaMessageId : telegaDeleteUpdate.messages) {\\n"
-        "                    TelegaDeletedMessages.mark(currentAccount, telegaDialogId, telegaMessageId);\\n"
-        "                }\\n"
-        "                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);\\n"
+        r"(\} else if \(baseUpdate instanceof TL_update\.TL_updateDeleteChannelMessages\) \{)(.*?)(\n\s*\} else if \(baseUpdate instanceof TL_update\.TL_updateChannel\))",
+        "                TL_update.TL_updateDeleteChannelMessages telegaDeleteUpdate = (TL_update.TL_updateDeleteChannelMessages) baseUpdate;\n"
+        "                long telegaDialogId = -telegaDeleteUpdate.channel_id;\n"
+        "                for (int telegaMessageId : telegaDeleteUpdate.messages) {\n"
+        "                    TelegaDeletedMessages.mark(currentAccount, telegaDialogId, telegaMessageId);\n"
+        "                }\n"
+        "                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);\n"
         "                // Telega: retain this channel message and mark it deleted.",
         "channel message deletion"
     ),
@@ -79,11 +79,11 @@ for pattern, replacement_body, label in patterns:
     branch_start, original_body, next_branch = match.groups()
     wrapped = (
         branch_start
-        + "\\n                if (TelegaFeatures.isDeletedMessagesEnabled(currentAccount)) {\\n"
+        + "\n                if (TelegaFeatures.isDeletedMessagesEnabled(currentAccount)) {\n"
         + replacement_body
-        + "\\n                } else {"
+        + "\n                } else {"
         + original_body
-        + "\\n                }"
+        + "\n                }"
         + next_branch
     )
     source = source[:match.start()] + wrapped + source[match.end():]
