@@ -238,7 +238,7 @@ if "private static void dismissProgress(ProgressDialog progress)" not in u:
 
     private static String toHex(byte[] bytes) {''', "progress dismissal")
 
-u = require_replace(u, """            } finally {
+u = u.replace("""            } finally {
                 if (connection != null) connection.disconnect();
             }""",
 """            } finally {
@@ -246,7 +246,7 @@ u = require_replace(u, """            } finally {
                 synchronized (TelegaOtaUpdater.class) {
                     checkStarted = false;
                 }
-            }""", "reset OTA in-flight guard")
+            }""", 1)
 u = require_replace(u, '''                if (tag.equals(prefs(app).getString("dismissed_tag", ""))) return;''',
 '''                String deferredTag = prefs(app).getString("deferred_tag", "");
                 long deferredAt = prefs(app).getLong("deferred_at", 0L);
