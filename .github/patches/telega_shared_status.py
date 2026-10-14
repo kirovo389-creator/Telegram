@@ -60,7 +60,7 @@ public final class TelegaLocalStatus {
     public static long getDocumentId(String about) {
         String payload = getPayload(about);
         if (payload == null || !payload.startsWith(PREFIX)) return 0;
-        String[] parts = payload.split("\\\\.", -1);
+        String[] parts = payload.split("\\.", -1);
         if (parts.length != 3) return 0;
         try {
             return Long.parseLong(parts[1], 36);
@@ -72,7 +72,7 @@ public final class TelegaLocalStatus {
     public static int getUntil(String about) {
         String payload = getPayload(about);
         if (payload == null || !payload.startsWith(PREFIX)) return 0;
-        String[] parts = payload.split("\\\\.", -1);
+        String[] parts = payload.split("\\.", -1);
         if (parts.length != 3) return 0;
         try {
             return Integer.parseInt(parts[2], 36);
