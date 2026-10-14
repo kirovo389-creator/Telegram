@@ -9,6 +9,8 @@ public final class TelegaCustomEmoji {
     private static final int TAG_BASE = 0xE0000;
     private static final int TAG_END = 0xE007F;
     private static final String PREFIX = "TGCE1.";
+    // Limit per-message animated custom emoji to avoid GPU/memory spikes on emoji-heavy messages.
+    private static final int MAX_ANIMATED_CUSTOM_EMOJI_PER_MESSAGE = 24;
 
     private TelegaCustomEmoji() {}
 
@@ -68,7 +70,9 @@ public final class TelegaCustomEmoji {
                                 entity.document_id = id;
                                 entity.offset = offset;
                                 entity.length = length;
-                                entities.add(entity);
+                                if (entities.size() < MAX_ANIMATED_CUSTOM_EMOJI_PER_MESSAGE) {
+                                    entities.add(entity);
+                                }
                                 i = cursor;
                                 continue;
                             }
