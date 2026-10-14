@@ -12,6 +12,7 @@ import sys
 root = Path("TMessagesProj/src/main/java/org/telegram")
 helper = root / "messenger" / "TelegaLocalStatus.java"
 profile = root / "ui" / "ProfileActivity.java"
+bio_editor = root / "ui" / "ChangeBioActivity.java"
 
 helper_source = r'''package org.telegram.messenger;
 
@@ -197,4 +198,29 @@ if render_call not in s:
 s = s.replace(render_call, "nameTextView[a].setRightDrawable(getEmojiStatusDrawable(telegaStatusToShow, false, false, a));", 1)
 
 profile.write_text(s, encoding="utf-8")
+
+# Keep the hidden shared-status payload intact when the user edits their bio.
+b = bio_editor.read_text(encoding="utf-8")
+if "import org.telegram.messenger.TelegaLocalStatus;" not in b:
+    marker = "import org.telegram.messenger.UserConfig;"
+    if marker not in b:
+        print("ERROR: ChangeBioActivity import anchor not found", file=sys.stderr)
+        sys.exit(1)
+    b = b.replace(marker, marker + "\\nimport org.telegram.messenger.TelegaLocalStatus;", 1)
+
+old_current = "String currentName = userFull.about;"
+new_current = "String currentName = TelegaLocalStatus.strip(userFull.about);"
+if old_current not in b:
+    print("ERROR: bio editor current-about anchor not found", file=sys.stderr)
+    sys.exit(1)
+b = b.replace(old_current, new_current, 1)
+
+old_new = 'final String newName = firstNameField.getText().toString().replace("\\n", "");'
+new_new = 'final String newName = TelegaLocalStatus.update(firstNameField.getText().toString().replace("\\n", ""), TelegaLocalStatus.getDocumentId(userFull.about), TelegaLocalStatus.getUntil(userFull.about));'
+if old_new not in b:
+    print("ERROR: bio editor save-about anchor not found", file=sys.stderr)
+    sys.exit(1)
+b = b.replace(old_new, new_new, 1)
+bio_editor.write_text(b, encoding="utf-8")
+
 print("Telega shared local emoji status patch applied.")
