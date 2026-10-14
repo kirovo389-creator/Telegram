@@ -83,6 +83,19 @@ jobs:
           python3 .github/patches/telega_features.py
           python3 .github/patches/telega_ota.py
           python3 .github/patches/telega_badge.py
+          set -euo pipefail
+          grep -q 'TelegaOtaUpdater.check(this)' TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+          grep -q 'TelegaOtaUpdater.installPending(this)' TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+          grep -q 'REQUEST_INSTALL_PACKAGES' TMessagesProj/src/main/AndroidManifest.xml
+          grep -q 'class TelegaInstallReceiver' TMessagesProj/src/main/java/org/telegram/messenger/TelegaInstallReceiver.java
+          grep -q 'TelegaFeatures.decodeArticle' TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+          grep -q 'TelegaCustomEmoji.decode' TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+          grep -q 'TELEGA_PREMIUM_STICKER_FALLBACK' TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
+          grep -q 'TelegaDeletedMessages.isDeleted' TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          grep -q 'onPeerAvailable(currentAccount' TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+          grep -q 'TelegaBadgeDrawable' TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+          grep -q 'Настройки Telega' TMessagesProj/src/main/java/org/telegram/ui/TelegaSettingsActivity.java
+          grep -q 'Список: ' TMessagesProj/src/main/java/org/telegram/messenger/TelegaFeatures.java
           python3 - <<'PY'
           import glob
           import xml.etree.ElementTree as ET
