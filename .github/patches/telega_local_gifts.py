@@ -110,7 +110,7 @@ public class TelegaLocalGiftsActivity extends BaseFragment {
             button.setPadding(AndroidUtilities.dp(16), 0, AndroidUtilities.dp(16), 0);
             button.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourceProvider));
             button.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(14), Theme.getColor(Theme.key_dialogBackground, resourceProvider)));
-            button.setOnClickListener(v -> selectRecipient(index));
+            button.setOnClickListener(v -> confirmPurchase(index));
             layout.addView(button, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 54, 0, 0, 0, 10));
         }
 
@@ -123,6 +123,24 @@ public class TelegaLocalGiftsActivity extends BaseFragment {
 
         fragmentView = layout;
         return fragmentView;
+    }
+
+    private void confirmPurchase(int index) {
+        if (getParentActivity() == null) return;
+        if (getBalance(currentAccount) < GIFT_PRICES[index]) {
+            new AlertDialog.Builder(getParentActivity())
+                    .setTitle("Недостаточно Telega Stars")
+                    .setMessage("Для этого подарка нужно " + GIFT_PRICES[index] + " локальных Telega Stars. Реальные деньги не используются.")
+                    .setPositiveButton("Понятно", null)
+                    .show();
+            return;
+        }
+        new AlertDialog.Builder(getParentActivity())
+                .setTitle("Купить " + GIFT_NAMES[index] + "?")
+                .setMessage("Цена: " + GIFT_PRICES[index] + " локальных Telega Stars. После подтверждения выбери получателя. Это не официальные Telegram Stars и не настоящий NFT.")
+                .setNegativeButton("Отмена", null)
+                .setPositiveButton("Купить за " + GIFT_PRICES[index] + " ⭐", (dialog, which) -> selectRecipient(index))
+                .show();
     }
 
     private void selectRecipient(int index) {
