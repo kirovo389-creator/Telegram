@@ -11,7 +11,10 @@ source = path.read_text(encoding="utf-8")
 source = source.replace('abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"',
                         'abiFilters "armeabi-v7a", "arm64-v8a"')
 pattern = re.compile(r"(?ms)^        release \{\n(.*?)(?=^        \})")
-match = pattern.search(source)
+build_types_start = source.find("buildTypes {")
+if build_types_start < 0:
+    sys.exit("ERROR: buildTypes block not found")
+match = pattern.search(source, build_types_start)
 if not match:
     sys.exit("ERROR: release buildType block not found")
 body = match.group(1)
