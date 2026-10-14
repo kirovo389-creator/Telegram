@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: telega-beta-build
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build-release:
