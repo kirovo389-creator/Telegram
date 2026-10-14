@@ -189,7 +189,7 @@ public final class TelegaFeatures {
         int listMarkers = 0;
         for (String line : lines) {
             String item = line.trim();
-            if (item.matches("^(?:[•●▪◦☐☑-]\\\\s+|[0-9]{1,3}[.)]\\\\s+).+")) {
+            if (item.matches("^(?:[•●▪◦☐☑-]\\s+|[0-9]{1,3}[.)]\\s+).+")) {
                 listMarkers++;
             }
         }
