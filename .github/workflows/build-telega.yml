@@ -73,6 +73,14 @@ jobs:
           python3 .github/patches/telega_local_gifts.py
           python3 .github/patches/telega_channel_prompt.py
           python3 .github/patches/telega_branding.py
+          python3 -m py_compile .github/patches/*.py
+          python3 - <<'PY'
+          import glob
+          import xml.etree.ElementTree as ET
+          for path in glob.glob("TMessagesProj/src/main/res/values*/strings.xml"):
+              ET.parse(path)
+          print("Patch Python syntax and Android string XML validation passed.")
+          PY
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
