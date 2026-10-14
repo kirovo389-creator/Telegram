@@ -304,7 +304,7 @@ settings_path.write_text(s, encoding="utf-8")
 # Hook newly discovered bots and joined groups/channels for auto-mute/archive.
 c = controller_path.read_text(encoding="utf-8")
 if "TelegaFeatures.onPeerAvailable(currentAccount, user.id, true);" not in c:
-    pat = r"(public void putUser\s*\(\s*TLRPC\.User\s+(\w+)\s*,\s*boolean\s+\w+\s*\)\s*\{)"
+    pat = r"(public\s+(?:final\s+)?void\s+putUser\s*\(\s*TLRPC\.User\s+(\w+)[^)]*\)\s*\{)"
     m = re.search(pat, c)
     if not m:
         print("ERROR: MessagesController.putUser anchor not found", file=sys.stderr)
@@ -313,7 +313,7 @@ if "TelegaFeatures.onPeerAvailable(currentAccount, user.id, true);" not in c:
     code = f'\n        if ({user} != null && {user}.bot && {user}.id != UserConfig.getInstance(currentAccount).getClientUserId()) TelegaFeatures.onPeerAvailable(currentAccount, {user}.id, true);'
     c = c[:m.end()] + code + c[m.end():]
 if "TelegaFeatures.onPeerAvailable(currentAccount, -chat.id, true);" not in c:
-    pat = r"(public void putChat\s*\(\s*TLRPC\.Chat\s+(\w+)\s*,\s*boolean\s+\w+\s*\)\s*\{)"
+    pat = r"(public\s+(?:final\s+)?void\s+putChat\s*\(\s*TLRPC\.Chat\s+(\w+)[^)]*\)\s*\{)"
     m = re.search(pat, c)
     if not m:
         print("ERROR: MessagesController.putChat anchor not found", file=sys.stderr)
