@@ -26,7 +26,7 @@ u = u.replace('"https://api.github.com/repos/kirovo389-creator/Telegram/releases
 u = u.replace("    private static final long CHECK_INTERVAL = 6L * 60L * 60L * 1000L;\n", "", 1)
 if "private static volatile boolean checkStarted;" not in u:
     u = require_replace(u, "    private static final Handler MAIN = new Handler(Looper.getMainLooper());",
-                        "    private static final Handler MAIN = new Handler(Looper.getMainLooper());\n    private static volatile boolean checkStarted;", "process check guard")
+                        "    private static final Handler MAIN = new Handler(Looper.getMainLooper());\n    private static volatile boolean checkStarted;\n    private static volatile long lastAttemptAt;\n    private static final long MIN_CHECK_INTERVAL = 5L * 60L * 1000L;", "process check guard")
 
 old_gate = """        final Activity activity = (Activity) activityContext;
         final Context app = activity.getApplicationContext();
@@ -37,8 +37,10 @@ new_gate = """        final Activity activity = (Activity) activityContext;
         final Context app = activity.getApplicationContext();
         if (!isEnabled(app)) return;
         synchronized (TelegaOtaUpdater.class) {
-            if (checkStarted) return;
+            long now = System.currentTimeMillis();
+            if (checkStarted || now - lastAttemptAt < MIN_CHECK_INTERVAL) return;
             checkStarted = true;
+            lastAttemptAt = now;
         }
 
         EXECUTOR.execute(() -> {"""
@@ -235,18 +237,45 @@ if "private static void dismissProgress(ProgressDialog progress)" not in u:
     }
 
     private static String toHex(byte[] bytes) {''', "progress dismissal")
+
+u = require_replace(u, """            } finally {
+                if (connection != null) connection.disconnect();
+            }""",
+"""            } finally {
+                if (connection != null) connection.disconnect();
+                synchronized (TelegaOtaUpdater.class) {
+                    checkStarted = false;
+                }
+            }""", "reset OTA in-flight guard")
+u = require_replace(u, '''                if (tag.equals(prefs(app).getString("dismissed_tag", ""))) return;''',
+'''                String deferredTag = prefs(app).getString("deferred_tag", "");
+                long deferredAt = prefs(app).getLong("deferred_at", 0L);
+                if (tag.equals(deferredTag)
+                        && System.currentTimeMillis() - deferredAt < 6L * 60L * 60L * 1000L) return;''',
+"defer previously postponed update")
+u = require_replace(u, '''                    .setNegativeButton("Позже", (dialog, which) ->
+                            prefs(app).edit().putString("dismissed_tag", tag).apply())''',
+'''                    .setNegativeButton("Позже", (dialog, which) ->
+                            prefs(app).edit().putString("deferred_tag", tag)
+                                    .putLong("deferred_at", System.currentTimeMillis()).apply())''',
+"remember Later choice for six hours")
+
 updater.write_text(u, encoding="utf-8")
 
 l = launch.read_text(encoding="utf-8")
 l = re.sub(r"(?m)^[ \t]*org\.telegram\.messenger\.TelegaOtaUpdater\.check\(this\);\n", "", l)
-create_pos = l.find("protected void onCreate(Bundle savedInstanceState)")
-if create_pos < 0:
-    sys.exit("ERROR: LaunchActivity.onCreate not found")
-m = re.search(r"(?m)^        super\.onCreate\(savedInstanceState\);$", l[create_pos:])
-if not m:
-    sys.exit("ERROR: direct onCreate super call not found")
-insert = create_pos + m.end()
-l = l[:insert] + "\n        org.telegram.messenger.TelegaOtaUpdater.check(this);" + l[insert:]
+resume_match = re.search(r"(?m)^    (?:public|protected) void onResume\(\)\s*\{", l)
+if not resume_match:
+    sys.exit("ERROR: LaunchActivity.onResume not found")
+resume_end = l.find("\n    }", resume_match.start())
+if resume_end < 0:
+    sys.exit("ERROR: LaunchActivity.onResume body end not found")
+resume_body = l[resume_match.start():resume_end]
+super_resume = "        super.onResume();"
+if super_resume not in resume_body:
+    sys.exit("ERROR: LaunchActivity super.onResume anchor not found")
+resume_body = resume_body.replace(super_resume, super_resume + "\n        org.telegram.messenger.TelegaOtaUpdater.check(this);", 1)
+l = l[:resume_match.start()] + resume_body + l[resume_end:]
 if l.count("TelegaOtaUpdater.check(this)") != 1:
     sys.exit("ERROR: OTA check must be wired exactly once")
 launch.write_text(l, encoding="utf-8")
