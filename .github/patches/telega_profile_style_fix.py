@@ -65,7 +65,7 @@ if status_import not in p:
     if import_anchor not in p:
         print("ERROR: TelegaLocalStatus import anchor missing", file=sys.stderr)
         sys.exit(1)
-    p = p.replace(import_anchor, import_anchor + "\\n" + status_import, 1)
+    p = p.replace(import_anchor, import_anchor + "\n" + status_import, 1)
 guard = """if (avatarContainer == null || nameTextView == null || getParentActivity() == null) {
             return;
         }"""
@@ -93,7 +93,7 @@ if "int telegaSharedColor = TelegaLocalStatus.getProfileColor(userInfo.about);" 
     if guard not in p:
         print("ERROR: updateProfileData guard anchor missing", file=sys.stderr)
         sys.exit(1)
-    p = p.replace(guard, guard + "\\n\\n        " + shared_style, 1)
+    p = p.replace(guard, guard + "\n\n        " + shared_style, 1)
 profile.write_text(p, encoding="utf-8")
 
 # Remove Stars balance widgets from Telega's Stars purchase/profile UI. This
@@ -103,15 +103,15 @@ stars = stars_path.read_text(encoding="utf-8")
 stars_original = stars
 stars = stars.replace(
     "StarsBalanceView balanceView = new StarsBalanceView(context, currentAccount, resourcesProvider);",
-    "StarsBalanceView balanceView = new StarsBalanceView(context, currentAccount, resourcesProvider);\\n        balanceView.setVisibility(android.view.View.GONE);"
+    "StarsBalanceView balanceView = new StarsBalanceView(context, currentAccount, resourcesProvider);\n        balanceView.setVisibility(android.view.View.GONE);"
 )
 stars = stars.replace(
     "        starBalanceTextView.setTextSize(dp(32));",
-    "        starBalanceTextView.setTextSize(dp(32));\\n        starBalanceTextView.setVisibility(android.view.View.GONE);"
+    "        starBalanceTextView.setTextSize(dp(32));\n        starBalanceTextView.setVisibility(android.view.View.GONE);"
 )
 stars = stars.replace(
     "        starBalanceTitleView.setText(LocaleController.getString(R.string.YourStarsBalance));",
-    "        starBalanceTitleView.setText(LocaleController.getString(R.string.YourStarsBalance));\\n        starBalanceTitleView.setVisibility(android.view.View.GONE);"
+    "        starBalanceTitleView.setText(LocaleController.getString(R.string.YourStarsBalance));\n        starBalanceTitleView.setVisibility(android.view.View.GONE);"
 )
 if stars == stars_original:
     print("ERROR: Stars balance anchors not found", file=sys.stderr)
@@ -125,7 +125,7 @@ emoji_path = Path("TMessagesProj/src/main/java/org/telegram/ui/Components/EmojiV
 emoji = emoji_path.read_text(encoding="utf-8")
 filter_line = "packs = MessagesController.getInstance(currentAccount).filterPremiumStickers(packs);"
 if filter_line in emoji:
-    emoji = emoji.replace(filter_line, "// Telega: show premium sticker packs in the picker.\\n            // " + filter_line, 1)
+    emoji = emoji.replace(filter_line, "// Telega: show premium sticker packs in the picker.\n            // " + filter_line, 1)
 elif "// Telega: show premium sticker packs in the picker." not in emoji:
     print("ERROR: premium sticker filter anchor not found", file=sys.stderr)
     sys.exit(1)
