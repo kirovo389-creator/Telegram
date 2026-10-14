@@ -46,6 +46,8 @@ jobs:
           cp .github/patches/telega_branding.py /tmp/telega_branding.py
           cp .github/patches/telega_features.py /tmp/telega_features.py
           cp .github/patches/telega_ota.py /tmp/telega_ota.py
+          cp .github/patches/telega_proxy.py /tmp/telega_proxy.py
+          cp .github/patches/telega_badge.py /tmp/telega_badge.py
           git fetch --depth=1 https://github.com/DrKLO/Telegram.git master
           git read-tree --reset -u FETCH_HEAD
           mkdir -p .github/workflows .github/patches
@@ -62,6 +64,8 @@ jobs:
           cp /tmp/telega_branding.py .github/patches/telega_branding.py
           cp /tmp/telega_features.py .github/patches/telega_features.py
           cp /tmp/telega_ota.py .github/patches/telega_ota.py
+          cp /tmp/telega_proxy.py .github/patches/telega_proxy.py
+          cp /tmp/telega_badge.py .github/patches/telega_badge.py
           sed -i 's/^APP_PACKAGE=.*/APP_PACKAGE=org.telega.messenger/' gradle.properties
           sed -i "s/^APP_VERSION_CODE=.*/APP_VERSION_CODE=$((7175 + GITHUB_RUN_NUMBER))/" gradle.properties
           sed -i 's/<string name="AppName">Telegram<\/string>/<string name="AppName">Telega<\/string>/' TMessagesProj/src/main/res/values/strings.xml
@@ -80,6 +84,8 @@ jobs:
           python3 .github/patches/telega_branding.py
           python3 .github/patches/telega_features.py
           python3 .github/patches/telega_ota.py
+          python3 .github/patches/telega_proxy.py
+          python3 .github/patches/telega_badge.py
           python3 - <<'PY'
           import glob
           import xml.etree.ElementTree as ET
@@ -94,7 +100,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if ! git diff --cached --quiet; then
-            git commit -m "Import upstream source and configure Telega"
+            git commit -m "Import upstream source and configure Telega [skip ci]"
             git push origin HEAD:main
           fi
 
