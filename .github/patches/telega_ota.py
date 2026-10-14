@@ -364,7 +364,7 @@ if "TelegaOtaUpdater.check(this)" not in source:
 
 # Retry installation when returning from Android's per-app unknown-source settings.
 if "TelegaOtaUpdater.installPending(this)" not in source:
-    method_match = re.search(r"(?m)^    (?:public|protected) void onResume\\(\\)\\s*\\{", source)
+    method_match = re.search(r"(?m)^    (?:public|protected) void onResume\(\)\s*\{", source)
     if not method_match:
         print("ERROR: LaunchActivity.onResume anchor not found", file=sys.stderr)
         sys.exit(1)
@@ -380,11 +380,17 @@ if "TelegaOtaUpdater.installPending(this)" not in source:
 launch.write_text(source, encoding="utf-8")
 
 xml = manifest.read_text(encoding="utf-8")
+permissions = []
 if "android.permission.INTERNET" not in xml:
-    xml = re.sub(r"(<manifest\\b[^>]*>)", r'\\1\n    <uses-permission android:name="android.permission.INTERNET" />', xml, count=1)
+    permissions.append('    <uses-permission android:name="android.permission.INTERNET" />')
 if "android.permission.REQUEST_INSTALL_PACKAGES" not in xml:
-    xml = re.sub(r'(    <uses-permission android:name="android\\.permission\\.INTERNET"\\s*/>)',
-                 r'\\1\n    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />', xml, count=1)
+    permissions.append('    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />')
+if permissions:
+    app_tag = xml.find("<application")
+    if app_tag < 0:
+        print("ERROR: AndroidManifest application tag not found", file=sys.stderr)
+        sys.exit(1)
+    xml = xml[:app_tag] + "\\n".join(permissions) + "\\n    " + xml[app_tag:]
 if "TelegaInstallReceiver" not in xml:
     app_close = xml.find("</application>")
     if app_close < 0:
