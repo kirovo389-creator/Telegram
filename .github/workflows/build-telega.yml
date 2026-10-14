@@ -41,6 +41,7 @@ jobs:
           cp /tmp/build-telega.yml .github/workflows/build-telega.yml
           cp /tmp/retain_deleted_messages.py .github/patches/retain_deleted_messages.py
           sed -i 's/^APP_PACKAGE=.*/APP_PACKAGE=org.telega.messenger/' gradle.properties
+          sed -i "s/^APP_VERSION_CODE=.*/APP_VERSION_CODE=$((7175 + GITHUB_RUN_NUMBER))/" gradle.properties
           sed -i 's/<string name="AppName">Telegram<\/string>/<string name="AppName">Telega<\/string>/' TMessagesProj/src/main/res/values/strings.xml
           sed -i 's/<string name="AppNameBeta">Telegram Beta<\/string>/<string name="AppNameBeta">Telega Beta<\/string>/' TMessagesProj/src/main/res/values/strings.xml
           if [ -f TMessagesProj_App/google-services.json ]; then
