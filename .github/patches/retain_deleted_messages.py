@@ -84,9 +84,9 @@ s = cell.read_text(encoding="utf-8")
 if "TelegaDeletedMessages.isDeleted" not in s:
     method_start = s.find("setMessageObject(")
     search_start = method_start if method_start >= 0 else 0
-    assignment_match = re.search(r"(?:this\\.)?currentMessageObject\\s*=\\s*[^;]+;", s[search_start:])
+    assignment_match = re.search(r"(?:this\.)?currentMessageObject\s*=\s*[^;]+;", s[search_start:])
     if assignment_match is None:
-        assignment_match = re.search(r"(?:this\\.)?currentMessageObject\\s*=\\s*[^;]+;", s)
+        assignment_match = re.search(r"(?:this\.)?currentMessageObject\s*=\s*[^;]+;", s)
         search_start = 0
     if assignment_match is None:
         print("ERROR: ChatMessageCell message binding anchor not found; no currentMessageObject assignment", file=sys.stderr)
