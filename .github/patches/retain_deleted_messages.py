@@ -97,8 +97,8 @@ if "TelegaDeletedMessages.isDeleted" not in s:
         }
 """
     dispatch_match = re.search(
-        r"(?:@Override\\s*)?protected void dispatchDraw\\(android\\.graphics\\.Canvas canvas\\)\\s*\\{|"
-        r"(?:@Override\\s*)?protected void dispatchDraw\\(Canvas canvas\\)\\s*\\{",
+        r"(?:@Override\s*)?protected void dispatchDraw\(android\.graphics\.Canvas canvas\)\s*\{|"
+        r"(?:@Override\s*)?protected void dispatchDraw\(Canvas canvas\)\s*\{",
         s
     )
     if dispatch_match:
