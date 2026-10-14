@@ -42,6 +42,7 @@ jobs:
           cp .github/patches/telega_profile_style_fix.py /tmp/telega_profile_style_fix.py
           cp .github/patches/telega_local_gifts.py /tmp/telega_local_gifts.py
           cp .github/patches/telega_channel_prompt.py /tmp/telega_channel_prompt.py
+          cp .github/patches/telega_branding.py /tmp/telega_branding.py
           git fetch --depth=1 https://github.com/DrKLO/Telegram.git master
           git read-tree --reset -u FETCH_HEAD
           mkdir -p .github/workflows .github/patches
@@ -55,6 +56,7 @@ jobs:
           cp /tmp/telega_profile_style_fix.py .github/patches/telega_profile_style_fix.py
           cp /tmp/telega_local_gifts.py .github/patches/telega_local_gifts.py
           cp /tmp/telega_channel_prompt.py .github/patches/telega_channel_prompt.py
+          cp /tmp/telega_branding.py .github/patches/telega_branding.py
           sed -i 's/^APP_PACKAGE=.*/APP_PACKAGE=org.telega.messenger/' gradle.properties
           sed -i "s/^APP_VERSION_CODE=.*/APP_VERSION_CODE=$((7175 + GITHUB_RUN_NUMBER))/" gradle.properties
           sed -i 's/<string name="AppName">Telegram<\/string>/<string name="AppName">Telega<\/string>/' TMessagesProj/src/main/res/values/strings.xml
@@ -70,6 +72,7 @@ jobs:
           python3 .github/patches/telega_profile_style_fix.py
           python3 .github/patches/telega_local_gifts.py
           python3 .github/patches/telega_channel_prompt.py
+          python3 .github/patches/telega_branding.py
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
