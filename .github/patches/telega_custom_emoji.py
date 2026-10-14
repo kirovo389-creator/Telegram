@@ -26,6 +26,8 @@ public final class TelegaCustomEmoji {
     private static final int TAG_BASE = 0xE0000;
     private static final int TAG_END = 0xE007F;
     private static final String PREFIX = "TGCE1.";
+    // Limit per-message animated custom emoji to avoid GPU/memory spikes on emoji-heavy messages.
+    private static final int MAX_ANIMATED_CUSTOM_EMOJI_PER_MESSAGE = 24;
 
     private TelegaCustomEmoji() {}
 
@@ -85,7 +87,9 @@ public final class TelegaCustomEmoji {
                                 entity.document_id = id;
                                 entity.offset = offset;
                                 entity.length = length;
-                                entities.add(entity);
+                                if (entities.size() < MAX_ANIMATED_CUSTOM_EMOJI_PER_MESSAGE) {
+                                    entities.add(entity);
+                                }
                                 i = cursor;
                                 continue;
                             }
@@ -166,6 +170,8 @@ replacement = '''        if (messageText == null) {
             TelegaCustomEmoji.Decoded telegaDecoded = TelegaCustomEmoji.decode(messageText.toString());
             if (!telegaDecoded.entities.isEmpty()) {
                 messageText = telegaDecoded.text;
+                // Persist the cleaned fallback text and decoded entity offsets for local chat-list previews.
+                messageOwner.message = telegaDecoded.text;
                 if (messageOwner.entities == null) {
                     messageOwner.entities = new ArrayList<>();
                 }
