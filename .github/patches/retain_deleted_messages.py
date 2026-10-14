@@ -82,15 +82,17 @@ controller.write_text(source, encoding="utf-8")
 
 s = cell.read_text(encoding="utf-8")
 if "TelegaDeletedMessages.isDeleted" not in s:
-    method_start = s.find("public void setMessageObject(")
-    if method_start < 0:
-        method_start = s.find("void setMessageObject(")
-    assignment = "currentMessageObject = messageObject;"
-    assignment_pos = s.find(assignment, method_start)
-    if method_start < 0 or assignment_pos < 0:
-        print("ERROR: ChatMessageCell message binding anchor not found", file=sys.stderr)
+    method_start = s.find("setMessageObject(")
+    search_start = method_start if method_start >= 0 else 0
+    assignment_match = re.search(r"(?:this\\.)?currentMessageObject\\s*=\\s*[^;]+;", s[search_start:])
+    if assignment_match is None:
+        assignment_match = re.search(r"(?:this\\.)?currentMessageObject\\s*=\\s*[^;]+;", s)
+        search_start = 0
+    if assignment_match is None:
+        print("ERROR: ChatMessageCell message binding anchor not found; no currentMessageObject assignment", file=sys.stderr)
         sys.exit(1)
-    after = assignment_pos + len(assignment)
+    assignment_pos = search_start + assignment_match.start()
+    after = search_start + assignment_match.end()
     visual_check = """
         boolean telegaDeletedMessage = currentMessageObject != null
                 && currentMessageObject.messageOwner != null
