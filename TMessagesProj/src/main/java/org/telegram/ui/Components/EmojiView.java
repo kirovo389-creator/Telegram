@@ -5679,7 +5679,8 @@ public class EmojiView extends FrameLayout implements
                 }
             }
         }
-        packs = MessagesController.getInstance(currentAccount).filterPremiumStickers(packs);
+        // Telega: show premium sticker packs in the picker.
+            // packs = MessagesController.getInstance(currentAccount).filterPremiumStickers(packs);
         for (int a = 0; a < packs.size(); a++) {
             TLRPC.TL_messages_stickerSet pack = packs.get(a);
             if (pack.set != null && pack.set.archived || pack.documents == null || pack.documents.isEmpty()) {

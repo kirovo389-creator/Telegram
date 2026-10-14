@@ -11295,6 +11295,27 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         if (avatarContainer == null || nameTextView == null || getParentActivity() == null) {
             return;
         }
+
+        if (userInfo != null) {
+            TLRPC.User telegaViewedUser = getMessagesController().getUser(userId);
+            if (telegaViewedUser != null) {
+                int telegaSharedColor = TelegaLocalStatus.getProfileColor(userInfo.about);
+                long telegaSharedEmoji = TelegaLocalStatus.getProfileEmoji(userInfo.about);
+                if (telegaSharedColor >= 0 || telegaSharedEmoji > 0) {
+                    if (telegaViewedUser.profile_color == null) {
+                        telegaViewedUser.profile_color = new TLRPC.TL_peerColor();
+                    }
+                    if (telegaSharedColor >= 0) {
+                        telegaViewedUser.profile_color.flags |= 1;
+                        telegaViewedUser.profile_color.color = telegaSharedColor;
+                    }
+                    if (telegaSharedEmoji > 0) {
+                        telegaViewedUser.profile_color.flags |= 2;
+                        telegaViewedUser.profile_color.background_emoji_id = telegaSharedEmoji;
+                    }
+                }
+            }
+        }
         String onlineTextOverride;
         int currentConnectionState = getConnectionsManager().getConnectionState();
         if (currentConnectionState == ConnectionsManager.ConnectionStateWaitingForNetwork) {

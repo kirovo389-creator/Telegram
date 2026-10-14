@@ -321,6 +321,7 @@ public class StarsIntroActivity extends GradientHeaderActivity implements Notifi
         starBalanceTextView = new AnimatedTextView(getContext(), false, true, false);
         starBalanceTextView.setTypeface(AndroidUtilities.bold());
         starBalanceTextView.setTextSize(dp(32));
+        starBalanceTextView.setVisibility(android.view.View.GONE);
         starBalanceTextView.setGravity(Gravity.CENTER);
         starBalanceTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourceProvider));
 
@@ -337,6 +338,7 @@ public class StarsIntroActivity extends GradientHeaderActivity implements Notifi
         starBalanceTitleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
         starBalanceTitleView.setGravity(Gravity.CENTER);
         starBalanceTitleView.setText(LocaleController.getString(R.string.YourStarsBalance));
+        starBalanceTitleView.setVisibility(android.view.View.GONE);
         starBalanceTitleView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2, resourceProvider));
         balanceLayout.addView(starBalanceTitleView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER, 24, 0, 24, 0));
         TextView telegaLocalStarsView = new TextView(getContext());
@@ -2183,6 +2185,7 @@ public class StarsIntroActivity extends GradientHeaderActivity implements Notifi
         }
 
         StarsBalanceView balanceView = new StarsBalanceView(context, currentAccount, resourcesProvider);
+        balanceView.setVisibility(android.view.View.GONE);
         ScaleStateListAnimator.apply(balanceView);
         balanceView.setOnClickListener(v -> {
             if (balanceView.lastBalance <= 0) return;
@@ -2391,6 +2394,7 @@ public class StarsIntroActivity extends GradientHeaderActivity implements Notifi
         starFgView.setTranslationY(dp(26));
 
         StarsBalanceView balanceView = new StarsBalanceView(context, currentAccount, resourcesProvider);
+        balanceView.setVisibility(android.view.View.GONE);
         ScaleStateListAnimator.apply(balanceView);
         balanceView.setOnClickListener(v -> {
             if (balanceView.lastBalance <= 0) return;
