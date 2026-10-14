@@ -84,8 +84,8 @@ public final class TelegaAutoProxy {
         Context app = context.getApplicationContext();
         future = EXECUTOR.scheduleWithFixedDelay(() -> {
             if (!isEnabled()) return;
-            scan(app);
             checkStoredProxies(app);
+            scan(app);
         }, 0, 30, TimeUnit.MINUTES);
     }
 
