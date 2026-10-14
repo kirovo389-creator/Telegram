@@ -446,7 +446,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         flagSecureReason.attach();
 
         super.onCreate(savedInstanceState);
-        org.telegram.messenger.TelegaOtaUpdater.check(this);
         if (Build.VERSION.SDK_INT >= 24) {
             AndroidUtilities.isInMultiwindow = isInMultiWindowMode();
         }
@@ -7031,6 +7030,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     @Override
     protected void onResume() {
         super.onResume();
+        org.telegram.messenger.TelegaOtaUpdater.check(this);
         org.telegram.messenger.TelegaOtaUpdater.installPending(this);
         isResumed = true;
         pipActivityHandler.onResume();

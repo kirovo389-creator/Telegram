@@ -46,6 +46,8 @@ public final class TelegaOtaUpdater {
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static volatile boolean checkStarted;
+    private static volatile long lastAttemptAt;
+    private static final long MIN_CHECK_INTERVAL = 5L * 60L * 1000L;
 
     private TelegaOtaUpdater() {}
 
@@ -93,8 +95,10 @@ public final class TelegaOtaUpdater {
         final Context app = activity.getApplicationContext();
         if (!isEnabled(app)) return;
         synchronized (TelegaOtaUpdater.class) {
-            if (checkStarted) return;
+            long now = System.currentTimeMillis();
+            if (checkStarted || now - lastAttemptAt < MIN_CHECK_INTERVAL) return;
             checkStarted = true;
+            lastAttemptAt = now;
         }
 
         EXECUTOR.execute(() -> {
@@ -163,7 +167,10 @@ public final class TelegaOtaUpdater {
                 newest.put("_telega_version_code", candidateVersionCode);
                 newest.put("_telega_size", apkAsset.optLong("size", -1));
                 newest.put("_telega_digest", apkAsset.optString("digest", ""));
-                if (tag.equals(prefs(app).getString("dismissed_tag", ""))) return;
+                String deferredTag = prefs(app).getString("deferred_tag", "");
+                long deferredAt = prefs(app).getLong("deferred_at", 0L);
+                if (tag.equals(deferredTag)
+                        && System.currentTimeMillis() - deferredAt < 6L * 60L * 60L * 1000L) return;
                 JSONObject found = newest;
                 MAIN.post(() -> {
                     if (!activity.isFinishing() && !activity.isDestroyed()) showUpdateDialog(activity, app, found);
@@ -172,6 +179,9 @@ public final class TelegaOtaUpdater {
                 Log.d(TAG, "GitHub update check failed; current app remains usable", error);
             } finally {
                 if (connection != null) connection.disconnect();
+                synchronized (TelegaOtaUpdater.class) {
+                    checkStarted = false;
+                }
             }
         });
     }
@@ -196,7 +206,8 @@ public final class TelegaOtaUpdater {
                     .setTitle("Обновление Telega")
                     .setMessage(message)
                     .setNegativeButton("Позже", (dialog, which) ->
-                            prefs(app).edit().putString("dismissed_tag", tag).apply())
+                            prefs(app).edit().putString("deferred_tag", tag)
+                                    .putLong("deferred_at", System.currentTimeMillis()).apply())
                     .setNeutralButton("Релиз", (dialog, which) ->
                             openReleasePage(activity, release.optString("html_url",
                                     "https://github.com/kirovo389-creator/Telegram/releases")))
