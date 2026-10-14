@@ -37,7 +37,7 @@ jobs:
             release_tag="telega-build-${GITHUB_RUN_NUMBER}"
             app_version_name="$release_tag"
           fi
-          base_version_code=$((7175 + GITHUB_RUN_NUMBER))
+          base_version_code=$((7274 + GITHUB_RUN_NUMBER))
           final_version_code=$((base_version_code * 10 + 9))
           {
             echo "TELEGA_RELEASE_TAG=$release_tag"
