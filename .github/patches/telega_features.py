@@ -46,6 +46,7 @@ public final class TelegaFeatures {
     private static final int TAG_BASE = 0xE0000;
     private static final int TAG_END = 0xE007F;
     private static final String ARTICLE_TAG = "TELEGA_ARTICLE_V1";
+    private static final String LIST_TAG = "TELEGA_LIST_V1";
 
     private TelegaFeatures() {}
 
@@ -183,10 +184,21 @@ public final class TelegaFeatures {
     /** Fallback transport: ordinary text plus an invisible marker; Telega renders it as an article. */
     public static String encodeArticle(String text) {
         String clean = text == null ? "" : text;
-        return "Статья: " + clean + hiddenTag(ARTICLE_TAG);
+        boolean listContent = false;
+        String[] lines = clean.split("\\r?\\n");
+        int listMarkers = 0;
+        for (String line : lines) {
+            String item = line.trim();
+            if (item.matches("^(?:[•●▪◦☐☑-]\\\\s+|[0-9]{1,3}[.)]\\\\s+).+")) {
+                listMarkers++;
+            }
+        }
+        listContent = listMarkers >= 2 || clean.contains("☐") || clean.contains("☑");
+        String prefix = listContent ? "Список: " : "Статья: ";
+        return prefix + clean + hiddenTag(listContent ? LIST_TAG : ARTICLE_TAG);
     }
 
-    /** Returns cleaned article text when the Telega marker is present; otherwise null. */
+    /** Removes Telega article/list metadata while preserving the ordinary fallback text. */
     public static String decodeArticle(String text) {
         if (text == null || text.isEmpty() || text.codePointBefore(text.length()) != TAG_END) return null;
         int cursor = text.length() - Character.charCount(TAG_END);
@@ -203,7 +215,8 @@ public final class TelegaFeatures {
             decoded.append((char) (cp - TAG_BASE));
             i += Character.charCount(cp);
         }
-        if (!ARTICLE_TAG.equals(decoded.toString())) return null;
+        String marker = decoded.toString();
+        if (!ARTICLE_TAG.equals(marker) && !LIST_TAG.equals(marker)) return null;
         return text.substring(0, start);
     }
 }
