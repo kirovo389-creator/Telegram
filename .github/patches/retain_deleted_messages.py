@@ -56,6 +56,7 @@ patterns = [
         "                for (int telegaMessageId : telegaDeleteUpdate.messages) {\n"
         "                    TelegaDeletedMessages.mark(currentAccount, 0, telegaMessageId);\n"
         "                }\n"
+        "                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);\n"
         "                // Telega: intentionally retain the cached message and render it as deleted.\n"
         "            } else if (baseUpdate instanceof TL_update.TL_updateDeleteQuickReplyMessages)",
         "regular message deletion"
@@ -68,6 +69,7 @@ patterns = [
         "                for (int telegaMessageId : telegaDeleteUpdate.messages) {\n"
         "                    TelegaDeletedMessages.mark(currentAccount, telegaDialogId, telegaMessageId);\n"
         "                }\n"
+        "                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);\n"
         "                // Telega: intentionally retain the cached channel message and render it as deleted.\n"
         "            } else if (baseUpdate instanceof TL_update.TL_updateChannel)",
         "channel message deletion"
