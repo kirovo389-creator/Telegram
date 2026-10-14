@@ -12,12 +12,12 @@ p = profile.read_text(encoding="utf-8")
 bad_start = r"\n            if (userInfo != null) {"
 if bad_start in p:
     start = p.index(bad_start)
-    end_marker = "\n            }\n\n        if (avatarContainer == null"
-    end = p.find(end_marker, start)
+    end = p.find("if (avatarContainer == null", start)
     if end < 0:
         print("ERROR: malformed profile-style block end not found", file=sys.stderr)
         sys.exit(1)
-    p = p[:start] + p[end + len("\n            }\n"):]
+    p = p[:start] + "\\n        " + p[end:]
+
 
 # Apply style only where the local variable user exists.
 anchor = """if (userId != 0) {
