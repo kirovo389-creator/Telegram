@@ -43,6 +43,7 @@ jobs:
           cp .github/patches/telega_local_gifts.py /tmp/telega_local_gifts.py
           cp .github/patches/telega_channel_prompt.py /tmp/telega_channel_prompt.py
           cp .github/patches/telega_branding.py /tmp/telega_branding.py
+          cp .github/patches/telega_features.py /tmp/telega_features.py
           git fetch --depth=1 https://github.com/DrKLO/Telegram.git master
           git read-tree --reset -u FETCH_HEAD
           mkdir -p .github/workflows .github/patches
@@ -57,6 +58,7 @@ jobs:
           cp /tmp/telega_local_gifts.py .github/patches/telega_local_gifts.py
           cp /tmp/telega_channel_prompt.py .github/patches/telega_channel_prompt.py
           cp /tmp/telega_branding.py .github/patches/telega_branding.py
+          cp /tmp/telega_features.py .github/patches/telega_features.py
           sed -i 's/^APP_PACKAGE=.*/APP_PACKAGE=org.telega.messenger/' gradle.properties
           sed -i "s/^APP_VERSION_CODE=.*/APP_VERSION_CODE=$((7175 + GITHUB_RUN_NUMBER))/" gradle.properties
           sed -i 's/<string name="AppName">Telegram<\/string>/<string name="AppName">Telega<\/string>/' TMessagesProj/src/main/res/values/strings.xml
@@ -73,10 +75,13 @@ jobs:
           python3 .github/patches/telega_local_gifts.py
           python3 .github/patches/telega_channel_prompt.py
           python3 .github/patches/telega_branding.py
-          python3 -m py_compile .github/patches/*.py
+          python3 .github/patches/telega_features.py
           python3 - <<'PY'
           import glob
           import xml.etree.ElementTree as ET
+          for path in glob.glob(".github/patches/*.py"):
+              with open(path, encoding="utf-8") as source:
+                  compile(source.read(), path, "exec")
           for path in glob.glob("TMessagesProj/src/main/res/values*/strings.xml"):
               ET.parse(path)
           print("Patch Python syntax and Android string XML validation passed.")
