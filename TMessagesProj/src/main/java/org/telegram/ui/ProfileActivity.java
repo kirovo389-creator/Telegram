@@ -11292,22 +11292,6 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private MessagesController.PeerColor peerColor;
 
     private void updateProfileData(boolean reload) {
-        if (user != null && userInfo != null) {
-            int telegaProfileColor = TelegaLocalStatus.getProfileColor(userInfo.about);
-            long telegaBackgroundEmoji = TelegaLocalStatus.getProfileEmoji(userInfo.about);
-            if (telegaProfileColor >= 0 || telegaBackgroundEmoji != 0) {
-                if (user.profile_color == null) user.profile_color = new TLRPC.TL_peerColor();
-                if (telegaProfileColor >= 0) {
-                    user.profile_color.flags |= 1;
-                    user.profile_color.color = telegaProfileColor;
-                }
-                if (telegaBackgroundEmoji != 0) {
-                    user.profile_color.flags |= 2;
-                    user.profile_color.background_emoji_id = telegaBackgroundEmoji;
-                }
-            }
-        }
-
         if (avatarContainer == null || nameTextView == null || getParentActivity() == null) {
             return;
         }
@@ -11350,6 +11334,20 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             TLRPC.User user = getMessagesController().getUser(userId);
             if (user == null) {
                 return;
+            }\n            if (userInfo != null) {
+                int telegaProfileColor = TelegaLocalStatus.getProfileColor(userInfo.about);
+                long telegaBackgroundEmoji = TelegaLocalStatus.getProfileEmoji(userInfo.about);
+                if (telegaProfileColor >= 0 || telegaBackgroundEmoji != 0) {
+                    if (user.profile_color == null) user.profile_color = new TLRPC.TL_peerColor();
+                    if (telegaProfileColor >= 0) {
+                        user.profile_color.flags |= 1;
+                        user.profile_color.color = telegaProfileColor;
+                    }
+                    if (telegaBackgroundEmoji != 0) {
+                        user.profile_color.flags |= 2;
+                        user.profile_color.background_emoji_id = telegaBackgroundEmoji;
+                    }
+                }
             }
             shortStatus = user.photo != null && user.photo.personal;
             TLRPC.FileLocation photoBig = null;
