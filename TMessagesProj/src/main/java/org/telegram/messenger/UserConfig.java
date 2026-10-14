@@ -572,11 +572,10 @@ public class UserConfig extends BaseController {
     }
 
     public boolean isPremium() {
-        TLRPC.User user = currentUser;
-        if (user == null) {
-            return false;
-        }
-        return user.premium;
+        // Telega Local Premium: enabled by default for every signed-in Telega user.
+        // This unlocks client-side UI only; Telegram servers remain authoritative
+        // for API operations that require an actual Premium subscription.
+        return currentUser != null;
     }
 
     public Long getEmojiStatus() {
