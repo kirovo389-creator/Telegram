@@ -11296,24 +11296,16 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             return;
         }
 
-        if (nameTextView != null) {
+        if (nameTextView != null && nameTextView.length > 0 && nameTextView[0] != null) {
             boolean telegaOwnProfile = userId == UserConfig.getInstance(currentAccount).getClientUserId();
-            android.graphics.drawable.Drawable telegaRight = nameTextView.getCompoundDrawablesRelative()[2];
+            org.telegram.ui.ActionBar.SimpleTextView telegaNameView = nameTextView[0];
+            android.graphics.drawable.Drawable telegaRight = telegaNameView.getRightDrawable();
             if (telegaOwnProfile && org.telegram.messenger.TelegaFeatures.isBadgeEnabled()) {
                 if (!(telegaRight instanceof org.telegram.ui.Components.TelegaBadgeDrawable)) {
-                    nameTextView.setCompoundDrawablePadding(AndroidUtilities.dp(3));
-                    nameTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                            nameTextView.getCompoundDrawablesRelative()[0],
-                            nameTextView.getCompoundDrawablesRelative()[1],
-                            new org.telegram.ui.Components.TelegaBadgeDrawable(),
-                            nameTextView.getCompoundDrawablesRelative()[3]);
+                    telegaNameView.setRightDrawable(new org.telegram.ui.Components.TelegaBadgeDrawable());
                 }
             } else if (telegaRight instanceof org.telegram.ui.Components.TelegaBadgeDrawable) {
-                nameTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                        nameTextView.getCompoundDrawablesRelative()[0],
-                        nameTextView.getCompoundDrawablesRelative()[1],
-                        null,
-                        nameTextView.getCompoundDrawablesRelative()[3]);
+                telegaNameView.setRightDrawable((android.graphics.drawable.Drawable) null);
             }
         }
 
