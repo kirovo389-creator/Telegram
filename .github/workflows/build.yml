@@ -1,0 +1,230 @@
+name: Telega Beta Android build
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: telega-beta-build
+  cancel-in-progress: false
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: \${{ secrets.GITHUB_TOKEN }}
+
+      - name: Calculate release version
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "\${GITHUB_REF_TYPE:-branch}" == "tag" ]]; then
+            release_tag="$GITHUB_REF_NAME"
+            app_version_name="$GITHUB_REF_NAME"
+          else
+            release_tag="telega-build-\${GITHUB_RUN_NUMBER}"
+            app_version_name="$release_tag"
+          fi
+          base_version_code=$((7175 + GITHUB_RUN_NUMBER))
+          final_version_code=$((base_version_code * 10 + 9))
+          {
+            echo "TELEGA_RELEASE_TAG=$release_tag"
+            echo "TELEGA_VERSION_NAME=$app_version_name"
+            echo "TELEGA_BASE_VERSION_CODE=$base_version_code"
+            echo "TELEGA_FINAL_VERSION_CODE=$final_version_code"
+          } >> "$GITHUB_ENV"
+          echo "Release tag: $release_tag"
+          echo "Version name: $app_version_name"
+          echo "Expected APK version code: $final_version_code"
+
+      - name: Sync Telegram Android upstream and apply Telega patches
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/telega-preserve
+          git fetch origin main
+          git reset --hard origin/main
+          cp -a .github /tmp/telega-preserve/github
+          cp README.md /tmp/telega-preserve/README.md
+          git fetch --depth=1 https://github.com/DrKLO/Telegram.git master
+          git read-tree --reset -u FETCH_HEAD
+          rm -rf .github
+          cp -a /tmp/telega-preserve/github .github
+          cp /tmp/telega-preserve/README.md README.md
+          mkdir -p .github/patches .github/workflows
+          sed -i "s/^APP_PACKAGE=.*/APP_PACKAGE=org.telega.messenger/" gradle.properties
+          sed -i "s/^APP_VERSION_CODE=.*/APP_VERSION_CODE=\${TELEGA_BASE_VERSION_CODE}/" gradle.properties
+          sed -i "s/^APP_VERSION_NAME=.*/APP_VERSION_NAME=\${TELEGA_VERSION_NAME}/" gradle.properties
+
+          patches=(
+            .github/patches/retain_deleted_messages.py
+            .github/patches/telega_local_premium.py
+            .github/patches/telega_shared_status.py
+            .github/patches/telega_custom_emoji.py
+            .github/patches/telega_profile_style.py
+            .github/patches/telega_profile_style_fix.py
+            .github/patches/telega_local_gifts.py
+            .github/patches/telega_channel_prompt.py
+            .github/patches/telega_branding.py
+            .github/patches/telega_features.py
+            .github/patches/telega_ota.py
+            .github/patches/telega_badge.py
+            .github/patches/telega_advanced_fixes.py
+            .github/patches/telega_ota_hardening.py
+            .github/patches/telega_build_config.py
+          )
+          for patch in "\${patches[@]}"; do
+            test -f "$patch"
+            python3 "$patch"
+          done
+
+          python3 - <<'PY'
+          import ast
+          import glob
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          for path in glob.glob(".github/patches/*.py"):
+              ast.parse(Path(path).read_text(encoding="utf-8"), filename=path)
+          for path in glob.glob("TMessagesProj/src/main/res/values*/strings.xml"):
+              ET.parse(path)
+          ET.parse("TMessagesProj/src/main/AndroidManifest.xml")
+          launch = Path("TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java").read_text(encoding="utf-8")
+          ota = Path("TMessagesProj/src/main/java/org/telegram/messenger/TelegaOtaUpdater.java").read_text(encoding="utf-8")
+          settings = Path("TMessagesProj/src/main/java/org/telegram/ui/TelegaSettingsActivity.java").read_text(encoding="utf-8")
+          app_gradle = Path("TMessagesProj_App/build.gradle").read_text(encoding="utf-8")
+          assert launch.count("TelegaOtaUpdater.check(this)") == 1, "OTA check must be wired exactly once"
+          assert "releases/latest" in ota, "OTA must query the latest stable GitHub release"
+          assert "TelegaOtaUpdater.isEnabled(context)" in settings, "OTA toggle is missing"
+          assert 'abiFilters "armeabi-v7a", "arm64-v8a"' in app_gradle, "release ABI filters were not narrowed"
+          print("Patch Python syntax, Android XML, OTA wiring, settings toggle and release ABI configuration validated.")
+          PY
+
+          sed -i 's/<string name="AppName">Telegram<\/string>/<string name="AppName">Telega<\/string>/' TMessagesProj/src/main/res/values/strings.xml
+          sed -i 's/<string name="AppNameBeta">Telegram Beta<\/string>/<string name="AppNameBeta">Telega Beta<\/string>/' TMessagesProj/src/main/res/values/strings.xml
+          if [ -f TMessagesProj_App/google-services.json ]; then
+            sed -i 's/org\.telegram\.messenger/org.telega.messenger/g' TMessagesProj_App/google-services.json
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Import upstream source and configure Telega [skip ci]"
+            git push origin HEAD:main
+          fi
+
+      - name: Configure release signing
+        shell: bash
+        env:
+          KEYSTORE_BASE64: \${{ secrets.KEYSTORE_BASE64 || secrets.TELEGA_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: \${{ secrets.KEYSTORE_PASSWORD || secrets.TELEGA_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: \${{ secrets.KEY_ALIAS || secrets.TELEGA_KEY_ALIAS }}
+          KEY_PASSWORD: \${{ secrets.KEY_PASSWORD || secrets.TELEGA_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -n "\${KEYSTORE_BASE64:-}" ]; then
+            test -n "\${KEYSTORE_PASSWORD:-}"
+            test -n "\${KEY_ALIAS:-}"
+            test -n "\${KEY_PASSWORD:-}"
+            echo "$KEYSTORE_BASE64" | base64 --decode > TMessagesProj/config/release.keystore
+            echo "Stable release keystore loaded from Actions secrets."
+          else
+            echo "::warning::No stable signing secrets configured; using the repository's configured Gradle signing key. OTA update compatibility depends on that key remaining unchanged."
+          fi
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: "platform-tools"
+
+      - name: Install Android SDK and NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
+
+      - name: Initialize source submodules
+        run: git submodule update --init --recursive --depth=1
+
+      - name: Build optimized Telega Beta APK
+        shell: bash
+        env:
+          KEYSTORE_BASE64: \${{ secrets.KEYSTORE_BASE64 || secrets.TELEGA_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: \${{ secrets.KEYSTORE_PASSWORD || secrets.TELEGA_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: \${{ secrets.KEY_ALIAS || secrets.TELEGA_KEY_ALIAS }}
+          KEY_PASSWORD: \${{ secrets.KEY_PASSWORD || secrets.TELEGA_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          if [ -n "\${KEYSTORE_BASE64:-}" ]; then
+            ./gradlew :TMessagesProj_App:assembleAfatRelease --stacktrace \
+              -PRELEASE_STORE_PASSWORD="$KEYSTORE_PASSWORD" \
+              -PRELEASE_KEY_ALIAS="$KEY_ALIAS" \
+              -PRELEASE_KEY_PASSWORD="$KEY_PASSWORD"
+          else
+            ./gradlew :TMessagesProj_App:assembleAfatRelease --stacktrace
+          fi
+
+      - name: Prepare APK and release notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="$(find TMessagesProj_App/build/outputs -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          mkdir -p release-assets
+          cp "$APK" release-assets/Telega-Beta.apk
+          cat > release-notes.md <<EOF
+          Automated Telega Beta build from Telegram Android upstream.
+
+          - Version: $TELEGA_VERSION_NAME
+          - GitHub Actions run: $GITHUB_RUN_NUMBER
+          - Supported native ABIs: arm64-v8a, armeabi-v7a
+          - Build configuration: release, R8 minification and resource shrinking enabled
+
+          Telega-Version-Code: $TELEGA_FINAL_VERSION_CODE
+          EOF
+          echo "APK prepared: release-assets/Telega-Beta.apk"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TELEGA_RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$TELEGA_RELEASE_TAG" release-assets/*.apk --clobber
+            gh release edit "$TELEGA_RELEASE_TAG" --title "Telega Beta $TELEGA_VERSION_NAME" --notes-file release-notes.md
+          else
+            gh release create "$TELEGA_RELEASE_TAG" release-assets/*.apk \
+              --title "Telega Beta $TELEGA_VERSION_NAME" \
+              --notes-file release-notes.md
+          fi
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Telega-Beta-apk
+          path: release-assets/*.apk
+          if-no-files-found: error
+          retention-days: 30
