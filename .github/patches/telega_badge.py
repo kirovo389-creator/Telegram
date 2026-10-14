@@ -30,11 +30,24 @@ new = old + '''
             } catch (Throwable ignored) {}
         });
     }'''
-if old not in settings_patch:
-    print("ERROR: TelegaFeatures badge preference insertion anchor missing", file=sys.stderr)
-    sys.exit(1)
-settings_patch = settings_patch.replace(old, new, 1)
-feature_patch.write_text(settings_patch, encoding="utf-8")
+if "public static boolean isBadgeEnabled()" not in settings_patch:
+    if old not in settings_patch:
+        print("ERROR: TelegaFeatures badge preference insertion anchor missing", file=sys.stderr)
+        sys.exit(1)
+    settings_patch = settings_patch.replace(old, new, 1)
+    feature_patch.write_text(settings_patch, encoding="utf-8")
+
+# The feature generator ran earlier in this build, so patch the already-generated Java helper too.
+feature_java = root / "messenger" / "TelegaFeatures.java"
+helper_source = feature_java.read_text(encoding="utf-8")
+if "public static boolean isBadgeEnabled()" not in helper_source:
+    helper_anchor = old
+    helper_new = new[len(old):] if new.startswith(old) else ""
+    if helper_anchor not in helper_source:
+        print("ERROR: generated TelegaFeatures helper insertion anchor missing", file=sys.stderr)
+        sys.exit(1)
+    helper_source = helper_source.replace(helper_anchor, helper_anchor + helper_new, 1)
+    feature_java.write_text(helper_source, encoding="utf-8")
 
 # Add the switch to TelegaSettingsActivity's generated source.
 settings = root / "ui" / "TelegaSettingsActivity.java"
