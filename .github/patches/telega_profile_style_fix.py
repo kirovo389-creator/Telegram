@@ -16,7 +16,7 @@ if bad_start in p:
     if end < 0:
         print("ERROR: malformed profile-style block end not found", file=sys.stderr)
         sys.exit(1)
-    p = p[:start] + "\\n        " + p[end:]
+    p = p[:start] + "\n        " + p[end:]
 
 
 # Apply style only where the local variable user exists.
