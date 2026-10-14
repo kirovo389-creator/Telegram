@@ -47,6 +47,7 @@ jobs:
           cp .github/patches/telega_features.py /tmp/telega_features.py
           cp .github/patches/telega_ota.py /tmp/telega_ota.py
           cp .github/patches/telega_badge.py /tmp/telega_badge.py
+          cp .github/patches/telega_advanced_fixes.py /tmp/telega_advanced_fixes.py
           git fetch --depth=1 https://github.com/DrKLO/Telegram.git master
           git read-tree --reset -u FETCH_HEAD
           mkdir -p .github/workflows .github/patches
@@ -64,6 +65,7 @@ jobs:
           cp /tmp/telega_features.py .github/patches/telega_features.py
           cp /tmp/telega_ota.py .github/patches/telega_ota.py
           cp /tmp/telega_badge.py .github/patches/telega_badge.py
+          cp /tmp/telega_advanced_fixes.py .github/patches/telega_advanced_fixes.py
           sed -i 's/^APP_PACKAGE=.*/APP_PACKAGE=org.telega.messenger/' gradle.properties
           sed -i "s/^APP_VERSION_CODE=.*/APP_VERSION_CODE=$((7175 + GITHUB_RUN_NUMBER))/" gradle.properties
           sed -i 's/<string name="AppName">Telegram<\/string>/<string name="AppName">Telega<\/string>/' TMessagesProj/src/main/res/values/strings.xml
@@ -83,6 +85,7 @@ jobs:
           python3 .github/patches/telega_features.py
           python3 .github/patches/telega_ota.py
           python3 .github/patches/telega_badge.py
+          python3 .github/patches/telega_advanced_fixes.py
           set -euo pipefail
           grep -q 'TelegaOtaUpdater.check(this)' TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
           grep -q 'TelegaOtaUpdater.installPending(this)' TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
@@ -96,6 +99,10 @@ jobs:
           grep -q 'TelegaBadgeDrawable' TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
           grep -q 'Настройки Telega' TMessagesProj/src/main/java/org/telegram/ui/TelegaSettingsActivity.java
           grep -q 'Список: ' TMessagesProj/src/main/java/org/telegram/messenger/TelegaFeatures.java
+          grep -q 'markAllUnreadReactionsAsRead' TMessagesProj/src/main/java/org/telegram/messenger/TelegaFeatures.java
+          grep -q 'Auto Proxy' TMessagesProj/src/main/java/org/telegram/ui/TelegaSettingsActivity.java
+          grep -q 'showTelegaChangelogIfNeeded' TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+          grep -q 'telegaFallbackEnterView' TMessagesProj/src/main/java/org/telegram/ui/iv/RichEditor.java
           python3 - <<'PY'
           import glob
           import xml.etree.ElementTree as ET
