@@ -88,7 +88,7 @@ if "TelegaDeletedMessages.isDeleted" not in s:
     # occurrence of setMessageObject( can land on a call site and inject code
     # after an unrelated return, producing Java's "unreachable statement".
     method_match = re.search(
-        r"(?:public|protected)\s+void\s+setMessageObject\s*\([^)]*\)\s*\\{",
+        r"(?:public|protected)\s+void\s+setMessageObject\s*\([^)]*\)\s*\{",
         s
     )
     if method_match is None:
