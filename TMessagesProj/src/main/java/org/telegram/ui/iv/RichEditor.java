@@ -1985,7 +1985,7 @@ public class RichEditor extends BaseFragment implements NotificationCenter.Notif
             if (onSentCallback != null) {
                 onSentCallback.run();
             }
-            enterView.sendConvertedRichAsSimple(org.telegram.messenger.TelegaFeatures.encodeArticle(listView.toSimpleMessage()), notify, scheduleDate, scheduleRepeatPeriod);
+            enterView.sendConvertedRichAsSimple(org.telegram.messenger.TelegaFeatures.encodeArticle(listView.toSimpleMessage().toString()), notify, scheduleDate, scheduleRepeatPeriod);
             finishFragment();
             return;
         }
