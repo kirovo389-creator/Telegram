@@ -104,22 +104,40 @@ c = c.replace(call, "            saveTelegaProfileStyle(me, profilePage.selected
 method_anchor = "    private void showBulletin() {"
 method = '''    private void saveTelegaProfileStyle(TLRPC.User me, int color, long backgroundEmojiId) {
         if (me == null) return;
+        // Keep a durable device-side copy even if Telegram does not accept the bio metadata.
+        ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + me.id, Context.MODE_PRIVATE)
+                .edit().putInt("color", color).putLong("backgroundEmoji", backgroundEmojiId).apply();
+        if (me.profile_color == null) me.profile_color = new TLRPC.TL_peerColor();
+        if (color >= 0) {
+            me.profile_color.flags |= 1;
+            me.profile_color.color = color;
+        }
+        if (backgroundEmojiId > 0) {
+            me.profile_color.flags |= 2;
+            me.profile_color.background_emoji_id = backgroundEmojiId;
+        }
         TLRPC.UserFull full = getMessagesController().getUserFull(me.id);
-        if (full == null) return;
+        if (full == null) {
+            getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
+            return;
+        }
         String about = full.about == null ? "" : full.about;
         String newAbout = TelegaLocalStatus.updateProfileStyle(about, color, backgroundEmojiId);
-        if (about.equals(newAbout)) return;
-        TL_account.updateProfile request = new TL_account.updateProfile();
-        request.flags |= 4;
-        request.about = newAbout;
-        getConnectionsManager().sendRequest(request, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
-            if (error != null) {
-                Log.e("Telega", "Profile style save failed: " + error.text);
-                return;
-            }
-            full.about = newAbout;
+        if (!about.equals(newAbout)) {
+            TL_account.updateProfile request = new TL_account.updateProfile();
+            request.flags |= 4;
+            request.about = newAbout;
+            getConnectionsManager().sendRequest(request, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+                if (error != null) {
+                    Log.e("Telega", "Profile style metadata sync failed: " + error.text);
+                    return;
+                }
+                full.about = newAbout;
+                getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
+            }));
+        } else {
             getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
-        }));
+        }
     }
 
 '''
@@ -143,19 +161,22 @@ anchor = """if (userId != 0) {
             if (user == null) {
                 return;
             }"""
-style = """if (userInfo != null) {
-                int telegaProfileColor = TelegaLocalStatus.getProfileColor(userInfo.about);
-                long telegaBackgroundEmoji = TelegaLocalStatus.getProfileEmoji(userInfo.about);
-                if (telegaProfileColor >= 0 || telegaBackgroundEmoji != 0) {
-                    if (user.profile_color == null) user.profile_color = new TLRPC.TL_peerColor();
-                    if (telegaProfileColor >= 0) {
-                        user.profile_color.flags |= 1;
-                        user.profile_color.color = telegaProfileColor;
-                    }
-                    if (telegaBackgroundEmoji != 0) {
-                        user.profile_color.flags |= 2;
-                        user.profile_color.background_emoji_id = telegaBackgroundEmoji;
-                    }
+style = """int telegaProfileColor = userInfo == null ? -1 : TelegaLocalStatus.getProfileColor(userInfo.about);
+            long telegaBackgroundEmoji = userInfo == null ? 0 : TelegaLocalStatus.getProfileEmoji(userInfo.about);
+            if (user.id == UserConfig.getInstance(currentAccount).getClientUserId()) {
+                android.content.SharedPreferences telegaStylePrefs = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + user.id, 0);
+                if (telegaStylePrefs.contains("color")) telegaProfileColor = telegaStylePrefs.getInt("color", -1);
+                if (telegaStylePrefs.contains("backgroundEmoji")) telegaBackgroundEmoji = telegaStylePrefs.getLong("backgroundEmoji", 0);
+            }
+            if (telegaProfileColor >= 0 || telegaBackgroundEmoji != 0) {
+                if (user.profile_color == null) user.profile_color = new TLRPC.TL_peerColor();
+                if (telegaProfileColor >= 0) {
+                    user.profile_color.flags |= 1;
+                    user.profile_color.color = telegaProfileColor;
+                }
+                if (telegaBackgroundEmoji != 0) {
+                    user.profile_color.flags |= 2;
+                    user.profile_color.background_emoji_id = telegaBackgroundEmoji;
                 }
             }"""
 if anchor not in p:
