@@ -77,7 +77,7 @@ public class TelegaLocalGiftsActivity extends BaseFragment {
         layout.addView(balance, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, 0, 18));
 
         TextView note = new TextView(context);
-        note.setText("Локальный баланс для подарков Telega Beta. Он отделён от официальных Telegram Stars. Подарки отправляются как сообщения и видны другим пользователям Telega Beta.");
+        note.setText("Локальный баланс для подарков Telega Beta. Он отделён от официальных Telega Stars. Подарки отправляются как сообщения и видны другим пользователям Telega Beta.");
         note.setTextSize(14);
         note.setGravity(Gravity.CENTER);
         note.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText, resourceProvider));
@@ -119,7 +119,7 @@ public class TelegaLocalGiftsActivity extends BaseFragment {
         }
         new AlertDialog.Builder(getParentActivity())
                 .setTitle("Купить " + GIFT_NAMES[index] + "?")
-                .setMessage("Цена: " + GIFT_PRICES[index] + " локальных Telega Stars. После подтверждения выбери получателя. Это не официальные Telegram Stars и не настоящий NFT.")
+                .setMessage("Цена: " + GIFT_PRICES[index] + " локальных Telega Stars. После подтверждения выбери получателя. Это не официальные Telega Stars и не настоящий NFT.")
                 .setNegativeButton("Отмена", null)
                 .setPositiveButton("Купить за " + GIFT_PRICES[index] + " ⭐", (dialog, which) -> selectRecipient(index))
                 .show();

@@ -703,7 +703,7 @@
     <string name="AuthAnotherClientOk">Autenticação concluída</string>
     <string name="AuthAnotherClientDownloadClientUrl">https://desktop.telegram.org/</string>
     <string name="AuthAnotherWebClientUrl">https://web.telegram.org/</string>
-    <string name="AuthAnotherClientInfo1">Baixe o Telegram em *desktop.telegram.org* no seu computador.</string>
+    <string name="AuthAnotherClientInfo1">Baixe o Telega em *desktop.telegram.org* no seu computador.</string>
     <string name="AuthAnotherClientInfo2">Use o Telega Desktop para obter o código QR.</string>
     <string name="AuthAnotherClientInfo3">Escaneie o código QR para conectar à sua conta.</string>
     <string name="AuthAnotherClientUrl">Esse código pode ser usado para permitir que alguém entre na sua conta do Telega.\n\nPara confirmar o login no Telega, acesse Configurações &gt; Dispositivos &gt; Ler Código QR e escaneie o código.</string>

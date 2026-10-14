@@ -494,7 +494,7 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
                 final PackageInfo packageInfo = ApplicationLoader.applicationContext.getPackageManager().getPackageInfo(ApplicationLoader.applicationContext.getPackageName(), 0);
                 final int perf = SharedConfig.getDevicePerformanceClass();
                 final String perfName = perf == SharedConfig.PERFORMANCE_CLASS_LOW ? "LOW" : perf == SharedConfig.PERFORMANCE_CLASS_AVERAGE ? "AVERAGE" : "HIGH";
-                useragent += " Telegram-Android/" + packageInfo.versionName + " (" + capitalizeFirst(Build.MANUFACTURER) + " " + Build.MODEL + "; Android " + Build.VERSION.RELEASE + "; SDK " + Build.VERSION.SDK_INT + "; " + perfName + ")";
+                useragent += " Telega-Android/" + packageInfo.versionName + " (" + capitalizeFirst(Build.MANUFACTURER) + " " + Build.MODEL + "; Android " + Build.VERSION.RELEASE + "; SDK " + Build.VERSION.SDK_INT + "; " + perfName + ")";
             }
             settings.setUserAgentString(useragent);
         } catch (Exception e) {
@@ -1217,7 +1217,7 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
             return;
         }
         d("notifyEvent " + event);
-        evaluateJs("window.Telegram.WebView.receiveEvent('" + event + "', " + eventData + ");", false);
+        evaluateJs("window.Telega.WebView.receiveEvent('" + event + "', " + eventData + ");", false);
     }
 
     private void notifyEvent(WebRequestContext context, String event, JSONObject eventData) {
@@ -1258,7 +1258,7 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
             return;
         }
         StringBuilder sb = new StringBuilder();
-        sb.append("window.Telegram.WebView.receiveEvent('");
+        sb.append("window.Telega.WebView.receiveEvent('");
         sb.append(event);
         sb.append("', ");
         sb.append(eventData);
@@ -1274,7 +1274,7 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
                 FileLog.d("notifyEvent " + event + " dropped after document change");
                 return;
             }
-            webView.evaluateJS("window.Telegram.WebView.receiveEvent('" + event + "', " + eventData + ");");
+            webView.evaluateJS("window.Telega.WebView.receiveEvent('" + event + "', " + eventData + ");");
         });
     }
 

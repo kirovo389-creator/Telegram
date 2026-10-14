@@ -2061,6 +2061,16 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     }
 
     public void sendSticker(TLRPC.Document document, String query, long peer, MessageObject replyToMsg, MessageObject replyToTopMsg, TL_stories.StoryItem storyItem, ChatActivity.ReplyQuote quote, MessageObject.SendAnimationData sendAnimationData, boolean notify, int scheduleDate, int scheduleRepeatPeriod, boolean updateStickersOrder, Object parentObject, SendMessageChatArguments sendMessageChatArguments, long stars, long monoForumPeerId, MessageSuggestionParams suggestionParams) {
+        // TELEGA_PREMIUM_STICKER_FALLBACK: non-Premium accounts send fallback text plus invisible sticker metadata.
+        TLRPC.User telegaActualUser = UserConfig.getInstance(currentAccount).getCurrentUser();
+        if (document != null && MessageObject.isPremiumSticker(document) && (telegaActualUser == null || !telegaActualUser.premium)) {
+            String telegaFallback = MessageObject.findAnimatedEmojiEmoticon(document, null, currentAccount);
+            if (telegaFallback == null || telegaFallback.length() == 0) telegaFallback = "✨";
+            String telegaTransport = telegaFallback + TelegaCustomEmoji.encode(document.id, telegaFallback.length());
+            sendMessage(SendMessageParams.of(telegaTransport, peer));
+            return;
+        }
+
         sendSticker(document, query, peer, null, null, replyToMsg, replyToTopMsg, storyItem, quote, sendAnimationData, notify, scheduleDate, scheduleRepeatPeriod, updateStickersOrder, parentObject, sendMessageChatArguments, stars, monoForumPeerId, suggestionParams);
     }
 

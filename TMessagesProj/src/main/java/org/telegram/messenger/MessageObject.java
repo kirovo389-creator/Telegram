@@ -6146,6 +6146,29 @@ public class MessageObject {
             }
         }
 
+
+        if (messageOwner != null && messageText != null && messageText.length() > 0) {
+            String telegaArticleText = TelegaFeatures.decodeArticle(messageText.toString());
+            if (telegaArticleText != null) {
+                messageText = telegaArticleText;
+                messageOwner.message = telegaArticleText;
+                if (messageOwner.entities == null) messageOwner.entities = new ArrayList<>();
+                if (telegaArticleText.length() >= 7) {
+                    TLRPC.TL_messageEntityBold telegaArticleTitle = new TLRPC.TL_messageEntityBold();
+                    telegaArticleTitle.offset = 0;
+                    telegaArticleTitle.length = 7;
+                    messageOwner.entities.add(telegaArticleTitle);
+                }
+                if (telegaArticleText.length() > 8) {
+                    TLRPC.TL_messageEntityBlockquote telegaArticleBody = new TLRPC.TL_messageEntityBlockquote();
+                    telegaArticleBody.offset = 8;
+                    telegaArticleBody.length = telegaArticleText.length() - 8;
+                    telegaArticleBody.collapsed = false;
+                    messageOwner.entities.add(telegaArticleBody);
+                }
+            }
+        }
+
         isEmbedVideoCached = null;
         cachedStartsTimestamp = null;
         cachedSavedTimestamp = null;

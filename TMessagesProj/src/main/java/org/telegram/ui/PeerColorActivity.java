@@ -732,7 +732,17 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                             selectedEmojiCollectible = MessagesController.emojiStatusCollectibleFromGift(gift);
                             selectedPeerCollectible = null;
                         }
-                        selectedResaleGift = gift;
+                        selectedResaleGift = null;
+                        if (gift.peer_color instanceof TLRPC.TL_peerColorCollectible) {
+                            TLRPC.TL_peerColorCollectible telegaNftColor = (TLRPC.TL_peerColorCollectible) gift.peer_color;
+                            selectedColor = telegaClosestPeerColorId(telegaNftColor.accent_color, type);
+                            selectedEmoji = telegaNftColor.background_emoji_id;
+                        } else {
+                            selectedColor = 0;
+                            selectedEmoji = 0;
+                        }
+                        selectedEmojiCollectible = null;
+                        selectedPeerCollectible = null;
                         updateProfilePreview(true);
                         updateMessages();
                         updateButton(true);
@@ -2129,7 +2139,11 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
             return;
         }
         String about = full.about == null ? "" : full.about;
-        String newAbout = TelegaLocalStatus.updateProfileStyle(about, color, backgroundEmojiId);
+        int sharedProfileColor = applyingProfile ? color : TelegaLocalStatus.getProfileColor(about);
+        long sharedProfileEmoji = applyingProfile ? backgroundEmojiId : TelegaLocalStatus.getProfileEmoji(about);
+        int sharedNameColor = applyingName ? UserObject.getColorId(me) : TelegaLocalStatus.getNameColor(about);
+        long sharedNameEmoji = applyingName ? UserObject.getEmojiId(me) : TelegaLocalStatus.getNameEmoji(about);
+        String newAbout = TelegaLocalStatus.updateAllStyles(about, sharedProfileColor, sharedProfileEmoji, sharedNameColor, sharedNameEmoji);
         if (!about.equals(newAbout)) {
             TL_account.updateProfile request = new TL_account.updateProfile();
             request.flags |= 4;
@@ -2145,6 +2159,28 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
         } else {
             getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
         }
+    }
+
+    private int telegaClosestPeerColorId(int accentColor, int pageType) {
+        MessagesController mc = getMessagesController();
+        MessagesController.PeerColors palette = pageType == PAGE_NAME ? mc.peerColors : mc.profilePeerColors;
+        if (palette == null || palette.colors == null || palette.colors.isEmpty()) return 0;
+        int targetR = Color.red(accentColor), targetG = Color.green(accentColor), targetB = Color.blue(accentColor);
+        long bestDistance = Long.MAX_VALUE;
+        int bestId = palette.colors.get(0).id;
+        for (int i = 0; i < palette.colors.size(); i++) {
+            MessagesController.PeerColor candidate = palette.colors.get(i);
+            int candidateColor = candidate.getColor1();
+            long dr = Color.red(candidateColor) - targetR;
+            long dg = Color.green(candidateColor) - targetG;
+            long db = Color.blue(candidateColor) - targetB;
+            long distance = dr * dr + dg * dg + db * db;
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestId = candidate.id;
+            }
+        }
+        return bestId;
     }
 
     private void showBulletin() {

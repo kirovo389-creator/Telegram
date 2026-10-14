@@ -5812,7 +5812,7 @@ public class MessagesController extends BaseController implements NotificationCe
         TLRPC.TL_userForeign_old2 user = new TLRPC.TL_userForeign_old2();
         user.phone = "333";
         user.id = 333000;
-        user.first_name = "Telegram";
+        user.first_name = "Telega";
         user.last_name = "";
         user.status = null;
         user.photo = new TLRPC.TL_userProfilePhotoEmpty();
@@ -5822,7 +5822,7 @@ public class MessagesController extends BaseController implements NotificationCe
         user.phone = "42777";
         user.id = 777000;
         user.verified = true;
-        user.first_name = "Telegram";
+        user.first_name = "Telega";
         user.last_name = "Notifications";
         user.status = null;
         user.photo = new TLRPC.TL_userProfilePhotoEmpty();
@@ -6975,6 +6975,7 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public void putChat(final TLRPC.Chat chat, boolean fromCache) {
+        if (chat != null && (chat.megagroup || chat.broadcast) && !ChatObject.isNotInChat(chat)) TelegaFeatures.onPeerAvailable(currentAccount, -chat.id, true);
         if (chat == null) {
             return;
         }
@@ -18835,12 +18836,25 @@ public class MessagesController extends BaseController implements NotificationCe
                 }
                 dialogs_read_outbox_max.put(dialogId, Math.max(value, update.max_id));
             } else if (baseUpdate instanceof TL_update.TL_updateDeleteMessages) {
+                if (TelegaFeatures.isDeletedMessagesEnabled(currentAccount)) {
                 TL_update.TL_updateDeleteMessages telegaDeleteUpdate = (TL_update.TL_updateDeleteMessages) baseUpdate;
                 for (int telegaMessageId : telegaDeleteUpdate.messages) {
                     TelegaDeletedMessages.mark(currentAccount, 0, telegaMessageId);
                 }
                 NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
-                // Telega: intentionally retain the cached message and render it as deleted.
+                // Telega: retain this message and mark it deleted.
+                } else {
+                TL_update.TL_updateDeleteMessages update = (TL_update.TL_updateDeleteMessages) baseUpdate;
+                if (deletedMessages == null) {
+                    deletedMessages = new LongSparseArray<>();
+                }
+                ArrayList<Integer> arrayList = deletedMessages.get(0);
+                if (arrayList == null) {
+                    arrayList = new ArrayList<>();
+                    deletedMessages.put(0, arrayList);
+                }
+                arrayList.addAll(update.messages);
+                }
             } else if (baseUpdate instanceof TL_update.TL_updateDeleteQuickReplyMessages) {
                 TL_update.TL_updateDeleteQuickReplyMessages update = (TL_update.TL_updateDeleteQuickReplyMessages) baseUpdate;
                 if (deletedQuickReplyMessages == null) {
@@ -19353,13 +19367,30 @@ public class MessagesController extends BaseController implements NotificationCe
                 }
                 dialogs_read_outbox_max.put(dialogId, Math.max(value, update.max_id));
             } else if (baseUpdate instanceof TL_update.TL_updateDeleteChannelMessages) {
+                if (TelegaFeatures.isDeletedMessagesEnabled(currentAccount)) {
                 TL_update.TL_updateDeleteChannelMessages telegaDeleteUpdate = (TL_update.TL_updateDeleteChannelMessages) baseUpdate;
                 long telegaDialogId = -telegaDeleteUpdate.channel_id;
                 for (int telegaMessageId : telegaDeleteUpdate.messages) {
                     TelegaDeletedMessages.mark(currentAccount, telegaDialogId, telegaMessageId);
                 }
                 NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
-                // Telega: intentionally retain the cached channel message and render it as deleted.
+                // Telega: retain this channel message and mark it deleted.
+                } else {
+                TL_update.TL_updateDeleteChannelMessages update = (TL_update.TL_updateDeleteChannelMessages) baseUpdate;
+                if (BuildVars.LOGS_ENABLED) {
+                    FileLog.d(baseUpdate + " channelId = " + update.channel_id);
+                }
+                if (deletedMessages == null) {
+                    deletedMessages = new LongSparseArray<>();
+                }
+                long dialogId = -update.channel_id;
+                ArrayList<Integer> arrayList = deletedMessages.get(dialogId);
+                if (arrayList == null) {
+                    arrayList = new ArrayList<>();
+                    deletedMessages.put(dialogId, arrayList);
+                }
+                arrayList.addAll(update.messages);
+                }
             } else if (baseUpdate instanceof TL_update.TL_updateChannel) {
                 if (BuildVars.LOGS_ENABLED) {
                     TL_update.TL_updateChannel update = (TL_update.TL_updateChannel) baseUpdate;

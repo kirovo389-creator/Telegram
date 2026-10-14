@@ -828,7 +828,7 @@ public class ChatAttachAlertRichLayout extends ChatAttachAlert.AttachAlertLayout
             if (parentAlert.baseFragment instanceof ChatActivity) {
                 final ChatActivityEnterView enterView = ((ChatActivity) parentAlert.baseFragment).getChatActivityEnterView();
                 if (enterView != null) {
-                    enterView.sendConvertedRichAsSimple(listView.toSimpleMessage(), notify, scheduleDate, scheduleRepeatPeriod);
+                    enterView.sendConvertedRichAsSimple(org.telegram.messenger.TelegaFeatures.encodeArticle(listView.toSimpleMessage()), notify, scheduleDate, scheduleRepeatPeriod);
                     parentAlert.dismiss(true);
                     return true;
                 }

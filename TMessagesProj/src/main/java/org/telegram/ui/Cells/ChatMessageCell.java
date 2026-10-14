@@ -29588,21 +29588,24 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 && currentMessageObject.messageOwner != null
                 && org.telegram.messenger.TelegaDeletedMessages.isDeleted(org.telegram.messenger.UserConfig.selectedAccount,
                     currentMessageObject.messageOwner.dialog_id, currentMessageObject.messageOwner.id);
-        if (telegaDeletedForDraw) {
-            int telegaLayer = canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), 148);
-            super.dispatchDraw(canvas);
-            canvas.restoreToCount(telegaLayer);
-        } else {
-            super.dispatchDraw(canvas);
-        }
+        setAlpha(telegaDeletedForDraw ? 0.56f : 1.0f);
+        super.dispatchDraw(canvas);
 
         if (currentMessageObject != null && currentMessageObject.messageOwner != null
                 && org.telegram.messenger.TelegaDeletedMessages.isDeleted(org.telegram.messenger.UserConfig.selectedAccount,
                     currentMessageObject.messageOwner.dialog_id, currentMessageObject.messageOwner.id)) {
             android.graphics.Paint telegaDeletedPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-            telegaDeletedPaint.setTextSize(org.telegram.messenger.AndroidUtilities.dp(14));
             telegaDeletedPaint.setColor(0xFF858585);
-            canvas.drawText("🗑", org.telegram.messenger.AndroidUtilities.dp(12), getHeight() - org.telegram.messenger.AndroidUtilities.dp(10), telegaDeletedPaint);
+            telegaDeletedPaint.setStyle(android.graphics.Paint.Style.STROKE);
+            telegaDeletedPaint.setStrokeWidth(org.telegram.messenger.AndroidUtilities.dp(1.25f));
+            telegaDeletedPaint.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+            float telegaTrashX = org.telegram.messenger.AndroidUtilities.dp(10);
+            float telegaTrashY = getHeight() - org.telegram.messenger.AndroidUtilities.dp(16);
+            float telegaTrashW = org.telegram.messenger.AndroidUtilities.dp(8);
+            float telegaTrashH = org.telegram.messenger.AndroidUtilities.dp(9);
+            canvas.drawRoundRect(telegaTrashX, telegaTrashY + org.telegram.messenger.AndroidUtilities.dp(3), telegaTrashX + telegaTrashW, telegaTrashY + telegaTrashH, org.telegram.messenger.AndroidUtilities.dp(1), org.telegram.messenger.AndroidUtilities.dp(1), telegaDeletedPaint);
+            canvas.drawLine(telegaTrashX - org.telegram.messenger.AndroidUtilities.dp(1), telegaTrashY + org.telegram.messenger.AndroidUtilities.dp(2), telegaTrashX + telegaTrashW + org.telegram.messenger.AndroidUtilities.dp(1), telegaTrashY + org.telegram.messenger.AndroidUtilities.dp(2), telegaDeletedPaint);
+            canvas.drawLine(telegaTrashX + org.telegram.messenger.AndroidUtilities.dp(2), telegaTrashY, telegaTrashX + org.telegram.messenger.AndroidUtilities.dp(6), telegaTrashY, telegaDeletedPaint);
         }
     }
 
