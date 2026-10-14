@@ -419,6 +419,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             if (intent != null && intent.getAction() != null) {
                 if (Intent.ACTION_SEND.equals(intent.getAction()) || Intent.ACTION_SEND_MULTIPLE.equals(intent.getAction())) {
                     super.onCreate(savedInstanceState);
+        org.telegram.messenger.TelegaOtaUpdater.check(getApplicationContext());
                     finish();
                     return;
                 } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
