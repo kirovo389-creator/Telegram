@@ -136,7 +136,7 @@ if "TelegaDeletedMessages.isDeleted" not in s:
         }
 """
         method_body = method_body.replace(original_draw, wrapped_draw, 1)
-        method_body = method_body[:-1] + draw_code + "\\n    }"
+        method_body = method_body[:-1] + draw_code + "\n    }"
         s = s[:method_open] + method_body + s[method_end + 1:]
     else:
         dispatch = """
