@@ -50,36 +50,43 @@ helper.write_text(helper_source, encoding="utf-8")
 source = controller.read_text(encoding="utf-8")
 patterns = [
     (
-        r"\} else if \(baseUpdate instanceof TL_update\.TL_updateDeleteMessages\) \{.*?\n\s*\} else if \(baseUpdate instanceof TL_update\.TL_updateDeleteQuickReplyMessages\)",
-        "} else if (baseUpdate instanceof TL_update.TL_updateDeleteMessages) {\n"
-        "                TL_update.TL_updateDeleteMessages telegaDeleteUpdate = (TL_update.TL_updateDeleteMessages) baseUpdate;\n"
-        "                for (int telegaMessageId : telegaDeleteUpdate.messages) {\n"
-        "                    TelegaDeletedMessages.mark(currentAccount, 0, telegaMessageId);\n"
-        "                }\n"
-        "                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);\n"
-        "                // Telega: intentionally retain the cached message and render it as deleted.\n"
-        "            } else if (baseUpdate instanceof TL_update.TL_updateDeleteQuickReplyMessages)",
+        r"(\\} else if \\(baseUpdate instanceof TL_update\\.TL_updateDeleteMessages\\) \\{)(.*?)(\\n\\s*\\} else if \\(baseUpdate instanceof TL_update\\.TL_updateDeleteQuickReplyMessages\\))",
+        "                TL_update.TL_updateDeleteMessages telegaDeleteUpdate = (TL_update.TL_updateDeleteMessages) baseUpdate;\\n"
+        "                for (int telegaMessageId : telegaDeleteUpdate.messages) {\\n"
+        "                    TelegaDeletedMessages.mark(currentAccount, 0, telegaMessageId);\\n"
+        "                }\\n"
+        "                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);\\n"
+        "                // Telega: retain this message and mark it deleted.",
         "regular message deletion"
     ),
     (
-        r"\} else if \(baseUpdate instanceof TL_update\.TL_updateDeleteChannelMessages\) \{.*?\n\s*\} else if \(baseUpdate instanceof TL_update\.TL_updateChannel\)",
-        "} else if (baseUpdate instanceof TL_update.TL_updateDeleteChannelMessages) {\n"
-        "                TL_update.TL_updateDeleteChannelMessages telegaDeleteUpdate = (TL_update.TL_updateDeleteChannelMessages) baseUpdate;\n"
-        "                long telegaDialogId = -telegaDeleteUpdate.channel_id;\n"
-        "                for (int telegaMessageId : telegaDeleteUpdate.messages) {\n"
-        "                    TelegaDeletedMessages.mark(currentAccount, telegaDialogId, telegaMessageId);\n"
-        "                }\n"
-        "                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);\n"
-        "                // Telega: intentionally retain the cached channel message and render it as deleted.\n"
-        "            } else if (baseUpdate instanceof TL_update.TL_updateChannel)",
+        r"(\\} else if \\(baseUpdate instanceof TL_update\\.TL_updateDeleteChannelMessages\\) \\{)(.*?)(\\n\\s*\\} else if \\(baseUpdate instanceof TL_update\\.TL_updateChannel\\))",
+        "                TL_update.TL_updateDeleteChannelMessages telegaDeleteUpdate = (TL_update.TL_updateDeleteChannelMessages) baseUpdate;\\n"
+        "                long telegaDialogId = -telegaDeleteUpdate.channel_id;\\n"
+        "                for (int telegaMessageId : telegaDeleteUpdate.messages) {\\n"
+        "                    TelegaDeletedMessages.mark(currentAccount, telegaDialogId, telegaMessageId);\\n"
+        "                }\\n"
+        "                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);\\n"
+        "                // Telega: retain this channel message and mark it deleted.",
         "channel message deletion"
     ),
 ]
-for pattern, replacement, label in patterns:
-    source, count = re.subn(pattern, replacement, source, count=1, flags=re.S)
-    if count != 1:
+for pattern, replacement_body, label in patterns:
+    match = re.search(pattern, source, count=1, flags=re.S)
+    if not match:
         print(f"ERROR: could not patch {label}; upstream source layout changed", file=sys.stderr)
         sys.exit(1)
+    branch_start, original_body, next_branch = match.groups()
+    wrapped = (
+        branch_start
+        + "\\n                if (TelegaFeatures.isDeletedMessagesEnabled(currentAccount)) {\\n"
+        + replacement_body
+        + "\\n                } else {"
+        + original_body
+        + "\\n                }"
+        + next_branch
+    )
+    source = source[:match.start()] + wrapped + source[match.end():]
 controller.write_text(source, encoding="utf-8")
 
 s = cell.read_text(encoding="utf-8")
