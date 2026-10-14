@@ -1,0 +1,91 @@
+package org.telegram.messenger;
+
+/**
+ * Telega shared local status transport. Stores a custom-emoji document ID in
+ * Unicode tag characters appended to the Telegram bio. Telegram's profile
+ * storage acts as the sync channel; no Telega-owned server is used.
+ */
+public final class TelegaLocalStatus {
+    private static final int TAG_BASE = 0xE0000;
+    private static final int TAG_END = 0xE007F;
+    private static final String PREFIX = "TG1.";
+
+    private TelegaLocalStatus() {}
+
+    public static String update(String about, long documentId, int until) {
+        String clean = strip(about == null ? "" : about);
+        if (documentId == 0) {
+            return clean;
+        }
+        String payload = PREFIX + Long.toString(documentId, 36) + "." + Integer.toString(Math.max(0, until), 36);
+        StringBuilder hidden = new StringBuilder();
+        for (int i = 0; i < payload.length(); i++) {
+            hidden.appendCodePoint(TAG_BASE + payload.charAt(i));
+        }
+        hidden.appendCodePoint(TAG_END);
+        return clean + hidden;
+    }
+
+    public static String strip(String about) {
+        if (about == null || about.isEmpty()) return about == null ? "" : about;
+        int end = about.codePointBefore(about.length());
+        if (end != TAG_END) return about;
+        int cursor = about.length() - Character.charCount(end);
+        int start = cursor;
+        while (start > 0) {
+            int cp = about.codePointBefore(start);
+            if (cp < TAG_BASE || cp >= TAG_END) break;
+            start -= Character.charCount(cp);
+        }
+        String decoded = decode(about.substring(start, cursor));
+        if (decoded == null || !decoded.startsWith(PREFIX)) return about;
+        return about.substring(0, start);
+    }
+
+    public static long getDocumentId(String about) {
+        String payload = getPayload(about);
+        if (payload == null || !payload.startsWith(PREFIX)) return 0;
+        String[] parts = payload.split("\\.", -1);
+        if (parts.length != 3) return 0;
+        try {
+            return Long.parseLong(parts[1], 36);
+        } catch (Throwable ignore) {
+            return 0;
+        }
+    }
+
+    public static int getUntil(String about) {
+        String payload = getPayload(about);
+        if (payload == null || !payload.startsWith(PREFIX)) return 0;
+        String[] parts = payload.split("\\.", -1);
+        if (parts.length != 3) return 0;
+        try {
+            return Integer.parseInt(parts[2], 36);
+        } catch (Throwable ignore) {
+            return 0;
+        }
+    }
+
+    private static String getPayload(String about) {
+        if (about == null || about.isEmpty() || about.codePointBefore(about.length()) != TAG_END) return null;
+        int cursor = about.length() - Character.charCount(TAG_END);
+        int start = cursor;
+        while (start > 0) {
+            int cp = about.codePointBefore(start);
+            if (cp < TAG_BASE || cp >= TAG_END) break;
+            start -= Character.charCount(cp);
+        }
+        return decode(about.substring(start, cursor));
+    }
+
+    private static String decode(String encoded) {
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < encoded.length();) {
+            int cp = encoded.codePointAt(i);
+            if (cp < TAG_BASE || cp >= TAG_END) return null;
+            out.append((char) (cp - TAG_BASE));
+            i += Character.charCount(cp);
+        }
+        return out.toString();
+    }
+}

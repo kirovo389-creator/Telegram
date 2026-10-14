@@ -33,6 +33,7 @@ import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
+import org.telegram.messenger.TelegaLocalStatus;
 import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.tgnet.tl.TL_account;
@@ -199,11 +200,11 @@ public class ChangeBioActivity extends BaseFragment {
         if (getParentActivity() == null || userFull == null) {
             return;
         }
-        String currentName = userFull.about;
+        String currentName = TelegaLocalStatus.strip(userFull.about);
         if (currentName == null) {
             currentName = "";
         }
-        final String newName = firstNameField.getText().toString().replace("\n", "");
+        final String newName = TelegaLocalStatus.update(firstNameField.getText().toString().replace("\n", ""), TelegaLocalStatus.getDocumentId(userFull.about), TelegaLocalStatus.getUntil(userFull.about));
         if (currentName.equals(newName)) {
             finishFragment();
             return;

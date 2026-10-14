@@ -164,6 +164,7 @@ import org.telegram.messenger.SendMessagesHelper;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.SvgHelper;
 import org.telegram.messenger.UserConfig;
+import org.telegram.messenger.TelegaLocalStatus;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
 import org.telegram.messenger.browser.Browser;
@@ -6708,6 +6709,37 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
 
     private SelectAnimatedEmojiDialog.SelectAnimatedEmojiDialogWindow selectAnimatedEmojiDialog;
 
+    private void saveTelegaLocalStatus(long documentId, int until) {
+        if (getParentActivity() == null) return;
+        long selfId = UserConfig.getInstance(currentAccount).getClientUserId();
+        TLRPC.UserFull full = userInfo != null ? userInfo : getMessagesController().getUserFull(selfId);
+        String oldAbout = full == null || full.about == null ? "" : full.about;
+        String newAbout = TelegaLocalStatus.update(oldAbout, documentId, until);
+        if (oldAbout.equals(newAbout)) return;
+
+        TL_account.updateProfile request = new TL_account.updateProfile();
+        request.flags |= 4;
+        request.about = newAbout;
+        ConnectionsManager.getInstance(currentAccount).sendRequest(request, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            if (error != null) {
+                FileLog.e("Telega shared status save failed: " + error.text);
+                if (getParentActivity() != null) {
+                    org.telegram.ui.Components.AlertsCreator.processError(currentAccount, error, ProfileActivity.this, request);
+                }
+                return;
+            }
+            if (full != null) full.about = newAbout;
+            if (response instanceof TLRPC.User) {
+                TLRPC.User updatedUser = (TLRPC.User) response;
+                if (full != null) {
+                    NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.userInfoDidLoad, updatedUser.id, full);
+                }
+            }
+            updateProfileData(true);
+            getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
+        }), ConnectionsManager.RequestFlagFailOnServerErrors);
+    }
+
     public void showStatusSelect() {
         if (selectAnimatedEmojiDialog != null) {
             return;
@@ -6772,7 +6804,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     emojiStatus = status;
                 }
                 emojiStatusGiftId = gift != null ? gift.id : null;
-                getMessagesController().updateEmojiStatus(currentChat == null ? 0 : -currentChat.id, emojiStatus, gift);
+                if (currentChat == null && gift == null) {
+                    saveTelegaLocalStatus(documentId == null ? 0L : documentId, until == null ? 0 : until);
+                } else {
+                    getMessagesController().updateEmojiStatus(currentChat == null ? 0 : -currentChat.id, emojiStatus, gift);
+                }
                 for (int a = 0; a < 2; ++a) {
                     if (emojiStatusDrawable[a] != null) {
                         if (documentId == null && currentChat == null) {
@@ -11467,10 +11503,24 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         nameTextView[a].setRightDrawable2(null);
                         nameTextViewRightDrawable2ContentDescription = null;
                     }
-                    if (user != null/* && !getMessagesController().premiumFeaturesBlocked()*/ && !MessagesController.isSupportUser(user) && DialogObject.getEmojiStatusDocumentId(user.emoji_status) != 0) {
+                    if (user != null/* && !getMessagesController().premiumFeaturesBlocked()*/ && !MessagesController.isSupportUser(user) && (DialogObject.getEmojiStatusDocumentId(user.emoji_status) != 0 || (userInfo != null && TelegaLocalStatus.getDocumentId(userInfo.about) != 0))) {
+                        TLRPC.EmojiStatus telegaStatusToShow = user.emoji_status;
+                        if (DialogObject.getEmojiStatusDocumentId(telegaStatusToShow) == 0 && userInfo != null) {
+                            long telegaDocumentId = TelegaLocalStatus.getDocumentId(userInfo.about);
+                            if (telegaDocumentId != 0) {
+                                TLRPC.TL_emojiStatus localStatus = new TLRPC.TL_emojiStatus();
+                                localStatus.document_id = telegaDocumentId;
+                                int telegaUntil = TelegaLocalStatus.getUntil(userInfo.about);
+                                if (telegaUntil > 0) {
+                                    localStatus.flags |= 1;
+                                    localStatus.until = telegaUntil;
+                                }
+                                telegaStatusToShow = localStatus;
+                            }
+                        }
                         rightIconIsStatus = true;
                         rightIconIsPremium = false;
-                        nameTextView[a].setRightDrawable(getEmojiStatusDrawable(user.emoji_status, false, false, a));
+                        nameTextView[a].setRightDrawable(getEmojiStatusDrawable(telegaStatusToShow, false, false, a));
                         nameTextViewRightDrawableContentDescription = LocaleController.getString(R.string.AccDescrPremium);
                     } else if (getMessagesController().isPremiumUser(user)) {
                         rightIconIsStatus = false;
