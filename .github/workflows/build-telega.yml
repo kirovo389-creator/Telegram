@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   sync-build-release:
-    if: ${{ !startsWith(github.event.head_commit.message, 'STOP BUILDS') }}
+    if: ${{ startsWith(github.event.head_commit.message, 'BUILD Telega FINAL') }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
