@@ -161,6 +161,6 @@ style = """if (userInfo != null) {
 if anchor not in p:
     print("ERROR: ProfileActivity viewed-user anchor not found", file=sys.stderr)
     sys.exit(1)
-p = p.replace(anchor, anchor + "\\n            " + style, 1)
+p = p.replace(anchor, anchor + "\n            " + style, 1)
 profile.write_text(p, encoding="utf-8")
 print("Telega shared profile color/background emoji patch applied.")
