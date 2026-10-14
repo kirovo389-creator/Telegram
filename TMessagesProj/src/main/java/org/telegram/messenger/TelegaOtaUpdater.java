@@ -3,10 +3,12 @@ package org.telegram.messenger;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInstaller;
+import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -36,14 +38,14 @@ import java.util.concurrent.Executors;
 public final class TelegaOtaUpdater {
     private static final String TAG = "TelegaOTA";
     private static final String RELEASES_API =
-            "https://api.github.com/repos/kirovo389-creator/Telegram/releases?per_page=10";
+            "https://api.github.com/repos/kirovo389-creator/Telegram/releases/latest";
     private static final String RELEASE_PREFIX =
             "https://github.com/kirovo389-creator/Telegram/releases/download/";
     private static final String PREFS = "telega_ota";
-    private static final long CHECK_INTERVAL = 6L * 60L * 60L * 1000L;
     private static final long MAX_APK_BYTES = 300L * 1024L * 1024L;
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
+    private static volatile boolean checkStarted;
 
     private TelegaOtaUpdater() {}
 
@@ -51,11 +53,49 @@ public final class TelegaOtaUpdater {
         return context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 
+
+    public static boolean isEnabled(Context context) {
+        return prefs(context).getBoolean("enabled", true);
+    }
+
+    public static void setEnabled(Context context, boolean enabled) {
+        prefs(context).edit().putBoolean("enabled", enabled).apply();
+        if (enabled && context instanceof Activity) check(context);
+    }
+
+    private static long parseVersionCode(String body) {
+        if (body == null) return -1L;
+        for (String line : body.split("\\n")) {
+            String prefix = "Telega-Version-Code:";
+            if (!line.startsWith(prefix)) continue;
+            try {
+                return Long.parseLong(line.substring(prefix.length()).trim());
+            } catch (NumberFormatException ignored) {
+                return -1L;
+            }
+        }
+        return -1L;
+    }
+
+    private static long versionCodeFromTag(String tag) {
+        if (tag == null || !tag.startsWith("telega-build-")) return -1L;
+        try {
+            long run = Long.parseLong(tag.substring("telega-build-".length()));
+            return (7175L + run) * 10L + 9L;
+        } catch (NumberFormatException ignored) {
+            return -1L;
+        }
+    }
+
     public static void check(Context activityContext) {
         if (!(activityContext instanceof Activity)) return;
         final Activity activity = (Activity) activityContext;
         final Context app = activity.getApplicationContext();
-        if (System.currentTimeMillis() - prefs(app).getLong("last_check", 0) < CHECK_INTERVAL) return;
+        if (!isEnabled(app)) return;
+        synchronized (TelegaOtaUpdater.class) {
+            if (checkStarted) return;
+            checkStarted = true;
+        }
 
         EXECUTOR.execute(() -> {
             HttpURLConnection connection = null;
@@ -67,7 +107,11 @@ public final class TelegaOtaUpdater {
                 connection.setRequestProperty("X-GitHub-Api-Version", "2022-11-28");
                 connection.setRequestProperty("User-Agent", "Telega-Beta-OTA");
                 int status = connection.getResponseCode();
-                if (status != 200) return;
+                if (status != 200) {
+                    Log.w(TAG, "GitHub Releases returned HTTP " + status
+                            + (status == 403 ? " (rate limit or access restriction)" : ""));
+                    return;
+                }
                 StringBuilder body = new StringBuilder();
                 try (InputStream stream = connection.getInputStream();
                      BufferedInputStream input = new BufferedInputStream(stream)) {
@@ -75,54 +119,50 @@ public final class TelegaOtaUpdater {
                     int read;
                     while ((read = input.read(buffer)) != -1) body.append(new String(buffer, 0, read, "UTF-8"));
                 }
-                prefs(app).edit().putLong("last_check", System.currentTimeMillis()).apply();
-                JSONArray releases = new JSONArray(body.toString());
+                JSONObject release = new JSONObject(body.toString());
 
-                long installedVersion;
+                PackageInfo installedInfo;
+                String installedVersionName;
+                long installedVersionCode;
                 try {
-                    if (Build.VERSION.SDK_INT >= 28) {
-                        installedVersion = app.getPackageManager().getPackageInfo(app.getPackageName(), 0).getLongVersionCode();
-                    } else {
-                        installedVersion = app.getPackageManager().getPackageInfo(app.getPackageName(), 0).versionCode;
-                    }
-                } catch (Throwable ignored) {
-                    installedVersion = 0;
+                    installedInfo = app.getPackageManager().getPackageInfo(app.getPackageName(), 0);
+                    installedVersionName = installedInfo.versionName == null ? "" : installedInfo.versionName;
+                    installedVersionCode = Build.VERSION.SDK_INT >= 28
+                            ? installedInfo.getLongVersionCode() : installedInfo.versionCode;
+                } catch (Throwable error) {
+                    Log.w(TAG, "Unable to read installed version", error);
+                    return;
                 }
 
-                JSONObject newest = null;
-                long newestVersion = installedVersion;
-                for (int i = 0; i < releases.length(); i++) {
-                    JSONObject release = releases.optJSONObject(i);
-                    if (release == null || release.optBoolean("draft", false)) continue;
-                    String tag = release.optString("tag_name", "");
-                    if (!tag.startsWith("telega-build-")) continue;
-                    long run;
-                    try { run = Long.parseLong(tag.substring("telega-build-".length())); }
-                    catch (Throwable ignored) { continue; }
-                    long candidateVersion = 7175L + run;
-                    JSONArray assets = release.optJSONArray("assets");
-                    if (assets == null) continue;
-                    JSONObject apkAsset = null;
-                    for (int j = 0; j < assets.length(); j++) {
-                        JSONObject asset = assets.optJSONObject(j);
-                        if (asset != null && asset.optString("name", "").equalsIgnoreCase("Telega-debug.apk")) {
-                            apkAsset = asset;
-                            break;
-                        }
-                    }
-                    if (apkAsset != null && candidateVersion > newestVersion) {
-                        String url = apkAsset.optString("browser_download_url", "");
-                        if (!url.startsWith(RELEASE_PREFIX)) continue;
-                        newestVersion = candidateVersion;
-                        newest = new JSONObject(release.toString());
-                        newest.put("_telega_apk_url", url);
-                        newest.put("_telega_version_code", candidateVersion);
-                        newest.put("_telega_size", apkAsset.optLong("size", -1));
-                        newest.put("_telega_digest", apkAsset.optString("digest", ""));
+                String tag = release.optString("tag_name", "");
+                if (tag.isEmpty() || release.optBoolean("draft", false) || release.optBoolean("prerelease", false)) return;
+                long candidateVersionCode = parseVersionCode(release.optString("body", ""));
+                if (candidateVersionCode <= 0) candidateVersionCode = versionCodeFromTag(tag);
+                if (tag.equals(installedVersionName) && candidateVersionCode <= 0) return;
+                if (candidateVersionCode <= installedVersionCode) return;
+
+                JSONArray assets = release.optJSONArray("assets");
+                if (assets == null) return;
+                JSONObject apkAsset = null;
+                for (int j = 0; j < assets.length(); j++) {
+                    JSONObject asset = assets.optJSONObject(j);
+                    if (asset == null) continue;
+                    String assetName = asset.optString("name", "");
+                    if (assetName.equalsIgnoreCase("Telega-Beta.apk")
+                            || assetName.equalsIgnoreCase("Telega-debug.apk")
+                            || assetName.equalsIgnoreCase("Telega.apk")) {
+                        apkAsset = asset;
+                        break;
                     }
                 }
-                if (newest == null) return;
-                String tag = newest.optString("tag_name", "");
+                if (apkAsset == null) return;
+                String url = apkAsset.optString("browser_download_url", "");
+                if (!url.startsWith(RELEASE_PREFIX)) return;
+                JSONObject newest = new JSONObject(release.toString());
+                newest.put("_telega_apk_url", url);
+                newest.put("_telega_version_code", candidateVersionCode);
+                newest.put("_telega_size", apkAsset.optLong("size", -1));
+                newest.put("_telega_digest", apkAsset.optString("digest", ""));
                 if (tag.equals(prefs(app).getString("dismissed_tag", ""))) return;
                 JSONObject found = newest;
                 MAIN.post(() -> {
@@ -140,13 +180,18 @@ public final class TelegaOtaUpdater {
         try {
             String tag = release.optString("tag_name", "new version");
             String notes = release.optString("body", "");
+            notes = notes.replaceAll("(?m)^Telega-Version-Code:.*(?:\\R|$)", "").trim();
             if (notes.length() > 700) notes = notes.substring(0, 700) + "…";
+            long expectedSize = release.optLong("_telega_size", -1);
+            String sizeLabel = expectedSize > 0
+                    ? String.format(Locale.US, "%.2f MB", expectedSize / (1024.0 * 1024.0))
+                    : "неизвестен";
             String message = "Доступна новая версия Telega Beta: " + tag
                     + "\n\n" + (notes.isEmpty() ? "Исправления и улучшения." : notes)
+                    + "\n\nРазмер APK: " + sizeLabel
                     + "\n\nAPK будет загружен из GitHub Releases. Для установки Android может запросить разрешение. Системный диалог установки нужно подтвердить.";
             String url = release.optString("_telega_apk_url", "");
             String digest = release.optString("_telega_digest", "");
-            long expectedSize = release.optLong("_telega_size", -1);
             new AlertDialog.Builder(activity)
                     .setTitle("Обновление Telega")
                     .setMessage(message)
@@ -165,7 +210,18 @@ public final class TelegaOtaUpdater {
 
     private static void downloadApk(Activity activity, String url, String digest, long expectedSize, String tag) {
         if (url == null || !url.startsWith(RELEASE_PREFIX)) return;
-        Toast.makeText(activity, "Загружаю обновление Telega…", Toast.LENGTH_SHORT).show();
+        final ProgressDialog progress = new ProgressDialog(activity);
+        progress.setTitle("Обновление Telega");
+        progress.setMessage("Загрузка APK из GitHub Releases…");
+        progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progress.setIndeterminate(true);
+        progress.setCancelable(false);
+        try {
+            progress.show();
+        } catch (Throwable error) {
+            Log.w(TAG, "Unable to show download progress", error);
+            return;
+        }
         final Context app = activity.getApplicationContext();
         EXECUTOR.execute(() -> {
             HttpURLConnection connection = null;
@@ -178,7 +234,18 @@ public final class TelegaOtaUpdater {
                 connection.setInstanceFollowRedirects(true);
                 if (connection.getResponseCode() != 200) throw new IllegalStateException("GitHub returned HTTP " + connection.getResponseCode());
                 long declared = connection.getContentLengthLong();
+                final long totalBytes = declared > 0 ? declared : expectedSize;
                 if (declared > MAX_APK_BYTES || expectedSize > MAX_APK_BYTES) throw new IllegalStateException("APK exceeds allowed size");
+                if (totalBytes > 0) {
+                    MAIN.post(() -> {
+                        try {
+                            if (progress.isShowing()) {
+                                progress.setIndeterminate(false);
+                                progress.setMax(100);
+                            }
+                        } catch (Throwable ignored) {}
+                    });
+                }
                 File dir = new File(app.getFilesDir(), "ota");
                 if (!dir.exists() && !dir.mkdirs()) throw new IllegalStateException("Cannot create update directory");
                 apk = new File(dir, "Telega-update.apk");
@@ -193,6 +260,14 @@ public final class TelegaOtaUpdater {
                         if (written > MAX_APK_BYTES) throw new IllegalStateException("APK exceeds allowed size");
                         sha.update(buffer, 0, count);
                         output.write(buffer, 0, count);
+                        if (totalBytes > 0) {
+                            final int percent = (int) Math.min(100L, (written * 100L) / totalBytes);
+                            MAIN.post(() -> {
+                                try {
+                                    if (progress.isShowing()) progress.setProgress(percent);
+                                } catch (Throwable ignored) {}
+                            });
+                        }
                     }
                 }
                 if (expectedSize > 0 && written != expectedSize) throw new IllegalStateException("APK size mismatch");
@@ -204,13 +279,17 @@ public final class TelegaOtaUpdater {
                 prefs(app).edit().putString("pending_file", apk.getAbsolutePath())
                         .putString("pending_tag", tag).putBoolean("awaiting_unknown_sources", false).apply();
                 MAIN.post(() -> {
+                    dismissProgress(progress);
                     Toast.makeText(app, "Обновление загружено. Подготавливаю установку…", Toast.LENGTH_LONG).show();
-                    installPending(activity);
+                    if (!activity.isFinishing() && !activity.isDestroyed()) installPending(activity);
                 });
             } catch (Throwable error) {
                 if (apk != null) apk.delete();
                 Log.e(TAG, "Update download/verification failed", error);
-                MAIN.post(() -> Toast.makeText(app, "Не удалось загрузить обновление. Текущая версия сохранена.", Toast.LENGTH_LONG).show());
+                MAIN.post(() -> {
+                    dismissProgress(progress);
+                    Toast.makeText(app, "Не удалось загрузить обновление. Текущая версия сохранена.", Toast.LENGTH_LONG).show();
+                });
             } finally {
                 if (connection != null) connection.disconnect();
             }
@@ -276,6 +355,12 @@ public final class TelegaOtaUpdater {
             PendingIntent pending = PendingIntent.getBroadcast(context, sessionId, result, flags);
             session.commit(pending.getIntentSender());
         }
+    }
+
+    private static void dismissProgress(ProgressDialog progress) {
+        try {
+            if (progress != null && progress.isShowing()) progress.dismiss();
+        } catch (Throwable ignored) {}
     }
 
     private static String toHex(byte[] bytes) {

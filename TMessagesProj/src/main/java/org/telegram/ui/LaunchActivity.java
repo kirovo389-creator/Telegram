@@ -419,7 +419,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             if (intent != null && intent.getAction() != null) {
                 if (Intent.ACTION_SEND.equals(intent.getAction()) || Intent.ACTION_SEND_MULTIPLE.equals(intent.getAction())) {
                     super.onCreate(savedInstanceState);
-        org.telegram.messenger.TelegaOtaUpdater.check(this);
                     finish();
                     return;
                 } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
@@ -447,6 +446,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         flagSecureReason.attach();
 
         super.onCreate(savedInstanceState);
+        org.telegram.messenger.TelegaOtaUpdater.check(this);
         if (Build.VERSION.SDK_INT >= 24) {
             AndroidUtilities.isInMultiwindow = isInMultiWindowMode();
         }

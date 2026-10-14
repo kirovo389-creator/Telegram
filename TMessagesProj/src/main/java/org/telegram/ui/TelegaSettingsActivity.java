@@ -15,6 +15,7 @@ import android.widget.Toast;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
 import org.telegram.messenger.TelegaFeatures;
+import org.telegram.messenger.TelegaOtaUpdater;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
@@ -74,6 +75,11 @@ public class TelegaSettingsActivity extends BaseFragment {
                         Toast.makeText(context, "Добавь минимум два прокси в настройках прокси Telegram", Toast.LENGTH_LONG).show();
                     }
                 });
+
+        addToggle(context, list, "Автообновление",
+                "Проверять GitHub Releases при каждом запуске приложения и предлагать установить новую версию.",
+                TelegaOtaUpdater.isEnabled(context),
+                (button, enabled) -> TelegaOtaUpdater.setEnabled(context, enabled));
 
         addToggle(context, list, "Auto Archive",
                 "Автоматически архивировать новые группы, каналы и ботов и отключать им звук.",
