@@ -338,7 +338,7 @@ public final class TelegaInstallReceiver extends BroadcastReceiver {
             context.getSharedPreferences("telega_ota", Context.MODE_PRIVATE).edit().remove("pending_file").apply();
             Toast.makeText(context, "Обновление Telega установлено", Toast.LENGTH_LONG).show();
         } else {
-            int detail = intent.getIntExtra(PackageInstaller.EXTRA_STATUS_MESSAGE, 0);
+            String detail = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
             Log.w("TelegaOTA", "Install failed, status=" + status + ", detail=" + detail);
             Toast.makeText(context, "Android не установил обновление. Проверь подпись APK и попробуй позже.", Toast.LENGTH_LONG).show();
         }
