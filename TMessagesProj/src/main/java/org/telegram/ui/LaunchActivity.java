@@ -6979,7 +6979,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         prefs.edit().putBoolean(prefKey, true).apply();
         new AlertDialog.Builder(this)
                 .setTitle("Поддержать Telega Beta")
-                .setMessage("Хочешь подписаться на канал TelegaForks и получать новости сборок?")
+                .setMessage("Спасибо за установку нашего форка «Telega»! 💙\n\nМы развиваем Telega Beta и выпускаем новые функции. Подпишись на канал TelegaForks, чтобы узнавать о сборках и обновлениях.")
                 .setNegativeButton("Не сейчас", null)
                 .setPositiveButton("Открыть канал", (dialog, which) -> {
                     try {

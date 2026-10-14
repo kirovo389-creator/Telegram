@@ -29601,8 +29601,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                     currentMessageObject.messageOwner.dialog_id, currentMessageObject.messageOwner.id)) {
             android.graphics.Paint telegaDeletedPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
             telegaDeletedPaint.setTextSize(org.telegram.messenger.AndroidUtilities.dp(14));
-            telegaDeletedPaint.setColor(0xFFE05D5D);
-            canvas.drawText("🗑", getWidth() - org.telegram.messenger.AndroidUtilities.dp(26), org.telegram.messenger.AndroidUtilities.dp(22), telegaDeletedPaint);
+            telegaDeletedPaint.setColor(0xFF858585);
+            canvas.drawText("🗑", org.telegram.messenger.AndroidUtilities.dp(12), getHeight() - org.telegram.messenger.AndroidUtilities.dp(10), telegaDeletedPaint);
         }
     }
 
