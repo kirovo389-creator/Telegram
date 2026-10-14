@@ -136,6 +136,34 @@ jobs:
           mkdir -p release-assets
           cp "$APK" release-assets/Telega-debug.apk
 
+      - name: Sign APK with stable OTA key when configured
+        shell: bash
+        env:
+          TELEGA_KEYSTORE_BASE64: ${{ secrets.TELEGA_KEYSTORE_BASE64 }}
+          TELEGA_KEYSTORE_PASSWORD: ${{ secrets.TELEGA_KEYSTORE_PASSWORD }}
+          TELEGA_KEY_ALIAS: ${{ secrets.TELEGA_KEY_ALIAS }}
+          TELEGA_KEY_PASSWORD: ${{ secrets.TELEGA_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -n "${TELEGA_KEYSTORE_BASE64:-}" ]; then
+            test -n "${TELEGA_KEYSTORE_PASSWORD:-}"
+            test -n "${TELEGA_KEY_ALIAS:-}"
+            test -n "${TELEGA_KEY_PASSWORD:-}"
+            echo "$TELEGA_KEYSTORE_BASE64" | base64 --decode > /tmp/telega-release.jks
+            "$ANDROID_HOME/build-tools/36.0.0/apksigner" sign \
+              --ks /tmp/telega-release.jks \
+              --ks-key-alias "$TELEGA_KEY_ALIAS" \
+              --ks-pass "pass:$TELEGA_KEYSTORE_PASSWORD" \
+              --key-pass "pass:$TELEGA_KEY_PASSWORD" \
+              --out release-assets/Telega-stable.apk \
+              release-assets/Telega-debug.apk
+            mv release-assets/Telega-stable.apk release-assets/Telega-debug.apk
+            "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose release-assets/Telega-debug.apk
+            echo "APK was signed using the configured persistent OTA key."
+          else
+            echo "::warning::Stable OTA signing key is not configured. The APK will use GitHub runner debug signing, so Android may reject in-place updates over an installed build."
+          fi
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
