@@ -741,7 +741,7 @@ preview_old = """                if (selectedEmojiCollectible != null) {
 preview_new = """                if (selectedEmojiCollectible != null) {
                     profilePreview.setStatusEmoji(selectedEmojiCollectible.document_id, true, animated);
                     if (type == PAGE_PROFILE && selectedPeerCollectible != null) {
-                        profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);
+                        profilePreview.setColor(MessagesController.PeerColor.fromPeerCollectible(selectedPeerCollectible), animated);
                         profilePreview.setEmoji(selectedPeerCollectible.background_emoji_id, false, animated);
                     } else {
                         profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedEmojiCollectible), animated);
@@ -750,14 +750,14 @@ preview_new = """                if (selectedEmojiCollectible != null) {
                 } else {"""
 if preview_old in pc:
     pc = pc.replace(preview_old, preview_new, 1)
-elif "profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);" not in pc:
+elif "profilePreview.setColor(MessagesController.PeerColor.fromPeerCollectible(selectedPeerCollectible), animated);" not in pc:
     print("ERROR: preview NFT color branch anchor missing", file=sys.stderr)
     sys.exit(1)
 
 preview_normal_old = """                    profilePreview.setColor(selectedColor, animated);
                     profilePreview.setEmoji(selectedEmoji, false, animated);"""
 preview_normal_new = """                    if (type == PAGE_PROFILE && selectedPeerCollectible != null) {
-                        profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);
+                        profilePreview.setColor(MessagesController.PeerColor.fromPeerCollectible(selectedPeerCollectible), animated);
                         profilePreview.setEmoji(selectedPeerCollectible.background_emoji_id, false, animated);
                     } else {
                         profilePreview.setColor(selectedColor, animated);
@@ -778,7 +778,7 @@ color_bar_old = """            if (type == PAGE_PROFILE && colorBar != null) {
             }"""
 color_bar_new = """            if (type == PAGE_PROFILE && colorBar != null) {
                 if (selectedPeerCollectible != null) {
-                    colorBar.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);
+                    colorBar.setColor(MessagesController.PeerColor.fromPeerCollectible(selectedPeerCollectible), animated);
                 } else if (selectedEmojiCollectible != null) {
                     colorBar.setColor(MessagesController.PeerColor.fromCollectible(selectedEmojiCollectible), animated);
                 } else {
@@ -787,11 +787,49 @@ color_bar_new = """            if (type == PAGE_PROFILE && colorBar != null) {
             }"""
 if color_bar_old in pc:
     pc = pc.replace(color_bar_old, color_bar_new, 1)
-elif "colorBar.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);" not in pc:
+elif "colorBar.setColor(MessagesController.PeerColor.fromPeerCollectible(selectedPeerCollectible), animated);" not in pc:
     print("ERROR: profile NFT color bar anchor missing", file=sys.stderr)
     sys.exit(1)
 
 peer_color_path.write_text(pc, encoding="utf-8")
+
+# Render real NFT peer-color palettes instead of returning an empty preview color.
+mc = controller_path.read_text(encoding="utf-8")
+peer_collectible_anchor = """            // TODO
+            return peerColor;
+        }
+
+        public static PeerColor fromCollectible(TLRPC.EmojiStatus status) {"""
+peer_collectible_replacement = """            int telegaFallbackColor = color.accent_color | 0xFF000000;
+            int telegaColorCount = color.colors == null ? 0 : color.colors.size();
+            for (int i = 0; i < peerColor.colors.length; i++) {
+                int raw = telegaColorCount > 0
+                        ? color.colors.get(Math.min(i, telegaColorCount - 1))
+                        : color.accent_color;
+                peerColor.colors[i] = raw | 0xFF000000;
+            }
+            int telegaDarkCount = color.dark_colors == null ? 0 : color.dark_colors.size();
+            int telegaDarkAccent = color.dark_accent_color != 0
+                    ? color.dark_accent_color | 0xFF000000 : telegaFallbackColor;
+            for (int i = 0; i < peerColor.darkColors.length; i++) {
+                int raw = telegaDarkCount > 0
+                        ? color.dark_colors.get(Math.min(i, telegaDarkCount - 1))
+                        : (color.dark_accent_color != 0 ? telegaDarkAccent : peerColor.colors[i]);
+                peerColor.darkColors[i] = raw | 0xFF000000;
+            }
+            peerColor.patternColor = telegaFallbackColor;
+            peerColor.textColor = telegaFallbackColor;
+            return peerColor;
+        }
+
+        public static PeerColor fromCollectible(TLRPC.EmojiStatus status) {"""
+if peer_collectible_anchor in mc:
+    mc = mc.replace(peer_collectible_anchor, peer_collectible_replacement, 1)
+elif "int telegaFallbackColor = color.accent_color | 0xFF000000;" not in mc:
+    print("ERROR: PeerColor.fromPeerCollectible implementation anchor missing", file=sys.stderr)
+    sys.exit(1)
+controller_path.write_text(mc, encoding="utf-8")
+
 
 # The native profile and name fields remain independent; render hidden name metadata on other Telega clients.
 pr = profile_path.read_text(encoding="utf-8")
