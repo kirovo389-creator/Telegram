@@ -11644,7 +11644,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         }
                         rightIconIsStatus = true;
                         rightIconIsPremium = false;
-                        user.emoji_status = telegaStatusToShow;\n                        nameTextView[a].setRightDrawable(getEmojiStatusDrawable(telegaStatusToShow, false, false, a));
+                        user.emoji_status = telegaStatusToShow;
+                        nameTextView[a].setRightDrawable(getEmojiStatusDrawable(telegaStatusToShow, false, false, a));
                         nameTextViewRightDrawableContentDescription = LocaleController.getString(R.string.AccDescrPremium);
                     } else if (getMessagesController().isPremiumUser(user)) {
                         rightIconIsStatus = false;
