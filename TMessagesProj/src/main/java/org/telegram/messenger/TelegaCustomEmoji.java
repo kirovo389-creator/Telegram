@@ -37,6 +37,9 @@ public final class TelegaCustomEmoji {
 
     public static Decoded decode(String text) {
         if (text == null || text.isEmpty()) return new Decoded(text == null ? "" : text, new ArrayList<>());
+        // Unicode tag payloads use the high surrogate 0xDB40. Most messages do not
+        // contain Telega metadata, so skip the full decoder scan for ordinary text.
+        if (text.indexOf((char) 0xDB40) < 0) return new Decoded(text, new ArrayList<>());
         StringBuilder clean = new StringBuilder(text.length());
         ArrayList<TLRPC.TL_messageEntityCustomEmoji> entities = new ArrayList<>();
         int i = 0;

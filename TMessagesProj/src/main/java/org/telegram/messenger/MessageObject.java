@@ -6122,8 +6122,8 @@ public class MessageObject {
             TelegaCustomEmoji.Decoded telegaDecoded = TelegaCustomEmoji.decode(messageText.toString());
             if (!telegaDecoded.entities.isEmpty()) {
                 messageText = telegaDecoded.text;
-                // Persist the cleaned fallback text and decoded entity offsets for local chat-list previews.
-                messageOwner.message = telegaDecoded.text;
+                // Keep the transport payload in messageOwner.message. Cached/reloaded
+                // messages must retain the hidden document IDs and decode them again.
                 if (messageOwner.entities == null) {
                     messageOwner.entities = new ArrayList<>();
                 }
