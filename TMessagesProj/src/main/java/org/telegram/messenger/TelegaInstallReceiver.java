@@ -26,7 +26,13 @@ public final class TelegaInstallReceiver extends BroadcastReceiver {
         } else {
             String detail = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
             Log.w("TelegaOTA", "Install failed, status=" + status + ", detail=" + detail);
-            Toast.makeText(context, "Android не установил обновление. Проверь подпись APK и попробуй позже.", Toast.LENGTH_LONG).show();
+            String message = "Android не установил обновление";
+            if (detail != null && !detail.trim().isEmpty()) {
+                message += ": " + detail;
+            } else {
+                message += ". Проверь, что APK подписан тем же ключом, что и установленная версия.";
+            }
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show();
         }
     }
 }

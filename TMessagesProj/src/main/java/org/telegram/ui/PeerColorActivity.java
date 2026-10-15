@@ -2230,7 +2230,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
             if (syncColor < 0 && savedStyle.contains("color")) syncColor = savedStyle.getInt("color", -1);
             if (syncBackgroundEmoji == 0 && savedStyle.contains("backgroundEmoji")) syncBackgroundEmoji = savedStyle.getLong("backgroundEmoji", 0);
         }
-        android.content.SharedPreferences saved = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + full.id, Context.MODE_PRIVATE);
+                android.content.SharedPreferences saved = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + full.id, Context.MODE_PRIVATE);
         int sharedProfileColor = syncColor;
         long sharedProfileEmoji = syncBackgroundEmoji;
         int sharedNameColor = TelegaLocalStatus.getNameColor(about);
