@@ -293,6 +293,23 @@ settings_text = settings_text.replace(
 )
 settings.write_text(settings_text, encoding="utf-8")
 
+# Surface the PackageInstaller reason instead of hiding install failures behind
+# a generic toast. This is especially useful for signature/package mismatches.
+receiver = root / "messenger" / "TelegaInstallReceiver.java"
+if receiver.exists():
+    receiver_text = receiver.read_text(encoding="utf-8")
+    old_failure = '''            Toast.makeText(context, "Android не установил обновление. Проверь подпись APK и попробуй позже.", Toast.LENGTH_LONG).show();'''
+    new_failure = '''            String message = "Android не установил обновление";
+            if (detail != null && !detail.trim().isEmpty()) {
+                message += ": " + detail;
+            } else {
+                message += ". Проверь, что APK подписан тем же ключом, что и установленная версия.";
+            }
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show();'''
+    if old_failure in receiver_text:
+        receiver_text = receiver_text.replace(old_failure, new_failure, 1)
+    receiver.write_text(receiver_text, encoding="utf-8")
+
 updater.write_text(u, encoding="utf-8")
 
 l = launch.read_text(encoding="utf-8")
