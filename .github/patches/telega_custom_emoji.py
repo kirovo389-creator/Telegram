@@ -149,7 +149,7 @@ new = '''                    try {
                             inserted.append(org.telegram.messenger.TelegaCustomEmoji.encode(customDocumentId, fallbackEmoji.length()));
                         }
                         messageEditText.setText(messageEditText.getText().insert(i, inserted));
-                        messageEditText.setSelection(i + fallbackEmoji.length(), i + fallbackEmoji.length());
+                        messageEditText.setSelection(i + inserted.length(), i + inserted.length());
                     } catch (Exception e) {'''
 if old not in s:
     print("ERROR: custom emoji input insertion anchor not found", file=sys.stderr)
