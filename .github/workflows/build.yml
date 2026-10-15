@@ -73,6 +73,8 @@ jobs:
           cp TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java /tmp/telega-preserve/LaunchActivity.java
           cp TMessagesProj/src/main/java/org/telegram/ui/TelegaSettingsActivity.java /tmp/telega-preserve/TelegaSettingsActivity.java
           cp TMessagesProj/src/main/java/org/telegram/messenger/TelegaOtaUpdater.java /tmp/telega-preserve/TelegaOtaUpdater.java
+          cp TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java /tmp/telega-preserve/ProfileActivity.java
+          cp TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java /tmp/telega-preserve/ChatMessageCell.java
           cp /tmp/telega-changelog.txt /tmp/telega-preserve/telega_changelog.txt
           git fetch --depth=1 https://github.com/DrKLO/Telegram.git master
           git read-tree --reset FETCH_HEAD
@@ -116,6 +118,8 @@ jobs:
           cp /tmp/telega-preserve/LaunchActivity.java TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
           cp /tmp/telega-preserve/TelegaSettingsActivity.java TMessagesProj/src/main/java/org/telegram/ui/TelegaSettingsActivity.java
           cp /tmp/telega-preserve/TelegaOtaUpdater.java TMessagesProj/src/main/java/org/telegram/messenger/TelegaOtaUpdater.java
+          cp /tmp/telega-preserve/ProfileActivity.java TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+          cp /tmp/telega-preserve/ChatMessageCell.java TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
           mkdir -p TMessagesProj/src/main/assets
           cp /tmp/telega-preserve/telega_changelog.txt TMessagesProj/src/main/assets/telega_changelog.txt
 
