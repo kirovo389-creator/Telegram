@@ -350,8 +350,9 @@ public final class TelegaOtaUpdater {
         try {
             installWithPackageInstaller(app, file);
         } catch (Throwable error) {
+            // Keep the failure in the diagnostic log; do not show the confusing
+            // installer toast during ordinary app startup.
             Log.e(TAG, "Android installer session failed", error);
-            Toast.makeText(app, "Не удалось открыть системный установщик. APK сохранён в данных приложения.", Toast.LENGTH_LONG).show();
         }
     }
 
