@@ -5428,7 +5428,25 @@ public class MessagesController extends BaseController implements NotificationCe
             final PeerColor peerColor = new PeerColor();
             peerColor.id = -1;
             peerColor.hidden = true;
-            // TODO
+            int telegaFallbackColor = color.accent_color | 0xFF000000;
+            int telegaColorCount = color.colors == null ? 0 : color.colors.size();
+            for (int i = 0; i < peerColor.colors.length; i++) {
+                int raw = telegaColorCount > 0
+                        ? color.colors.get(Math.min(i, telegaColorCount - 1))
+                        : color.accent_color;
+                peerColor.colors[i] = raw | 0xFF000000;
+            }
+            int telegaDarkCount = color.dark_colors == null ? 0 : color.dark_colors.size();
+            int telegaDarkAccent = color.dark_accent_color != 0
+                    ? color.dark_accent_color | 0xFF000000 : telegaFallbackColor;
+            for (int i = 0; i < peerColor.darkColors.length; i++) {
+                int raw = telegaDarkCount > 0
+                        ? color.dark_colors.get(Math.min(i, telegaDarkCount - 1))
+                        : (color.dark_accent_color != 0 ? telegaDarkAccent : peerColor.colors[i]);
+                peerColor.darkColors[i] = raw | 0xFF000000;
+            }
+            peerColor.patternColor = telegaFallbackColor;
+            peerColor.textColor = telegaFallbackColor;
             return peerColor;
         }
 

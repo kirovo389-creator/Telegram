@@ -1300,7 +1300,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                 if (selectedEmojiCollectible != null) {
                     profilePreview.setStatusEmoji(selectedEmojiCollectible.document_id, true, animated);
                     if (type == PAGE_PROFILE && selectedPeerCollectible != null) {
-                        profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);
+                        profilePreview.setColor(MessagesController.PeerColor.fromPeerCollectible(selectedPeerCollectible), animated);
                         profilePreview.setEmoji(selectedPeerCollectible.background_emoji_id, false, animated);
                     } else {
                         profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedEmojiCollectible), animated);
@@ -1313,7 +1313,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                         profilePreview.setStatusEmoji(DialogObject.getEmojiStatusDocumentId(dialogId), DialogObject.isEmojiStatusCollectible(dialogId), animated);
                     }
                     if (type == PAGE_PROFILE && selectedPeerCollectible != null) {
-                        profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);
+                        profilePreview.setColor(MessagesController.PeerColor.fromPeerCollectible(selectedPeerCollectible), animated);
                         profilePreview.setEmoji(selectedPeerCollectible.background_emoji_id, false, animated);
                     } else {
                         profilePreview.setColor(selectedColor, animated);
@@ -1323,7 +1323,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
             }
             if (type == PAGE_PROFILE && colorBar != null) {
                 if (selectedPeerCollectible != null) {
-                    colorBar.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);
+                    colorBar.setColor(MessagesController.PeerColor.fromPeerCollectible(selectedPeerCollectible), animated);
                 } else if (selectedEmojiCollectible != null) {
                     colorBar.setColor(MessagesController.PeerColor.fromCollectible(selectedEmojiCollectible), animated);
                 } else {
