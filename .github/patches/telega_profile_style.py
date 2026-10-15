@@ -177,7 +177,16 @@ method = '''    private void saveTelegaProfileStyle(TLRPC.User me, int color, lo
 
     private void syncTelegaProfileStyleMetadata(TLRPC.UserFull full, int color, long backgroundEmojiId) {
         String about = full.about == null ? "" : full.about;
-        String newAbout = TelegaLocalStatus.updateProfileStyle(about, color, backgroundEmojiId);
+        int syncColor = color;
+        long syncBackgroundEmoji = backgroundEmojiId;
+        if (!applyingProfile) {
+            android.content.SharedPreferences savedStyle = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + full.id, Context.MODE_PRIVATE);
+            syncColor = TelegaLocalStatus.getProfileColor(about);
+            syncBackgroundEmoji = TelegaLocalStatus.getProfileEmoji(about);
+            if (syncColor < 0 && savedStyle.contains("color")) syncColor = savedStyle.getInt("color", -1);
+            if (syncBackgroundEmoji == 0 && savedStyle.contains("backgroundEmoji")) syncBackgroundEmoji = savedStyle.getLong("backgroundEmoji", 0);
+        }
+        String newAbout = TelegaLocalStatus.updateProfileStyle(about, syncColor, syncBackgroundEmoji);
         if (about.equals(newAbout)) {
             getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
             return;
@@ -206,10 +215,10 @@ method = '''    private void saveTelegaProfileStyle(TLRPC.User me, int color, lo
         int bestId = availableColors.colors.get(0).id;
         long bestDistance = Long.MAX_VALUE;
         for (MessagesController.PeerColor candidate : availableColors.colors) {
-            if (candidate == null || candidate.hidden) {
+            if (candidate == null) {
                 continue;
             }
-            int rgb = candidate.getColor1(false);
+            int rgb = candidate.getColor1();
             long red = ((target >>> 16) & 0xFF) - ((rgb >>> 16) & 0xFF);
             long green = ((target >>> 8) & 0xFF) - ((rgb >>> 8) & 0xFF);
             long blue = (target & 0xFF) - (rgb & 0xFF);
