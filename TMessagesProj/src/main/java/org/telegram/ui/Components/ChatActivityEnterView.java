@@ -11919,7 +11919,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                             inserted.append(org.telegram.messenger.TelegaCustomEmoji.encode(customDocumentId, fallbackEmoji.length()));
                         }
                         messageEditText.setText(messageEditText.getText().insert(i, inserted));
-                        messageEditText.setSelection(i + fallbackEmoji.length(), i + fallbackEmoji.length());
+                        messageEditText.setSelection(i + inserted.length(), i + inserted.length());
                     } catch (Exception e) {
                         FileLog.e(e);
                     } finally {
