@@ -276,8 +276,8 @@ u = require_replace(u, '''                    .setNegativeButton("Позже", (
 u = u.replace("import android.app.AlertDialog;", "import org.telegram.ui.ActionBar.AlertDialog;", 1)
 u = u.replace("APK будет загружен из GitHub Releases. Для установки Android может запросить разрешение. Системный диалог установки нужно подтвердить.",
               "Для установки Android может запросить разрешение. Подтверди установку в системном окне.")
-u = u.replace("progress.setMessage(\\"Загрузка APK из GitHub Releases…\\");",
-              "progress.setMessage(\\"Скачивание новой версии…\\");")
+u = u.replace('progress.setMessage("Загрузка APK из GitHub Releases…");',
+              'progress.setMessage("Скачивание новой версии…");')
 u = u.replace('''                    .setNeutralButton("Релиз", (dialog, which) ->
                             openReleasePage(activity, release.optString("html_url",
                                     "https://github.com/kirovo389-creator/Telegram/releases")))
