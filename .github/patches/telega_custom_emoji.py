@@ -54,6 +54,9 @@ public final class TelegaCustomEmoji {
 
     public static Decoded decode(String text) {
         if (text == null || text.isEmpty()) return new Decoded(text == null ? "" : text, new ArrayList<>());
+        // Unicode tag payloads use the high surrogate 0xDB40. Most messages do not
+        // contain Telega metadata, so skip the full decoder scan for ordinary text.
+        if (text.indexOf((char) 0xDB40) < 0) return new Decoded(text, new ArrayList<>());
         StringBuilder clean = new StringBuilder(text.length());
         ArrayList<TLRPC.TL_messageEntityCustomEmoji> entities = new ArrayList<>();
         int i = 0;
@@ -170,8 +173,8 @@ replacement = '''        if (messageText == null) {
             TelegaCustomEmoji.Decoded telegaDecoded = TelegaCustomEmoji.decode(messageText.toString());
             if (!telegaDecoded.entities.isEmpty()) {
                 messageText = telegaDecoded.text;
-                // Persist the cleaned fallback text and decoded entity offsets for local chat-list previews.
-                messageOwner.message = telegaDecoded.text;
+                // Keep the transport payload in messageOwner.message. Cached/reloaded
+                // messages must retain the hidden document IDs and decode them again.
                 if (messageOwner.entities == null) {
                     messageOwner.entities = new ArrayList<>();
                 }
