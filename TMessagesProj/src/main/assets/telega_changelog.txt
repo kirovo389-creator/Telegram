@@ -1,0 +1,4 @@
+• ci: preserve direct Telega source edits and generate per-build changelog
+• fix: show changelog generated for this exact build
+• fix: remove confusing APK installer startup toast
+• ui: redesign Telega settings with grouped sections
