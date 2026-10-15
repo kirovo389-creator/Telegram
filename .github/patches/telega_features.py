@@ -554,22 +554,23 @@ if helper_start >= 0 and "TelegaLocalStatus.updateAllStyles" not in pc[helper_st
     if about_line in pc:
         pc = pc.replace(about_line, about_new, 1)
     else:
-        sync_line = '        String newAbout = TelegaLocalStatus.updateProfileStyle(about, syncColor, syncBackgroundEmoji);'
-        sync_new = """        android.content.SharedPreferences saved = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + full.id, Context.MODE_PRIVATE);
-        int sharedProfileColor = syncColor;
-        long sharedProfileEmoji = syncBackgroundEmoji;
-        int sharedNameColor = TelegaLocalStatus.getNameColor(about);
-        long sharedNameEmoji = TelegaLocalStatus.getNameEmoji(about);
-        if (saved.contains("nameColor")) {
-            sharedNameColor = saved.getInt("nameColor", sharedNameColor);
-            sharedNameEmoji = saved.getLong("nameEmoji", sharedNameEmoji);
-        }
-        String newAbout = TelegaLocalStatus.updateAllStyles(about, sharedProfileColor, sharedProfileEmoji, sharedNameColor, sharedNameEmoji);"""
-        if sync_line in pc:
-            pc = pc.replace(sync_line, sync_new, 1)
+        sync_pattern = re.compile(r'String newAbout = TelegaLocalStatus\\.updateProfileStyle\\(about,\\s*syncColor,\\s*syncBackgroundEmoji\\);')
+        if sync_pattern.search(pc):
+            pc = sync_pattern.sub(lambda match: sync_new, pc, count=1)
         elif "TelegaLocalStatus.updateAllStyles(about," not in pc:
-            print("ERROR: profile-style metadata merge anchor not found", file=sys.stderr)
-            sys.exit(1)
+            # Upstream sometimes changes whitespace or local variable formatting;
+            # replace only the update expression inside saveTelegaProfileStyle.
+            helper_end = min(len(pc), helper_start + 9000)
+            helper_body = pc[helper_start:helper_end]
+            generic_pattern = re.compile(r'String newAbout = TelegaLocalStatus\\.updateProfileStyle\\(about,\\s*[^,]+,\\s*[^)]+\\);')
+            match = generic_pattern.search(helper_body)
+            if match:
+                absolute_start = helper_start + match.start()
+                absolute_end = helper_start + match.end()
+                pc = pc[:absolute_start] + sync_new + pc[absolute_end:]
+            else:
+                print("ERROR: profile-style metadata merge anchor not found in saveTelegaProfileStyle", file=sys.stderr)
+                sys.exit(1)
 
 # NFT resale preview: choose the closest ordinary supported color and emoji, never invoke the buy flow.
 if "telegaClosestPeerColorId" not in pc:
