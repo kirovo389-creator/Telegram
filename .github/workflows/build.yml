@@ -52,9 +52,9 @@ jobs:
           # Build the in-app changelog from commits since the previous Telega release tag.
           last_release_tag="$(git tag --list 'telega-v2-build-*' --sort=-creatordate | head -n 1)"
           if [[ -n "$last_release_tag" ]]; then
-            git log --no-merges --format='• %s' "$last_release_tag..HEAD" > /tmp/telega-changelog.txt
+            git log --no-merges --format='• %s' "$last_release_tag..HEAD" | sed '/^• Import upstream source and configure Telega/d' > /tmp/telega-changelog.txt
           else
-            git log --no-merges --format='• %s' -n 8 HEAD > /tmp/telega-changelog.txt
+            git log --no-merges --format='• %s' -n 8 HEAD | sed '/^• Import upstream source and configure Telega/d' > /tmp/telega-changelog.txt
           fi
           if [[ ! -s /tmp/telega-changelog.txt ]]; then
             git log --no-merges --format='• %s' -n 5 HEAD > /tmp/telega-changelog.txt
@@ -140,6 +140,7 @@ jobs:
           app_gradle = Path("TMessagesProj_App/build.gradle").read_text(encoding="utf-8")
           entry_view = Path("TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java").read_text(encoding="utf-8")
           peer_color = Path("TMessagesProj/src/main/java/org/telegram/ui/PeerColorActivity.java").read_text(encoding="utf-8")
+          profile = Path("TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java").read_text(encoding="utf-8")
           assert launch.count("TelegaOtaUpdater.check(this)") == 1, "OTA check must be wired exactly once"
           assert "releases/latest" in ota, "OTA must query the latest stable GitHub Release"
           assert "return (versionBase + run) * 10L + 9L;" in ota, "OTA versionCode must match the ABI-aware APK versionCode"
@@ -162,6 +163,12 @@ jobs:
           assert "TelegaMessageEffects.onMessageBound(this," in message_cell, "message effect hook is missing"
           assert "Telega turbo downloads" in download_queue, "turbo download queue toggle is not wired"
           assert "TelegaLocalStatus.updateBio(" in Path("TMessagesProj/src/main/java/org/telegram/ui/ChangeBioActivity.java").read_text(encoding="utf-8"), "BIO metadata would be lost while editing the profile"
+          assert "readTelegaChangelog()" in launch and "telega_changelog.txt" in launch, "in-app changelog must use this build's generated notes"
+          assert "Не удалось открыть системный установщик" not in ota, "confusing installer toast must stay removed"
+          assert 'getSharedPreferences("telega_local_status"' in profile, "local emoji status fallback is missing"
+          assert "telegaTimeX" in message_cell, "deleted-message trash marker must be positioned relative to the timestamp"
+          assert "ПРОИЗВОДИТЕЛЬНОСТЬ" in settings, "grouped Telega settings UI is missing"
+          assert Path("TMessagesProj/src/main/assets/telega_changelog.txt").is_file(), "per-build changelog asset is missing"
           print("Patch syntax, Android XML, Telega branding, Unicode emoji cursor, shared profile sync/color mapper, themed OTA, installer permission, OTA versioning, badge/status transport, message effects, turbo downloads and release ABI configuration validated.")
           PY
 
