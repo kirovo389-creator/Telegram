@@ -52,9 +52,9 @@ jobs:
           # Build the in-app changelog from commits since the previous Telega release tag.
           last_release_tag="$(git tag --list 'telega-v2-build-*' --sort=-creatordate | head -n 1)"
           if [[ -n "$last_release_tag" ]]; then
-            git log --no-merges --format='• %s' "$last_release_tag..HEAD" | sed '/^• Import upstream source and configure Telega/d' > /tmp/telega-changelog.txt
+            git log --no-merges --format='• %s' "$last_release_tag..HEAD" | sed -e '/^• Import upstream source and configure Telega/d' -e '/^• ci:/d' -e '/^• test:/d' -e '/^• build:/d' -e '/^• docs:/d' -e '/^• chore:/d' > /tmp/telega-changelog.txt
           else
-            git log --no-merges --format='• %s' -n 8 HEAD | sed '/^• Import upstream source and configure Telega/d' > /tmp/telega-changelog.txt
+            git log --no-merges --format='• %s' -n 8 HEAD | sed -e '/^• Import upstream source and configure Telega/d' -e '/^• ci:/d' -e '/^• test:/d' -e '/^• build:/d' -e '/^• docs:/d' -e '/^• chore:/d' > /tmp/telega-changelog.txt
           fi
           if [[ ! -s /tmp/telega-changelog.txt ]]; then
             git log --no-merges --format='• %s' -n 5 HEAD > /tmp/telega-changelog.txt
