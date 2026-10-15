@@ -150,6 +150,7 @@ import java.util.Stack;
 import me.vkryl.android.animator.BoolAnimator;
 
 public class DialogCell extends BaseCell implements StoriesListPlaceProvider.AvatarOverlaysView, Theme.Colorable {
+    private static final Paint glassChatPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     public boolean collapsed;
     public boolean drawArchive = true;
@@ -4027,6 +4028,23 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
         }
 
         float cornersRadius = dp(8) * cornerProgress;
+        // TELEGA_GLASS_CHATS: opt-in translucent cards; dialog behavior remains unchanged.
+        if (org.telegram.messenger.TelegaFeatures.isGlassChatsEnabled()
+                && !isSelected && translationX == 0 && rightFragmentOpenedProgress == 0) {
+            rect.set(dp(7), dp(3), getMeasuredWidth() - dp(7), getMeasuredHeight() - dp(3));
+            int surfaceColor = Theme.getColor(Theme.key_windowBackgroundWhite, resourcesProvider);
+            int glassAlpha = Theme.isCurrentThemeDark() ? 92 : 118;
+            glassChatPaint.setColor(ColorUtils.setAlphaComponent(surfaceColor, glassAlpha));
+            glassChatPaint.setStyle(Paint.Style.FILL);
+            canvas.drawRoundRect(rect, dp(15), dp(15), glassChatPaint);
+            glassChatPaint.setColor(ColorUtils.setAlphaComponent(
+                    Theme.getColor(Theme.key_windowBackgroundWhite, resourcesProvider),
+                    Theme.isCurrentThemeDark() ? 105 : 150));
+            glassChatPaint.setStyle(Paint.Style.STROKE);
+            glassChatPaint.setStrokeWidth(dp(0.7f));
+            canvas.drawRoundRect(rect, dp(15), dp(15), glassChatPaint);
+            glassChatPaint.setStyle(Paint.Style.FILL);
+        }
         if (isSelected) {
             rect.set(0, 0, getMeasuredWidth(), AndroidUtilities.lerp(getMeasuredHeight(), getCollapsedHeight(), rightFragmentOpenedProgress));
             rect.offset(0, -translateY + collapseOffset);

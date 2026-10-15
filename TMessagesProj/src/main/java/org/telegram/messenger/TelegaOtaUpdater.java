@@ -1,7 +1,7 @@
 package org.telegram.messenger;
 
 import android.app.Activity;
-import android.app.AlertDialog;
+import org.telegram.ui.ActionBar.AlertDialog;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -210,7 +210,7 @@ public final class TelegaOtaUpdater {
             String message = "Доступна новая версия Telega Beta: " + tag
                     + "\n\n" + (notes.isEmpty() ? "Исправления и улучшения." : notes)
                     + "\n\nРазмер APK: " + sizeLabel
-                    + "\n\nAPK будет загружен из GitHub Releases. Для установки Android может запросить разрешение. Системный диалог установки нужно подтвердить.";
+                    + "\n\nДля установки Android может запросить разрешение. Подтверди установку в системном окне.";
             String url = release.optString("_telega_apk_url", "");
             String digest = release.optString("_telega_digest", "");
             new AlertDialog.Builder(activity)
@@ -219,10 +219,7 @@ public final class TelegaOtaUpdater {
                     .setNegativeButton("Позже", (dialog, which) ->
                             prefs(app).edit().putString("deferred_tag", tag)
                                     .putLong("deferred_at", System.currentTimeMillis()).apply())
-                    .setNeutralButton("Релиз", (dialog, which) ->
-                            openReleasePage(activity, release.optString("html_url",
-                                    "https://github.com/kirovo389-creator/Telegram/releases")))
-                    .setPositiveButton("Скачать и установить", (dialog, which) ->
+                    .setPositiveButton("Обновить", (dialog, which) ->
                             downloadApk(activity, url, digest, expectedSize, tag))
                     .show();
         } catch (Throwable error) {
@@ -234,7 +231,7 @@ public final class TelegaOtaUpdater {
         if (url == null || !url.startsWith(RELEASE_PREFIX)) return;
         final ProgressDialog progress = new ProgressDialog(activity);
         progress.setTitle("Обновление Telega");
-        progress.setMessage("Загрузка APK из GitHub Releases…");
+        progress.setMessage("Скачивание новой версии…");
         progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         progress.setIndeterminate(true);
         progress.setCancelable(false);
@@ -335,7 +332,7 @@ public final class TelegaOtaUpdater {
             preferences.edit().putBoolean("awaiting_unknown_sources", true).apply();
             new AlertDialog.Builder(activity)
                     .setTitle("Разрешение на обновление")
-                    .setMessage("Чтобы установить APK из GitHub Releases, разреши Telega устанавливать обновления из этого источника. Android покажет системный экран разрешений.")
+                    .setMessage("Разреши Telega устанавливать обновления из этого источника. Android откроет системный экран разрешений.")
                     .setNegativeButton("Позже", (dialog, which) -> {})
                     .setPositiveButton("Открыть настройки", (dialog, which) -> {
                         try {
