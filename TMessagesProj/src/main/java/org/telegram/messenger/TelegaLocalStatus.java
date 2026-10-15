@@ -12,9 +12,13 @@ public final class TelegaLocalStatus {
 
     private TelegaLocalStatus() {}
 
-    private static String encodePayload(String clean, long documentId, int until, int color, long backgroundEmojiId, int nameColor, long nameEmojiId) {
-        if (documentId == 0 && color < 0 && backgroundEmojiId == 0 && nameColor < 0 && nameEmojiId == 0) return clean;
-        String payload = PREFIX + Long.toString(Math.max(0, documentId), 36) + "." + Integer.toString(Math.max(0, until), 36) + "." + Integer.toString(color + 1, 36) + "." + Long.toString(Math.max(0, backgroundEmojiId), 36) + "." + Integer.toString(nameColor + 1, 36) + "." + Long.toString(Math.max(0, nameEmojiId), 36);
+    private static String encodePayload(String clean, long documentId, int until, int color, long backgroundEmojiId, boolean telegaUser) {
+        if (documentId == 0 && color < 0 && backgroundEmojiId == 0 && !telegaUser) return clean;
+        String payload = PREFIX + Long.toString(Math.max(0, documentId), 36)
+                + "." + Integer.toString(Math.max(0, until), 36)
+                + "." + Integer.toString(color + 1, 36)
+                + "." + Long.toString(Math.max(0, backgroundEmojiId), 36)
+                + "." + (telegaUser ? "1" : "0");
         StringBuilder hidden = new StringBuilder();
         for (int i = 0; i < payload.length(); i++) hidden.appendCodePoint(TAG_BASE + payload.charAt(i));
         hidden.appendCodePoint(TAG_END);
@@ -25,15 +29,34 @@ public final class TelegaLocalStatus {
         String source = about == null ? "" : about;
         int color = getProfileColor(source);
         long backgroundEmojiId = getProfileEmoji(source);
-        String clean = strip(source);
-        return encodePayload(clean, documentId, until, color, backgroundEmojiId, getNameColor(source), getNameEmoji(source));
+        boolean telegaUser = hasUserBadge(source);
+        return encodePayload(strip(source), documentId, until, color, backgroundEmojiId, telegaUser);
     }
 
     public static String updateProfileStyle(String about, int color, long backgroundEmojiId) {
         String source = about == null ? "" : about;
         long documentId = getDocumentId(source);
         int until = getUntil(source);
-        return encodePayload(strip(source), documentId, until, color, backgroundEmojiId, getNameColor(source), getNameEmoji(source));
+        boolean telegaUser = hasUserBadge(source);
+        return encodePayload(strip(source), documentId, until, color, backgroundEmojiId, telegaUser);
+    }
+
+    public static boolean hasUserBadge(String about) {
+        String[] parts = getParts(about);
+        return parts != null && parts.length >= 6 && "1".equals(parts[5]);
+    }
+
+    public static String updateUserBadge(String about, boolean enabled) {
+        String source = about == null ? "" : about;
+        return encodePayload(strip(source), getDocumentId(source), getUntil(source),
+                getProfileColor(source), getProfileEmoji(source), enabled);
+    }
+
+    public static String updateBio(String visibleAbout, String previousAbout) {
+        String old = previousAbout == null ? "" : previousAbout;
+        String clean = strip(visibleAbout == null ? "" : visibleAbout);
+        return encodePayload(clean, getDocumentId(old), getUntil(old), getProfileColor(old),
+                getProfileEmoji(old), hasUserBadge(old));
     }
 
     public static int getProfileColor(String about) {

@@ -2253,6 +2253,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                         nameString = showTopicIconInName ? ForumUtilities.getTopicSpannedName(forumTopic, Theme.dialogs_namePaint[paintIndex], topicIconInName, false) : AndroidUtilities.escape(forumTopic.title);
                     } else {
                         nameString = AndroidUtilities.escape(UserObject.getUserName(user));
+                        nameString = org.telegram.ui.Components.TelegaBadgeRendering.decorateDialogName(nameString, currentAccount, user, Theme.dialogs_namePaint[paintIndex]);
                     }
                 }
                 if (nameString != null && nameString.length() == 0) {

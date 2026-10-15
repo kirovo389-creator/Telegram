@@ -136,11 +136,25 @@ public final class TelegaFeatures {
         });
     }
 
+    public static boolean isTurboDownloadEnabled() {
+        return prefs().getBoolean("turbo_downloads", false);
+    }
+    public static void setTurboDownloadEnabled(boolean enabled) {
+        prefs().edit().putBoolean("turbo_downloads", enabled).apply();
+    }
+    public static boolean isMessageEffectsEnabled() {
+        return prefs().getBoolean("message_effects", true);
+    }
+    public static void setMessageEffectsEnabled(boolean enabled) {
+        prefs().edit().putBoolean("message_effects", enabled).apply();
+    }
+
     public static boolean isBadgeEnabled() {
         return prefs().getBoolean("telega_badge", false);
     }
     public static void setBadgeEnabled(boolean enabled) {
         prefs().edit().putBoolean("telega_badge", enabled).apply();
+        TelegaBadgeSync.update(UserConfig.selectedAccount, enabled);
         AndroidUtilities.runOnUIThread(() -> {
             try {
                 NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);

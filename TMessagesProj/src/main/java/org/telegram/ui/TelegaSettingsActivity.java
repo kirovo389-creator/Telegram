@@ -96,9 +96,18 @@ public class TelegaSettingsActivity extends BaseFragment {
                 (button, enabled) -> TelegaFeatures.setGlassChatsEnabled(enabled));
 
         addToggle(context, list, "Значок Telega",
-                "Пульсирующий значок рядом с твоим именем в собственном профиле.",
+                "Скрытая отметка в BIO показывает значок другим пользователям Telega Beta.",
                 TelegaFeatures.isBadgeEnabled(),
                 (button, enabled) -> TelegaFeatures.setBadgeEnabled(enabled));
+
+        addToggle(context, list, "Турбо-загрузка",
+                "Увеличивает число одновременно обрабатываемых загрузок до 10 на очередь. Скорость всё равно зависит от сети и серверов.",
+                TelegaFeatures.isTurboDownloadEnabled(),
+                (button, enabled) -> TelegaFeatures.setTurboDownloadEnabled(enabled));
+        addToggle(context, list, "Эффекты сообщений",
+                "Локальные анимации 🎉 ❤️ 🔥 👍 при появлении сообщения; данные для эффекта на сервер не отправляются.",
+                TelegaFeatures.isMessageEffectsEnabled(),
+                (button, enabled) -> TelegaFeatures.setMessageEffectsEnabled(enabled));
 
         fragmentView = scroll;
         return fragmentView;

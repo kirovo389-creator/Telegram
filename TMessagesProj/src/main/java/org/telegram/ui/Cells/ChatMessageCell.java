@@ -13331,6 +13331,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                                  boolean topNear,
                                  boolean firstInChat
     ) {
+
+        org.telegram.ui.Components.TelegaMessageEffects.onMessageBound(this, messageObject);
         setMessageObject(messageObject, groupedMessages, bottomNear, topNear, firstInChat, false);
     }
 

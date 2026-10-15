@@ -91,6 +91,8 @@ public class FileLoaderPriorityQueue {
         int lastPriority = 0;
         boolean pauseAllNextOperations = false;
         int max = type == TYPE_LARGE ? MessagesController.getInstance(currentAccount).largeQueueMaxActiveOperations : MessagesController.getInstance(currentAccount).smallQueueMaxActiveOperations;
+        // Telega turbo downloads: queue concurrency only; the MTProto transfer protocol is unchanged.
+        if (TelegaFeatures.isTurboDownloadEnabled()) max = Math.max(max, 10);
         tmpListOperations.clear();
         for (int i = 0; i < allOperations.size(); i++) {
             FileLoadOperation prevOperation = i > 0 ? allOperations.get(i - 1) : null;

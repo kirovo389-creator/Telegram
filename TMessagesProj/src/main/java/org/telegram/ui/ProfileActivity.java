@@ -11298,14 +11298,22 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
 
         if (nameTextView != null && nameTextView.length > 0 && nameTextView[0] != null) {
             boolean telegaOwnProfile = userId == UserConfig.getInstance(currentAccount).getClientUserId();
+            boolean telegaSharedBadge = userInfo != null && org.telegram.messenger.TelegaLocalStatus.hasUserBadge(userInfo.about);
+            boolean telegaShowBadge = telegaSharedBadge || (telegaOwnProfile && org.telegram.messenger.TelegaFeatures.isBadgeEnabled());
             org.telegram.ui.ActionBar.SimpleTextView telegaNameView = nameTextView[0];
             android.graphics.drawable.Drawable telegaRight = telegaNameView.getRightDrawable();
-            if (telegaOwnProfile && org.telegram.messenger.TelegaFeatures.isBadgeEnabled()) {
-                if (!(telegaRight instanceof org.telegram.ui.Components.TelegaBadgeDrawable)) {
-                    telegaNameView.setRightDrawable(new org.telegram.ui.Components.TelegaBadgeDrawable());
-                }
+            android.graphics.drawable.Drawable telegaPrimary = telegaRight;
+            if (telegaRight instanceof org.telegram.ui.Components.TelegaBadgePairDrawable) {
+                telegaPrimary = ((org.telegram.ui.Components.TelegaBadgePairDrawable) telegaRight).getPrimaryDrawable();
             } else if (telegaRight instanceof org.telegram.ui.Components.TelegaBadgeDrawable) {
-                telegaNameView.setRightDrawable((android.graphics.drawable.Drawable) null);
+                telegaPrimary = null;
+            }
+            if (telegaShowBadge) {
+                telegaNameView.setRightDrawable(new org.telegram.ui.Components.TelegaBadgePairDrawable(
+                        telegaPrimary, new org.telegram.ui.Components.TelegaBadgeDrawable()));
+            } else if (telegaRight instanceof org.telegram.ui.Components.TelegaBadgePairDrawable
+                    || telegaRight instanceof org.telegram.ui.Components.TelegaBadgeDrawable) {
+                telegaNameView.setRightDrawable(telegaPrimary);
             }
         }
 
