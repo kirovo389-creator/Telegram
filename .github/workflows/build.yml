@@ -190,7 +190,19 @@ jobs:
         run: |
           set -euo pipefail
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
+
+          # SDK downloads can occasionally be truncated on hosted runners. Retry
+          # cleanly instead of failing the entire Android build on a corrupt NDK ZIP.
+          for attempt in 1 2 3; do
+            if sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.22.1"; then
+              exit 0
+            fi
+            echo "::warning::Android SDK/NDK installation failed (attempt $attempt/3); clearing incomplete package downloads."
+            rm -rf "$ANDROID_HOME/ndk/27.2.12479018" "$ANDROID_HOME/.temp" "$HOME/.android/cache"
+            if [ "$attempt" -lt 3 ]; then sleep 5; fi
+          done
+          echo "::error::Android SDK/NDK installation failed after 3 attempts."
+          exit 1
 
       - name: Initialize source submodules
         run: git submodule update --init --recursive --depth=1
