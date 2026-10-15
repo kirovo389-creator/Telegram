@@ -258,7 +258,7 @@ if "showTelegaChangelogIfNeeded()" not in l:
     if call_anchor not in l:
         print("ERROR: LaunchActivity connection-state resume anchor missing", file=sys.stderr)
         sys.exit(1)
-    l = l.replace(call_anchor, call_anchor + "\n        getWindow().getDecorView().postDelayed(this::showTelegaChangelogIfNeeded, 1200);\n        getWindow().getDecorView().postDelayed(() -> org.telegram.messenger.TelegaFeatures.markAllUnreadReactionsAsRead(currentAccount), 1800);", 1)
+    l = l.replace(call_anchor, call_anchor + "\n        getWindow().getDecorView().postDelayed(this::showTelegaChangelogIfNeeded, 3000);\n        getWindow().getDecorView().postDelayed(() -> org.telegram.messenger.TelegaFeatures.markAllUnreadReactionsAsRead(currentAccount), 3800);", 1)
 launch.write_text(l, encoding="utf-8")
 
 print("Telega advanced fixes applied: Auto Proxy, automatic reaction read, simple article fallback, settings refresh, changelog.")

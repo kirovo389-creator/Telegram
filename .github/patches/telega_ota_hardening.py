@@ -285,7 +285,7 @@ resume_body = l[resume_match.start():resume_end]
 super_resume = "        super.onResume();"
 if super_resume not in resume_body:
     sys.exit("ERROR: LaunchActivity super.onResume anchor not found")
-resume_body = resume_body.replace(super_resume, super_resume + "\n        org.telegram.messenger.TelegaOtaUpdater.check(this);", 1)
+resume_body = resume_body.replace(super_resume, super_resume + "\n        getWindow().getDecorView().postDelayed(() -> org.telegram.messenger.TelegaOtaUpdater.check(this), 2500);", 1)
 l = l[:resume_match.start()] + resume_body + l[resume_end:]
 if l.count("TelegaOtaUpdater.check(this)") != 1:
     sys.exit("ERROR: OTA check must be wired exactly once")

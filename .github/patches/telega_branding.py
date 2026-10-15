@@ -26,14 +26,21 @@ def replace_visible(text):
     return "".join(tokens)
 
 def replace_words(text):
-    text = re.sub(r"(?<![A-Za-z])Telegram Beta(?![A-Za-z])", "Telega Beta", text)
-    return re.sub(r"(?<![A-Za-z])Telegram(?![A-Za-z])", "Telega", text)
+    text = re.sub(r"(?<![A-Za-z])Telegram Beta(?![A-Za-z])", "Telega Beta", text, flags=re.I)
+    return re.sub(r"(?<![A-Za-z])Telegram(?![A-Za-z])", "Telega", text, flags=re.I)
 
 changed_resources = 0
-for path in RES.glob("values*/strings.xml"):
+visible_xml_attribute = re.compile(r'(?P<name>(?:android:)?(?:label|title|text|contentDescription|summary|hint|description|tooltipText|accessibilityText))\s*=\s*"(?P<value>[^"]*)"', re.I)
+for path in RES.rglob("*.xml"):
     source = path.read_text(encoding="utf-8")
     original = source
     source = re.sub(r">([^<>]*)<", lambda m: ">" + replace_visible(m.group(1)) + "<", source)
+    def update_xml_attribute(match):
+        value = match.group("value")
+        if value.startswith(("@", "?")):
+            return match.group(0)
+        return match.group("name") + '="' + replace_visible(value) + '"'
+    source = visible_xml_attribute.sub(update_xml_attribute, source)
     if source != original:
         path.write_text(source, encoding="utf-8")
         changed_resources += 1
@@ -59,4 +66,4 @@ for path in JAVA.rglob("*.java"):
 if changed_resources == 0 and changed_java == 0:
     print("ERROR: no visible Telegram branding anchors found in upstream source", file=sys.stderr)
     sys.exit(1)
-print(f"Telega branding updated in {changed_resources} resource files and {changed_java} UI/source files.")
+print(f"Telega branding updated in {changed_resources} XML resource files and {changed_java} UI/source files.")

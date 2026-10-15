@@ -461,69 +461,28 @@ dc = deleted_cell_path.read_text(encoding="utf-8")
 if "telegaDeletedForDraw" in dc:
     dc = dc.replace(
         "        if (telegaDeletedForDraw) {\n            int telegaLayer = canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), 148);\n            super.dispatchDraw(canvas);\n            canvas.restoreToCount(telegaLayer);\n        } else {\n            super.dispatchDraw(canvas);\n        }",
-        "        setAlpha(telegaDeletedForDraw ? 0.56f : 1.0f);\n        super.dispatchDraw(canvas);",
+        "        setAlpha(telegaDeletedForDraw ? 0.64f : 1.0f);\n        super.dispatchDraw(canvas);",
         1
     )
     trash_old = '            android.graphics.Paint telegaDeletedPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);\n            telegaDeletedPaint.setTextSize(org.telegram.messenger.AndroidUtilities.dp(14));\n            telegaDeletedPaint.setColor(0xFF858585);\n            canvas.drawText("🗑", org.telegram.messenger.AndroidUtilities.dp(12), getHeight() - org.telegram.messenger.AndroidUtilities.dp(10), telegaDeletedPaint);'
     trash_new = '''            android.graphics.Paint telegaDeletedPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-            telegaDeletedPaint.setColor(0xFF858585);
+            telegaDeletedPaint.setColor(0xFFFF1744);
             telegaDeletedPaint.setStyle(android.graphics.Paint.Style.STROKE);
-            telegaDeletedPaint.setStrokeWidth(org.telegram.messenger.AndroidUtilities.dp(1.25f));
+            telegaDeletedPaint.setStrokeWidth(org.telegram.messenger.AndroidUtilities.dp(1.35f));
             telegaDeletedPaint.setStrokeCap(android.graphics.Paint.Cap.ROUND);
-            float telegaTrashX = getWidth() - org.telegram.messenger.AndroidUtilities.dp(29);
-            float telegaTrashY = getHeight() - org.telegram.messenger.AndroidUtilities.dp(16);
+            android.graphics.Rect telegaBubbleBounds = currentBackgroundDrawable == null ? null : currentBackgroundDrawable.getBounds();
+            float telegaBubbleRight = telegaBubbleBounds != null && !telegaBubbleBounds.isEmpty()
+                    ? telegaBubbleBounds.right
+                    : backgroundDrawableLeft + Math.max(backgroundDrawableRight, backgroundWidth);
+            float telegaBubbleBottom = telegaBubbleBounds != null && !telegaBubbleBounds.isEmpty()
+                    ? telegaBubbleBounds.bottom : getHeight();
+            float telegaTrashX = telegaBubbleRight - org.telegram.messenger.AndroidUtilities.dp(17);
+            float telegaTrashY = telegaBubbleBottom - org.telegram.messenger.AndroidUtilities.dp(13);
             float telegaTrashW = org.telegram.messenger.AndroidUtilities.dp(8);
             float telegaTrashH = org.telegram.messenger.AndroidUtilities.dp(9);
             canvas.drawRoundRect(telegaTrashX, telegaTrashY + org.telegram.messenger.AndroidUtilities.dp(3), telegaTrashX + telegaTrashW, telegaTrashY + telegaTrashH, org.telegram.messenger.AndroidUtilities.dp(1), org.telegram.messenger.AndroidUtilities.dp(1), telegaDeletedPaint);
             canvas.drawLine(telegaTrashX - org.telegram.messenger.AndroidUtilities.dp(1), telegaTrashY + org.telegram.messenger.AndroidUtilities.dp(2), telegaTrashX + telegaTrashW + org.telegram.messenger.AndroidUtilities.dp(1), telegaTrashY + org.telegram.messenger.AndroidUtilities.dp(2), telegaDeletedPaint);
             canvas.drawLine(telegaTrashX + org.telegram.messenger.AndroidUtilities.dp(2), telegaTrashY, telegaTrashX + org.telegram.messenger.AndroidUtilities.dp(6), telegaTrashY, telegaDeletedPaint);'''
-    if trash_old in dc:
-        dc = dc.replace(trash_old, trash_new, 1)
-    elif 'canvas.drawText("🗑"' in dc:
-        print("ERROR: deleted-message emoji marker source changed", file=sys.stderr)
-        sys.exit(1)
-    deleted_cell_path.write_text(dc, encoding="utf-8")
-
-# Extend hidden profile metadata to keep name color/name emoji when profile color is changed, and vice versa.
-st = status_path.read_text(encoding="utf-8")
-if "getNameColor(String about)" not in st:
-    old_sig = "private static String encodePayload(String clean, long documentId, int until, int color, long backgroundEmojiId) {"
-    if old_sig not in st:
-        print("ERROR: TelegaLocalStatus encodePayload signature changed", file=sys.stderr)
-        sys.exit(1)
-    st = st.replace(old_sig, "private static String encodePayload(String clean, long documentId, int until, int color, long backgroundEmojiId, int nameColor, long nameEmojiId) {", 1)
-    old_guard = "if (documentId == 0 && color < 0 && backgroundEmojiId == 0) return clean;"
-    st = st.replace(old_guard, "if (documentId == 0 && color < 0 && backgroundEmojiId == 0 && nameColor < 0 && nameEmojiId == 0) return clean;", 1)
-    old_payload = 'String payload = PREFIX + Long.toString(Math.max(0, documentId), 36) + "." + Integer.toString(Math.max(0, until), 36) + "." + Integer.toString(color + 1, 36) + "." + Long.toString(Math.max(0, backgroundEmojiId), 36);'
-    new_payload = 'String payload = PREFIX + Long.toString(Math.max(0, documentId), 36) + "." + Integer.toString(Math.max(0, until), 36) + "." + Integer.toString(color + 1, 36) + "." + Long.toString(Math.max(0, backgroundEmojiId), 36) + "." + Integer.toString(nameColor + 1, 36) + "." + Long.toString(Math.max(0, nameEmojiId), 36);'
-    if old_payload not in st:
-        print("ERROR: TelegaLocalStatus payload layout anchor not found", file=sys.stderr)
-        sys.exit(1)
-    st = st.replace(old_payload, new_payload, 1)
-    # Calls to the encoder preserve the existing name style unless explicit values are supplied.
-    st = st.replace("return encodePayload(clean, documentId, until, color, backgroundEmojiId);",
-                    "return encodePayload(clean, documentId, until, color, backgroundEmojiId, getNameColor(source), getNameEmoji(source));", 1)
-    st = st.replace("return encodePayload(strip(source), documentId, until, color, backgroundEmojiId);",
-                    "return encodePayload(strip(source), documentId, until, color, backgroundEmojiId, getNameColor(source), getNameEmoji(source));", 1)
-    insert_anchor = "    private static String[] getParts(String about) {"
-    methods = r'''    public static int getNameColor(String about) {
-        String[] parts = getParts(about);
-        if (parts == null || parts.length < 7) return -1;
-        try { return Integer.parseInt(parts[5], 36) - 1; } catch (Throwable ignore) { return -1; }
-    }
-
-    public static long getNameEmoji(String about) {
-        String[] parts = getParts(about);
-        if (parts == null || parts.length < 7) return 0;
-        try { return Long.parseLong(parts[6], 36); } catch (Throwable ignore) { return 0; }
-    }
-
-    public static String updateAllStyles(String about, int profileColor, long profileEmoji, int nameColor, long nameEmoji) {
-        String source = about == null ? "" : about;
-        return encodePayload(strip(source), getDocumentId(source), getUntil(source), profileColor, profileEmoji, nameColor, nameEmoji);
-    }
-
-'''
     if insert_anchor not in st:
         print("ERROR: TelegaLocalStatus parts method anchor not found", file=sys.stderr)
         sys.exit(1)
@@ -538,8 +497,12 @@ if helper_start >= 0 and "TelegaLocalStatus.updateAllStyles" not in pc[helper_st
     about_new = '''        String about = full.about == null ? "" : full.about;
         int sharedProfileColor = applyingProfile ? color : TelegaLocalStatus.getProfileColor(about);
         long sharedProfileEmoji = applyingProfile ? backgroundEmojiId : TelegaLocalStatus.getProfileEmoji(about);
-        int sharedNameColor = applyingName ? UserObject.getColorId(me) : TelegaLocalStatus.getNameColor(about);
-        long sharedNameEmoji = applyingName ? UserObject.getEmojiId(me) : TelegaLocalStatus.getNameEmoji(about);
+        int sharedNameColor = applyingName ? (namePage == null ? UserObject.getColorId(me) : namePage.selectedColor) : TelegaLocalStatus.getNameColor(about);
+        long sharedNameEmoji = applyingName ? (namePage == null ? UserObject.getEmojiId(me) : namePage.selectedEmoji) : TelegaLocalStatus.getNameEmoji(about);
+        if (applyingName && namePage != null && namePage.selectedPeerCollectible != null) {
+            sharedNameColor = telegaClosestPeerColorId(namePage.selectedPeerCollectible.accent_color, PAGE_NAME);
+            sharedNameEmoji = namePage.selectedPeerCollectible.background_emoji_id;
+        }
         String newAbout = TelegaLocalStatus.updateAllStyles(about, sharedProfileColor, sharedProfileEmoji, sharedNameColor, sharedNameEmoji);'''
     if about_line not in pc:
         print("ERROR: profile-style metadata merge anchor not found", file=sys.stderr)
@@ -576,20 +539,207 @@ if "telegaClosestPeerColorId" not in pc:
         print("ERROR: PeerColorActivity NFT helper insertion point not found", file=sys.stderr)
         sys.exit(1)
     pc = pc.replace(insert_anchor, method + insert_anchor, 1)
-if "selectedResaleGift = gift;" in pc:
-    pc = pc.replace("                        selectedResaleGift = gift;\n                        updateProfilePreview(true);",
-                    '''                        selectedResaleGift = null;
-                        if (gift.peer_color instanceof TLRPC.TL_peerColorCollectible) {
-                            TLRPC.TL_peerColorCollectible telegaNftColor = (TLRPC.TL_peerColorCollectible) gift.peer_color;
-                            selectedColor = telegaClosestPeerColorId(telegaNftColor.accent_color, type);
-                            selectedEmoji = telegaNftColor.background_emoji_id;
-                        } else {
-                            selectedColor = 0;
+# Telega profile-color NFT selection must preserve the collectible ID.
+# Load the current profile-color collectible so it stays selected after reopening the picker.
+profile_setup_old = """                    selectedEmojiCollectible = user != null && user.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? (TLRPC.TL_emojiStatusCollectible) user.emoji_status : null;
+                    selectedPeerCollectible = null;"""
+profile_setup_new = """                    selectedEmojiCollectible = user != null && user.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? (TLRPC.TL_emojiStatusCollectible) user.emoji_status : null;
+                    selectedPeerCollectible = user != null && user.profile_color instanceof TLRPC.TL_peerColorCollectible ? (TLRPC.TL_peerColorCollectible) user.profile_color : null;"""
+if profile_setup_old in pc:
+    pc = pc.replace(profile_setup_old, profile_setup_new, 1)
+elif "user.profile_color instanceof TLRPC.TL_peerColorCollectible ? (TLRPC.TL_peerColorCollectible) user.profile_color" not in pc:
+    print("ERROR: profile NFT restore-on-open anchor missing", file=sys.stderr)
+    sys.exit(1)
+
+owned_nft_old = """                        if (type == PAGE_NAME) {
+                            if (!(gift.peer_color instanceof TLRPC.TL_peerColorCollectible)) return;
                             selectedEmoji = 0;
+                            selectedColor = -1;
+                            selectedResaleGift = null;
+                            selectedEmojiCollectible = null;
+                            selectedPeerCollectible = (TLRPC.TL_peerColorCollectible) gift.peer_color;
+                        } else {
+                            selectedEmoji = 0;
+                            selectedColor = -1;
+                            selectedResaleGift = null;
+                            selectedEmojiCollectible = MessagesController.emojiStatusCollectibleFromGift(gift);
+                            selectedPeerCollectible = null;
+                        }"""
+owned_nft_new = """                        // TELEGA_PROFILE_COLOR_NFT_SELECTION_V2
+                        if (type == PAGE_NAME) {
+                            if (!(gift.peer_color instanceof TLRPC.TL_peerColorCollectible)) return;
+                            selectedEmoji = 0;
+                            selectedColor = -1;
+                            selectedResaleGift = null;
+                            selectedEmojiCollectible = null;
+                            selectedPeerCollectible = (TLRPC.TL_peerColorCollectible) gift.peer_color;
+                        } else if (gift.peer_color instanceof TLRPC.TL_peerColorCollectible) {
+                            selectedEmoji = 0;
+                            selectedColor = -1;
+                            selectedResaleGift = null;
+                            selectedPeerCollectible = (TLRPC.TL_peerColorCollectible) gift.peer_color;
+                        } else {
+                            selectedEmoji = 0;
+                            selectedColor = -1;
+                            selectedResaleGift = null;
+                            selectedEmojiCollectible = MessagesController.emojiStatusCollectibleFromGift(gift);
+                            selectedPeerCollectible = null;
+                        }"""
+if owned_nft_old in pc:
+    pc = pc.replace(owned_nft_old, owned_nft_new, 1)
+elif "TELEGA_PROFILE_COLOR_NFT_SELECTION_V2" not in pc:
+    print("ERROR: owned NFT selection anchor missing in PeerColorActivity", file=sys.stderr)
+    sys.exit(1)
+
+resale_nft_old = """                        if (type == PAGE_NAME) {
+                            if (!(gift.peer_color instanceof TLRPC.TL_peerColorCollectible)) return;
+                            selectedEmoji = 0;
+                            selectedColor = -1;
+                            selectedEmojiCollectible = null;
+                            selectedPeerCollectible = (TLRPC.TL_peerColorCollectible) gift.peer_color;
+                        } else {
+                            selectedEmoji = 0;
+                            selectedColor = -1;
+                            selectedEmojiCollectible = MessagesController.emojiStatusCollectibleFromGift(gift);
+                            selectedPeerCollectible = null;
                         }
-                        selectedEmojiCollectible = null;
-                        selectedPeerCollectible = null;
-                        updateProfilePreview(true);''', 1)
+                        selectedResaleGift = gift;"""
+resale_nft_new = """                        // TELEGA_PROFILE_COLOR_NFT_RESALE_V2
+                        if (type == PAGE_NAME) {
+                            if (!(gift.peer_color instanceof TLRPC.TL_peerColorCollectible)) return;
+                            selectedEmoji = 0;
+                            selectedColor = -1;
+                            selectedEmojiCollectible = null;
+                            selectedPeerCollectible = (TLRPC.TL_peerColorCollectible) gift.peer_color;
+                        } else if (gift.peer_color instanceof TLRPC.TL_peerColorCollectible) {
+                            selectedEmoji = 0;
+                            selectedColor = -1;
+                            selectedPeerCollectible = (TLRPC.TL_peerColorCollectible) gift.peer_color;
+                        } else {
+                            selectedEmoji = 0;
+                            selectedColor = -1;
+                            selectedEmojiCollectible = MessagesController.emojiStatusCollectibleFromGift(gift);
+                            selectedPeerCollectible = null;
+                        }
+                        selectedResaleGift = gift;"""
+if resale_nft_old in pc:
+    pc = pc.replace(resale_nft_old, resale_nft_new, 1)
+elif "TELEGA_PROFILE_COLOR_NFT_RESALE_V2" not in pc:
+    print("ERROR: resale NFT selection anchor missing in PeerColorActivity", file=sys.stderr)
+    sys.exit(1)
+
+# The profile page has independent color and emoji-status collectible fields.
+profile_unsaved_old = """                    return !(selectedColor == (me.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? -1 : UserObject.getProfileColorId(me)) && selectedEmoji == (me.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? 0 : UserObject.getOnlyProfileEmojiId(me)) && eq(me.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? (TLRPC.TL_emojiStatusCollectible) me.emoji_status : null , selectedEmojiCollectible));"""
+profile_unsaved_new = """                    final boolean a = selectedColor == (me.profile_color instanceof TLRPC.TL_peerColorCollectible ? -1 : UserObject.getProfileColorId(me));
+                    final boolean b = selectedEmoji == (me.profile_color instanceof TLRPC.TL_peerColorCollectible ? 0 : UserObject.getOnlyProfileEmojiId(me));
+                    final boolean c = eq(me.profile_color instanceof TLRPC.TL_peerColorCollectible ? (TLRPC.TL_peerColorCollectible) me.profile_color : null, selectedPeerCollectible);
+                    final boolean d = eq(me.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? (TLRPC.TL_emojiStatusCollectible) me.emoji_status : null, selectedEmojiCollectible);
+                    return !(a && b && c && d);"""
+if profile_unsaved_old in pc:
+    pc = pc.replace(profile_unsaved_old, profile_unsaved_new, 1)
+elif "final boolean c = eq(me.profile_color instanceof TLRPC.TL_peerColorCollectible" not in pc:
+    print("ERROR: profile NFT unsaved-state anchor missing", file=sys.stderr)
+    sys.exit(1)
+
+# Include profile color collectible IDs in the submit condition; status emoji is submitted separately.
+compare_old = """profilePage.selectedColor != UserObject.getProfileColorId(me) ||
+                            profilePage.selectedEmoji != UserObject.getOnlyProfileEmojiId(me) ||
+                            (profilePage.selectedEmojiCollectible == null ? 0 : profilePage.selectedEmojiCollectible.collectible_id) != UserObject.getProfileCollectibleId(me)"""
+compare_new = """profilePage.selectedColor != (me.profile_color instanceof TLRPC.TL_peerColorCollectible ? -1 : UserObject.getProfileColorId(me)) ||
+                            profilePage.selectedEmoji != (me.profile_color instanceof TLRPC.TL_peerColorCollectible ? 0 : UserObject.getOnlyProfileEmojiId(me)) ||
+                            (profilePage.selectedPeerCollectible == null ? 0 : profilePage.selectedPeerCollectible.collectible_id) != (me.profile_color instanceof TLRPC.TL_peerColorCollectible ? me.profile_color.collectible_id : 0)"""
+if compare_new not in pc:
+    if compare_old not in pc:
+        print("ERROR: profile color comparison anchor missing", file=sys.stderr)
+        sys.exit(1)
+    pc = pc.replace(compare_old, compare_new, 1)
+
+# The profile-color API accepts an InputPeerColorCollectible. Preserve the original ordinary-color path otherwise.
+if "TELEGA_PROFILE_COLOR_APPLY_V2" not in pc:
+    profile_apply_start = pc.find("                if (profilePage.selectedColor < 0) {", pc.find("req.for_profile = true;"))
+    profile_apply_end = pc.find("                getConnectionsManager().sendRequest(req, null);", profile_apply_start)
+    if profile_apply_start < 0 or profile_apply_end < 0:
+        print("ERROR: profile color application block anchor missing", file=sys.stderr)
+        sys.exit(1)
+    original_body = pc[profile_apply_start:profile_apply_end]
+    indented_original = "\n".join("    " + line for line in original_body.split("\n"))
+    apply_body = """                // TELEGA_PROFILE_COLOR_APPLY_V2
+                if (profilePage.selectedPeerCollectible != null) {
+                    req.flags |= 4;
+                    TLRPC.TL_inputPeerColorCollectible telegaInputProfileColor = new TLRPC.TL_inputPeerColorCollectible();
+                    telegaInputProfileColor.collectible_id = profilePage.selectedPeerCollectible.collectible_id;
+                    req.color = telegaInputProfileColor;
+                    me.profile_color = profilePage.selectedPeerCollectible;
+                } else {
+                    if (me.profile_color instanceof TLRPC.TL_peerColorCollectible) {
+                        me.profile_color = new TLRPC.TL_peerColor();
+                    }
+""" + indented_original + """
+                }
+"""
+    pc = pc[:profile_apply_start] + apply_body + pc[profile_apply_end:]
+
+# Render the profile color collectible separately from any emoji-status collectible.
+preview_old = """                if (selectedEmojiCollectible != null) {
+                    profilePreview.setStatusEmoji(selectedEmojiCollectible.document_id, true, animated);
+                    profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedEmojiCollectible), animated);
+                    profilePreview.setEmoji(selectedEmojiCollectible.pattern_document_id, true, animated);
+                } else {"""
+preview_new = """                if (selectedEmojiCollectible != null) {
+                    profilePreview.setStatusEmoji(selectedEmojiCollectible.document_id, true, animated);
+                    if (type == PAGE_PROFILE && selectedPeerCollectible != null) {
+                        profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);
+                        profilePreview.setEmoji(selectedPeerCollectible.background_emoji_id, false, animated);
+                    } else {
+                        profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedEmojiCollectible), animated);
+                        profilePreview.setEmoji(selectedEmojiCollectible.pattern_document_id, true, animated);
+                    }
+                } else {"""
+if preview_old in pc:
+    pc = pc.replace(preview_old, preview_new, 1)
+elif "profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);" not in pc:
+    print("ERROR: preview NFT color branch anchor missing", file=sys.stderr)
+    sys.exit(1)
+
+preview_normal_old = """                    profilePreview.setColor(selectedColor, animated);
+                    profilePreview.setEmoji(selectedEmoji, false, animated);"""
+preview_normal_new = """                    if (type == PAGE_PROFILE && selectedPeerCollectible != null) {
+                        profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);
+                        profilePreview.setEmoji(selectedPeerCollectible.background_emoji_id, false, animated);
+                    } else {
+                        profilePreview.setColor(selectedColor, animated);
+                        profilePreview.setEmoji(selectedEmoji, false, animated);
+                    }"""
+if preview_normal_old in pc:
+    pc = pc.replace(preview_normal_old, preview_normal_new, 1)
+elif "profilePreview.setColor(selectedColor, animated);" in pc:
+    print("ERROR: ordinary profile preview branch was not updated", file=sys.stderr)
+    sys.exit(1)
+
+color_bar_old = """            if (type == PAGE_PROFILE && colorBar != null) {
+                if (selectedEmojiCollectible != null) {
+                    colorBar.setColor(MessagesController.PeerColor.fromCollectible(selectedEmojiCollectible), animated);
+                } else {
+                    colorBar.setColor(currentAccount, selectedColor, animated);
+                }
+            }"""
+color_bar_new = """            if (type == PAGE_PROFILE && colorBar != null) {
+                if (selectedPeerCollectible != null) {
+                    colorBar.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);
+                } else if (selectedEmojiCollectible != null) {
+                    colorBar.setColor(MessagesController.PeerColor.fromCollectible(selectedEmojiCollectible), animated);
+                } else {
+                    colorBar.setColor(currentAccount, selectedColor, animated);
+                }
+            }"""
+if color_bar_old in pc:
+    pc = pc.replace(color_bar_old, color_bar_new, 1)
+elif "colorBar.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);" not in pc:
+    print("ERROR: profile NFT color bar anchor missing", file=sys.stderr)
+    sys.exit(1)
+
+peer_color_path.write_text(pc, encoding="utf-8")
+
 # The native profile and name fields remain independent; render hidden name metadata on other Telega clients.
 pr = profile_path.read_text(encoding="utf-8")
 name_hook = "int telegaNameColor = userInfo == null ? -1 : TelegaLocalStatus.getNameColor(userInfo.about);"
@@ -614,12 +764,22 @@ if name_hook not in pr:
             if end_guard >= 0:
                 end_guard += len("\n        }")
                 name_code = r'''
-
+ 
         if (userInfo != null && userId != 0) {
             TLRPC.User telegaNameUser = getMessagesController().getUser(userId);
             int telegaNameColor = TelegaLocalStatus.getNameColor(userInfo.about);
             long telegaNameEmoji = TelegaLocalStatus.getNameEmoji(userInfo.about);
-            if (telegaNameUser != null && (telegaNameColor >= 0 || telegaNameEmoji > 0)) {
+            boolean telegaHasLocalNameStyle = false;
+            if (telegaNameUser != null && userId == UserConfig.getInstance(currentAccount).getClientUserId()) {
+                android.content.SharedPreferences telegaNamePrefs = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + userId, 0);
+                telegaHasLocalNameStyle = telegaNamePrefs.contains("nameColor");
+                if (telegaHasLocalNameStyle) {
+                    telegaNameColor = telegaNamePrefs.getInt("nameColor", -1);
+                    telegaNameEmoji = telegaNamePrefs.getLong("nameEmoji", 0);
+                }
+            }
+            if (telegaNameUser != null && (telegaNameColor >= 0 || telegaNameEmoji > 0 || telegaHasLocalNameStyle)
+                    && !(telegaNameUser.color instanceof TLRPC.TL_peerColorCollectible)) {
                 if (telegaNameUser.color == null || !(telegaNameUser.color instanceof TLRPC.TL_peerColor)) {
                     telegaNameUser.color = new TLRPC.TL_peerColor();
                 }
@@ -627,10 +787,16 @@ if name_hook not in pr:
                 if (telegaNameColor >= 0) {
                     telegaPeerNameColor.flags |= 1;
                     telegaPeerNameColor.color = telegaNameColor;
+                } else if (telegaHasLocalNameStyle) {
+                    telegaPeerNameColor.flags &= ~1;
+                    telegaPeerNameColor.color = 0;
                 }
                 if (telegaNameEmoji > 0) {
                     telegaPeerNameColor.flags |= 2;
                     telegaPeerNameColor.background_emoji_id = telegaNameEmoji;
+                } else if (telegaHasLocalNameStyle) {
+                    telegaPeerNameColor.flags &= ~2;
+                    telegaPeerNameColor.background_emoji_id = 0;
                 }
             }
         }

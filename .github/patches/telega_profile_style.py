@@ -104,17 +104,53 @@ c = c.replace(call, "            saveTelegaProfileStyle(me, profilePage.selected
 method_anchor = "    private void showBulletin() {"
 method = '''    private void saveTelegaProfileStyle(TLRPC.User me, int color, long backgroundEmojiId) {
         if (me == null) return;
-        // Keep a durable device-side copy even if Telegram does not accept the bio metadata.
-        ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + me.id, Context.MODE_PRIVATE)
-                .edit().putInt("color", color).putLong("backgroundEmoji", backgroundEmojiId).apply();
-        if (me.profile_color == null) me.profile_color = new TLRPC.TL_peerColor();
-        if (color >= 0) {
-            me.profile_color.flags |= 1;
-            me.profile_color.color = color;
+
+        if (applyingProfile && profilePage != null && profilePage.selectedPeerCollectible != null) {
+            TLRPC.TL_peerColorCollectible telegaProfileCollectible = profilePage.selectedPeerCollectible;
+            color = telegaClosestPeerColorId(telegaProfileCollectible.accent_color, PAGE_PROFILE);
+            backgroundEmojiId = telegaProfileCollectible.background_emoji_id;
         }
-        if (backgroundEmojiId > 0) {
-            me.profile_color.flags |= 2;
-            me.profile_color.background_emoji_id = backgroundEmojiId;
+        int telegaNameColor = namePage == null ? UserObject.getColorId(me) : namePage.selectedColor;
+        long telegaNameEmoji = namePage == null ? UserObject.getEmojiId(me) : namePage.selectedEmoji;
+        if (applyingName && namePage != null && namePage.selectedPeerCollectible != null) {
+            TLRPC.TL_peerColorCollectible telegaNameCollectible = namePage.selectedPeerCollectible;
+            telegaNameColor = telegaClosestPeerColorId(telegaNameCollectible.accent_color, PAGE_NAME);
+            telegaNameEmoji = telegaNameCollectible.background_emoji_id;
+        }
+
+        android.content.SharedPreferences.Editor telegaStyleEditor =
+                ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + me.id, Context.MODE_PRIVATE).edit();
+        if (applyingProfile) {
+            telegaStyleEditor.putInt("color", color).putLong("backgroundEmoji", backgroundEmojiId);
+        }
+        if (applyingName) {
+            telegaStyleEditor.putInt("nameColor", telegaNameColor).putLong("nameEmoji", telegaNameEmoji);
+        }
+        telegaStyleEditor.apply();
+
+        // Changing the name alone must never replace the saved profile color or emoji.
+        if (applyingProfile) {
+            if (profilePage != null && profilePage.selectedPeerCollectible != null) {
+                me.profile_color = profilePage.selectedPeerCollectible;
+            } else {
+                if (me.profile_color == null || me.profile_color instanceof TLRPC.TL_peerColorCollectible) {
+                    me.profile_color = new TLRPC.TL_peerColor();
+                }
+                if (color >= 0) {
+                    me.profile_color.flags |= 1;
+                    me.profile_color.color = color;
+                } else {
+                    me.profile_color.flags &= ~1;
+                    me.profile_color.color = 0;
+                }
+                if (backgroundEmojiId > 0) {
+                    me.profile_color.flags |= 2;
+                    me.profile_color.background_emoji_id = backgroundEmojiId;
+                } else {
+                    me.profile_color.flags &= ~2;
+                    me.profile_color.background_emoji_id = 0;
+                }
+            }
         }
         TLRPC.UserFull full = getMessagesController().getUserFull(me.id);
         if (full == null) {
@@ -163,12 +199,31 @@ anchor = """if (userId != 0) {
             }"""
 style = """int telegaProfileColor = userInfo == null ? -1 : TelegaLocalStatus.getProfileColor(userInfo.about);
             long telegaBackgroundEmoji = userInfo == null ? 0 : TelegaLocalStatus.getProfileEmoji(userInfo.about);
+            boolean telegaHasLocalProfileStyle = false;
             if (user.id == UserConfig.getInstance(currentAccount).getClientUserId()) {
                 android.content.SharedPreferences telegaStylePrefs = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + user.id, 0);
-                if (telegaStylePrefs.contains("color")) telegaProfileColor = telegaStylePrefs.getInt("color", -1);
-                if (telegaStylePrefs.contains("backgroundEmoji")) telegaBackgroundEmoji = telegaStylePrefs.getLong("backgroundEmoji", 0);
+                telegaHasLocalProfileStyle = telegaStylePrefs.contains("color");
+                if (telegaHasLocalProfileStyle && !(user.profile_color instanceof TLRPC.TL_peerColorCollectible)) {
+                    if (user.profile_color == null) user.profile_color = new TLRPC.TL_peerColor();
+                    telegaProfileColor = telegaStylePrefs.getInt("color", -1);
+                    telegaBackgroundEmoji = telegaStylePrefs.getLong("backgroundEmoji", 0);
+                    if (telegaProfileColor >= 0) {
+                        user.profile_color.flags |= 1;
+                        user.profile_color.color = telegaProfileColor;
+                    } else {
+                        user.profile_color.flags &= ~1;
+                        user.profile_color.color = 0;
+                    }
+                    if (telegaBackgroundEmoji > 0) {
+                        user.profile_color.flags |= 2;
+                        user.profile_color.background_emoji_id = telegaBackgroundEmoji;
+                    } else {
+                        user.profile_color.flags &= ~2;
+                        user.profile_color.background_emoji_id = 0;
+                    }
+                }
             }
-            if (telegaProfileColor >= 0 || telegaBackgroundEmoji != 0) {
+            if (!telegaHasLocalProfileStyle && (telegaProfileColor >= 0 || telegaBackgroundEmoji != 0)) {
                 if (user.profile_color == null) user.profile_color = new TLRPC.TL_peerColor();
                 if (telegaProfileColor >= 0) {
                     user.profile_color.flags |= 1;
