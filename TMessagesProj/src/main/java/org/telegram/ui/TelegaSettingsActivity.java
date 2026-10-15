@@ -90,11 +90,6 @@ public class TelegaSettingsActivity extends BaseFragment {
                 TelegaFeatures.isAntiSoundEnabled(),
                 (button, enabled) -> TelegaFeatures.setAntiSoundEnabled(enabled));
 
-        addToggle(context, list, "Стеклянные чаты",
-                "Добавляет полупрозрачные карточки в списке диалогов. Можно выключить в любой момент; остальные функции и оформление не меняются.",
-                TelegaFeatures.isGlassChatsEnabled(),
-                (button, enabled) -> TelegaFeatures.setGlassChatsEnabled(enabled));
-
         addToggle(context, list, "Значок Telega",
                 "Пульсирующий значок рядом с твоим именем в собственном профиле.",
                 TelegaFeatures.isBadgeEnabled(),
