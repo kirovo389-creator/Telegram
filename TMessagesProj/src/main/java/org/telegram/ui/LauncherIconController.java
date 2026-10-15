@@ -51,7 +51,7 @@ public class LauncherIconController {
 
         public ComponentName getComponentName(Context ctx) {
             if (componentName == null) {
-                componentName = new ComponentName(ctx.getPackageName(), "org.telegram.messenger." + key);
+                componentName = new ComponentName(ctx.getPackageName(), "org.Telega.messenger." + key);
             }
             return componentName;
         }

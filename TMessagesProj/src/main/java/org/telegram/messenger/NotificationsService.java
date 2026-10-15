@@ -35,7 +35,7 @@ public class NotificationsService extends Service {
         super.onDestroy();
         SharedPreferences preferences = MessagesController.getGlobalNotificationsSettings();
         if (preferences.getBoolean("pushService", true)) {
-            Intent intent = new Intent("org.telegram.start");
+            Intent intent = new Intent("org.Telega.start");
             intent.setPackage(getPackageName());
             sendBroadcast(intent);
         }

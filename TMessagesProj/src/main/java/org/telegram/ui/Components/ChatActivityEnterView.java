@@ -8851,7 +8851,7 @@ public class ChatActivityEnterView extends FrameLayout implements
             try {
                 if (wakeLock == null) {
                     PowerManager pm = (PowerManager) ApplicationLoader.applicationContext.getSystemService(Context.POWER_SERVICE);
-                    wakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "telegram:audio_record_lock");
+                    wakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "Telega:audio_record_lock");
                     wakeLock.acquire();
                 }
             } catch (Exception e) {

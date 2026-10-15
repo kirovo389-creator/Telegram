@@ -557,8 +557,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
         checkCurrentAccount();
         updateCurrentConnectionState(currentAccount);
-        getWindow().getDecorView().postDelayed(this::showTelegaChangelogIfNeeded, 1200);
-        getWindow().getDecorView().postDelayed(() -> org.telegram.messenger.TelegaFeatures.markAllUnreadReactionsAsRead(currentAccount), 1800);
+        getWindow().getDecorView().postDelayed(this::showTelegaChangelogIfNeeded, 3000);
+        getWindow().getDecorView().postDelayed(() -> org.telegram.messenger.TelegaFeatures.markAllUnreadReactionsAsRead(currentAccount), 3800);
         getWindow().getDecorView().postDelayed(this::showTelegaChannelPromptIfNeeded, 900);
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.closeOtherAppActivities, this);
 
@@ -1757,7 +1757,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     if (error) {
                         Toast.makeText(this, "Unsupported content", Toast.LENGTH_SHORT).show();
                     }
-                } else if ("org.telegram.messenger.CREATE_STICKER_PACK".equals(intent.getAction())) {
+                } else if ("org.Telega.messenger.CREATE_STICKER_PACK".equals(intent.getAction())) {
                     try {
                         importingStickers = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
                         importingStickersEmoji = intent.getStringArrayListExtra("STICKER_EMOJIS");
@@ -1973,7 +1973,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                     String host = data.getHost().toLowerCase();
                                     Matcher prefixMatcher = PREFIX_T_ME_PATTERN.matcher(host);
                                     boolean isPrefix = prefixMatcher.find();
-                                    if (host.equals("telegram.me") || host.equals("t.me") || host.equals("telegram.dog") || isPrefix) {
+                                    if (host.equals("Telega.me") || host.equals("t.me") || host.equals("Telega.dog") || isPrefix) {
                                         if (isPrefix) {
                                             data = Uri.parse("https://t.me/" + prefixMatcher.group(1) + (TextUtils.isEmpty(data.getPath()) ? "" : data.getPath()) + (TextUtils.isEmpty(data.getQuery()) ? "" : "?" + data.getQuery()));
                                         }
@@ -2863,9 +2863,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                             NotificationCenter.getInstance(intentAccount[0]).postNotificationName(NotificationCenter.closeChats);
                                             push_user_id = userId;
                                             String mimeType = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.MIMETYPE));
-                                            if (TextUtils.equals(mimeType, "vnd.android.cursor.item/vnd.org.telegram.messenger.android.call")) {
+                                            if (TextUtils.equals(mimeType, "vnd.android.cursor.item/vnd.org.Telega.messenger.android.call")) {
                                                 audioCallUser = true;
-                                            } else if (TextUtils.equals(mimeType, "vnd.android.cursor.item/vnd.org.telegram.messenger.android.call.video")) {
+                                            } else if (TextUtils.equals(mimeType, "vnd.android.cursor.item/vnd.org.Telega.messenger.android.call.video")) {
                                                 videoCallUser = true;
                                             }
                                         }
@@ -2876,7 +2876,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                             }
                         }
                     }
-                } else if (intent.getAction().equals("org.telegram.messenger.OPEN_ACCOUNT")) {
+                } else if (intent.getAction().equals("org.Telega.messenger.OPEN_ACCOUNT")) {
                     open_settings = 1;
                 } else if (intent.getAction().equals("new_dialog")) {
                     open_new_dialog = 1;
@@ -7030,7 +7030,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     @Override
     protected void onResume() {
         super.onResume();
-        org.telegram.messenger.TelegaOtaUpdater.check(this);
+        getWindow().getDecorView().postDelayed(() -> org.telegram.messenger.TelegaOtaUpdater.check(this), 2500);
         org.telegram.messenger.TelegaOtaUpdater.installPending(this);
         isResumed = true;
         pipActivityHandler.onResume();

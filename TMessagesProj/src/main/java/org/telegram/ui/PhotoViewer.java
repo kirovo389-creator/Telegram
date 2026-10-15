@@ -14094,7 +14094,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 String siteName = webPage.site_name;
                 if (siteName != null) {
                     siteName = siteName.toLowerCase();
-                    if (siteName.equals("instagram") || siteName.equals("twitter") || "telegram_album".equals(webPage.type)) {
+                    if (siteName.equals("instagram") || siteName.equals("twitter") || "Telega_album".equals(webPage.type)) {
                         if (!TextUtils.isEmpty(webPage.author)) {
                             nameOverride = webPage.author;
                         }

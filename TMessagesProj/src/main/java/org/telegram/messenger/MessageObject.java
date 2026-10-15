@@ -8564,7 +8564,7 @@ public class MessageObject {
             } else if (needDrawAvatarInternal() && !isOutOwner() && !messageOwner.isThreadMessage) {
                 maxWidth -= dp(52);
             }
-        } else if (getMedia(messageOwner) instanceof TLRPC.TL_messageMediaWebPage && getMedia(messageOwner).webpage != null && "telegram_background".equals(getMedia(messageOwner).webpage.type)) {
+        } else if (getMedia(messageOwner) instanceof TLRPC.TL_messageMediaWebPage && getMedia(messageOwner).webpage != null && "Telega_background".equals(getMedia(messageOwner).webpage.type)) {
             try {
                 Uri uri = Uri.parse(getMedia(messageOwner).webpage.url);
                 String segment = uri.getLastPathSegment();
@@ -11985,11 +11985,11 @@ public class MessageObject {
     }
 
     public boolean isWallpaper() {
-        return getMedia(messageOwner) instanceof TLRPC.TL_messageMediaWebPage && getMedia(messageOwner).webpage != null && "telegram_background".equals(getMedia(messageOwner).webpage.type);
+        return getMedia(messageOwner) instanceof TLRPC.TL_messageMediaWebPage && getMedia(messageOwner).webpage != null && "Telega_background".equals(getMedia(messageOwner).webpage.type);
     }
 
     public boolean isTheme() {
-        return getMedia(messageOwner) instanceof TLRPC.TL_messageMediaWebPage && getMedia(messageOwner).webpage != null && "telegram_theme".equals(getMedia(messageOwner).webpage.type);
+        return getMedia(messageOwner) instanceof TLRPC.TL_messageMediaWebPage && getMedia(messageOwner).webpage != null && "Telega_theme".equals(getMedia(messageOwner).webpage.type);
     }
 
     public int getMediaExistanceFlags() {
@@ -12648,7 +12648,7 @@ public class MessageObject {
             return storyMentionWebpage;
         }
         TLRPC.WebPage webpage = new TLRPC.TL_webPage();
-        webpage.type = "telegram_story";
+        webpage.type = "Telega_story";
         TLRPC.TL_webPageAttributeStory attr = new TLRPC.TL_webPageAttributeStory();
         attr.id = messageOwner.media.id;
         attr.peer = MessagesController.getInstance(currentAccount).getPeer(messageOwner.media.user_id);
@@ -12846,16 +12846,16 @@ public class MessageObject {
             webpage != null && (webpage.photo != null || isVideoDocument(webpage.document)) &&
             !(webpage != null && TextUtils.isEmpty(webpage.description) && TextUtils.isEmpty(webpage.title)) &&
             !isSponsored() && // drawInstantViewType = 1
-            !"telegram_megagroup".equals(webpageType) &&     // drawInstantViewType = 2
-            !"telegram_background".equals(webpageType) &&    // drawInstantViewType = 6
-            !"telegram_voicechat".equals(webpageType) &&     // drawInstantViewType = 9
-            !"telegram_videochat".equals(webpageType) &&
-            !"telegram_livestream".equals(webpageType) &&    // drawInstantViewType = 11
-            !"telegram_user".equals(webpageType) &&          // drawInstantViewType = 13
-            !"telegram_story".equals(webpageType) &&         // drawInstantViewType = 17
-            !"telegram_channel_boost".equals(webpageType) && // drawInstantViewType = 18
-            !"telegram_group_boost".equals(webpageType) &&   // drawInstantViewType = 21
-            !"telegram_chat".equals(webpageType)
+            !"Telega_megagroup".equals(webpageType) &&     // drawInstantViewType = 2
+            !"Telega_background".equals(webpageType) &&    // drawInstantViewType = 6
+            !"Telega_voicechat".equals(webpageType) &&     // drawInstantViewType = 9
+            !"Telega_videochat".equals(webpageType) &&
+            !"Telega_livestream".equals(webpageType) &&    // drawInstantViewType = 11
+            !"Telega_user".equals(webpageType) &&          // drawInstantViewType = 13
+            !"Telega_story".equals(webpageType) &&         // drawInstantViewType = 17
+            !"Telega_channel_boost".equals(webpageType) && // drawInstantViewType = 18
+            !"Telega_group_boost".equals(webpageType) &&   // drawInstantViewType = 21
+            !"Telega_chat".equals(webpageType)
         ;
     }
 
@@ -12865,11 +12865,11 @@ public class MessageObject {
         final String webpageType = webpage != null ? webpage.type : null;
         return !(webpage != null && TextUtils.isEmpty(webpage.description) && TextUtils.isEmpty(webpage.title)) && (
                 "app".equals(webpageType) || "profile".equals(webpageType) ||
-                "article".equals(webpageType) || "telegram_bot".equals(webpageType) ||
-                "telegram_user".equals(webpageType) || "telegram_channel".equals(webpageType) ||
-                "telegram_megagroup".equals(webpageType) || "telegram_voicechat".equals(webpageType) || "telegram_videochat".equals(webpageType) ||
-                "telegram_livestream".equals(webpageType) || "telegram_channel_boost".equals(webpageType) || "telegram_group_boost".equals(webpageType) ||
-                "telegram_chat".equals(webpageType)
+                "article".equals(webpageType) || "Telega_bot".equals(webpageType) ||
+                "Telega_user".equals(webpageType) || "Telega_channel".equals(webpageType) ||
+                "Telega_megagroup".equals(webpageType) || "Telega_voicechat".equals(webpageType) || "Telega_videochat".equals(webpageType) ||
+                "Telega_livestream".equals(webpageType) || "Telega_channel_boost".equals(webpageType) || "Telega_group_boost".equals(webpageType) ||
+                "Telega_chat".equals(webpageType)
         );
     }
 

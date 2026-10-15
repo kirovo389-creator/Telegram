@@ -1712,9 +1712,9 @@ public class ThemeColors {
         colorKeysMap.put(key_botKeyboard_button_danger, "botKeyboard_button_danger");
         colorKeysMap.put(key_botKeyboard_button_primary, "botKeyboard_button_primary");
         colorKeysMap.put(key_botKeyboard_button_success, "botKeyboard_button_success");
-        colorKeysMap.put(key_telegram_color, "telegram_color");
-        colorKeysMap.put(key_telegram_color_text, "telegram_color_text");
-        colorKeysMap.put(key_telegram_color_dialogsLogo, "telegram_color_dialogsLogo");
+        colorKeysMap.put(key_telegram_color, "Telega_color");
+        colorKeysMap.put(key_telegram_color_text, "Telega_color_text");
+        colorKeysMap.put(key_telegram_color_dialogsLogo, "Telega_color_dialogsLogo");
 
         return colorKeysMap;
     }

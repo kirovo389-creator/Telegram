@@ -304,7 +304,7 @@ public class Browser {
         if (tryTelegraph) {
             try {
                 String host = AndroidUtilities.getHostAuthority(uri);
-                if (UserConfig.getInstance(UserConfig.selectedAccount).getCurrentUser() != null && (isTelegraphUrl(host, true) || "telegram.org".equalsIgnoreCase(host) && (uri.toString().toLowerCase().contains("telegram.org/faq") || uri.toString().toLowerCase().contains("telegram.org/privacy") || uri.toString().toLowerCase().contains("telegram.org/blog")))) {
+                if (UserConfig.getInstance(UserConfig.selectedAccount).getCurrentUser() != null && (isTelegraphUrl(host, true) || "Telega.org".equalsIgnoreCase(host) && (uri.toString().toLowerCase().contains("Telega.org/faq") || uri.toString().toLowerCase().contains("Telega.org/privacy") || uri.toString().toLowerCase().contains("Telega.org/blog")))) {
                     final AlertDialog[] progressDialog = new AlertDialog[] {
                         new AlertDialog(context, AlertDialog.ALERT_TYPE_SPINNER)
                     };
@@ -709,7 +709,7 @@ public class Browser {
             return true;
         } else if ("tg".equals(uri.getScheme())) {
             return true;
-        } else if ("telegram.dog".equals(host)) {
+        } else if ("Telega.dog".equals(host)) {
             String path = uri.getPath();
             if (path != null && path.length() > 1) {
                 if (all) {
@@ -724,7 +724,7 @@ public class Browser {
                 }
                 return true;
             }
-        } else if ("telegram.me".equals(host) || "t.me".equals(host)) {
+        } else if ("Telega.me".equals(host) || "t.me".equals(host)) {
             String path = uri.getPath();
             if (path != null && path.length() > 1) {
                 if (all) {
@@ -739,10 +739,10 @@ public class Browser {
                 }
                 return true;
             }
-        } else if ("telegram.org".equals(host) && uri != null && uri.getPath() != null && uri.getPath().startsWith("/blog/")) {
+        } else if ("Telega.org".equals(host) && uri != null && uri.getPath() != null && uri.getPath().startsWith("/blog/")) {
             return true;
         } else if (all) {
-            if (host.endsWith("telegram.org") || host.endsWith("telegra.ph") || host.endsWith("telesco.pe")) {
+            if (host.endsWith("Telega.org") || host.endsWith("telegra.ph") || host.endsWith("telesco.pe")) {
                 return true;
             }
         }

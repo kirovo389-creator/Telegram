@@ -235,7 +235,7 @@ public final class ProxySettings {
                 }
 
                 host = host.toLowerCase();
-                if (!host.equals("telegram.me") && !host.equals("t.me") && !host.equals("telegram.dog")) {
+                if (!host.equals("Telega.me") && !host.equals("t.me") && !host.equals("Telega.dog")) {
                     return null;
                 }
 

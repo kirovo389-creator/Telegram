@@ -463,7 +463,7 @@ public class MessageStatisticActivity extends BaseFragment implements Notificati
         if (!messageObject.isStory()) {
             if (!messageObject.needDrawBluredPreview() && (messageObject.isPhoto() || messageObject.isNewGif() || messageObject.isVideo())) {
                 String type = messageObject.isWebpage() ? messageObject.messageOwner.media.webpage.type : null;
-                if (!("app".equals(type) || "profile".equals(type) || "article".equals(type) || type != null && type.startsWith("telegram_"))) {
+                if (!("app".equals(type) || "profile".equals(type) || "article".equals(type) || type != null && type.startsWith("Telega_"))) {
                     TLRPC.PhotoSize smallThumb = FileLoader.getClosestPhotoSizeWithSize(messageObject.photoThumbs, 50);
                     TLRPC.PhotoSize bigThumb = FileLoader.getClosestPhotoSizeWithSize(messageObject.photoThumbs, AndroidUtilities.getPhotoSize());
                     if (smallThumb == bigThumb) {

@@ -226,7 +226,7 @@ public class NotificationsController extends BaseController implements Notificat
 
         try {
             PowerManager pm = (PowerManager) ApplicationLoader.applicationContext.getSystemService(Context.POWER_SERVICE);
-            notificationDelayWakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "telegram:notification_delay_lock");
+            notificationDelayWakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Telega:notification_delay_lock");
             notificationDelayWakelock.setReferenceCounted(false);
         } catch (Exception e) {
             FileLog.e(e);
@@ -3481,7 +3481,7 @@ public class NotificationsController extends BaseController implements Notificat
             SharedPreferences preferences = getAccountInstance().getNotificationsSettings();
             SharedPreferences.Editor editor = preferences.edit();
             if (what == 0 || what == -1) {
-                String key = "org.telegram.key" + dialogId;
+                String key = "org.Telega.key" + dialogId;
                 if (topicId != 0) {
                     key += ".topic" + topicId;
                 }
@@ -3499,7 +3499,7 @@ public class NotificationsController extends BaseController implements Notificat
                 }
             }
             if (what == 1 || what == -1) {
-                String key = "org.telegram.keyia" + dialogId;
+                String key = "org.Telega.keyia" + dialogId;
                 String channelId = preferences.getString(key, null);
                 if (channelId != null) {
                     editor.remove(key).remove(key + "_s");
@@ -3627,7 +3627,7 @@ public class NotificationsController extends BaseController implements Notificat
                 SharedPreferences.Editor editor = preferences.edit();
                 for (Map.Entry<String, ?> entry : values.entrySet()) {
                     String key = entry.getKey();
-                    if (key.startsWith("org.telegram.key")) {
+                    if (key.startsWith("org.Telega.key")) {
                         if (!key.endsWith("_s")) {
                             String id = (String) entry.getValue();
                             systemNotificationManager.deleteNotificationChannel(id);
@@ -3908,7 +3908,7 @@ public class NotificationsController extends BaseController implements Notificat
                 name = LocaleController.formatString(R.string.NotificationsChatInApp, name);
             }
             //TODO notifications
-            key = (isInApp ? "org.telegram.keyia" : "org.telegram.key") + dialogId + "_" + topicId;
+            key = (isInApp ? "org.Telega.keyia" : "org.Telega.key") + dialogId + "_" + topicId;
         }
         key += "_" + soundHash;
         String channelId = preferences.getString(key, null);
@@ -5598,7 +5598,7 @@ public class NotificationsController extends BaseController implements Notificat
             }
             Intent msgHeardIntent = new Intent(ApplicationLoader.applicationContext, AutoMessageHeardReceiver.class);
             msgHeardIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-            msgHeardIntent.setAction("org.telegram.messenger.ACTION_MESSAGE_HEARD");
+            msgHeardIntent.setAction("org.Telega.messenger.ACTION_MESSAGE_HEARD");
             msgHeardIntent.putExtra("dialog_id", dialogId);
             msgHeardIntent.putExtra("max_id", maxId);
             msgHeardIntent.putExtra("currentAccount", currentAccount);
@@ -5695,7 +5695,7 @@ public class NotificationsController extends BaseController implements Notificat
             if (copybutton != null) {
                 Intent copyIntent = new Intent(ApplicationLoader.applicationContext, CopyCodeReceiver.class);
                 copyIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-                copyIntent.setAction("org.telegram.messenger.ACTION_COPY_CODE");
+                copyIntent.setAction("org.Telega.messenger.ACTION_COPY_CODE");
                 copyIntent.putExtra("text", copyButtonType.copy_text);
                 PendingIntent copyPendingIntent = PendingIntent.getBroadcast(ApplicationLoader.applicationContext, internalId, copyIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
                 NotificationCompat.Action copyAction = new NotificationCompat.Action.Builder(R.drawable.msg_copy, copybutton.text, copyPendingIntent)

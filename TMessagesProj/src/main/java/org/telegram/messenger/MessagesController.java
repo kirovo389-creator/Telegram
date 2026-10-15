@@ -3737,7 +3737,7 @@ public class MessagesController extends BaseController implements NotificationCe
                     }
                     break;
                 }
-                case "telegram_antispam_user_id": {
+                case "Telega_antispam_user_id": {
                     if (value.value instanceof TLRPC.TL_jsonString) {
                         TLRPC.TL_jsonString string = (TLRPC.TL_jsonString) value.value;
                         try {
@@ -3753,7 +3753,7 @@ public class MessagesController extends BaseController implements NotificationCe
                     }
                     break;
                 }
-                case "telegram_antispam_group_size_min": {
+                case "Telega_antispam_group_size_min": {
                     if (value.value instanceof TLRPC.TL_jsonNumber) {
                         TLRPC.TL_jsonNumber number = (TLRPC.TL_jsonNumber) value.value;
                         if (number.value != telegramAntispamGroupSizeMin) {
@@ -5720,7 +5720,7 @@ public class MessagesController extends BaseController implements NotificationCe
             Theme.checkCurrentRemoteTheme(false);
 
             if (config.static_maps_provider == null) {
-                config.static_maps_provider = "telegram";
+                config.static_maps_provider = "Telega";
             }
 
             mapKey = null;
@@ -5749,7 +5749,7 @@ public class MessagesController extends BaseController implements NotificationCe
                                 }
                             }
                             availableMapProviders |= 1;
-                        } else if ("telegram".equals(typeAndKey[0])) {
+                        } else if ("Telega".equals(typeAndKey[0])) {
                             if (a == 0) {
                                 mapProvider = 2;
                             }

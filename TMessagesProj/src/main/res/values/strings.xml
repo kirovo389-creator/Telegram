@@ -1909,7 +1909,7 @@
     <string name="ALongTimeAgo">last seen a long time ago</string>
     <string name="NewMessageTitle">New Message</string>
     <string name="InviteFriendsHelp">Select contacts to invite them to Telega</string>
-    <string name="InviteToTelegram">INVITE TO TELEGRAM</string>
+    <string name="InviteToTelegram">INVITE TO Telega</string>
     <string name="ShareTelegram2">Share Telega</string>
     <string name="UpdateContactsTitle">Update contacts?</string>
     <string name="UpdateContactsMessage">Telega has detected many unsynced contacts, would you like to sync them now? Choose \'OK\' if you\'re using your own device, SIM card and Google account.</string>
@@ -2039,7 +2039,7 @@
     <string name="EncryptionKey">Encryption Key</string>
     <string name="MessageLifetime">Self-Destruct Timer</string>
     <string name="ShortMessageLifetimeForever">Off</string>
-    <string name="EncryptionKeyDescription">This image and text were derived from the encryption key for this secret chat with **%1$s**.\n\nIf they look the same on **%2$s\'s** device, end-to-end encryption is guaranteed.\n\nLearn more at telegram.org</string>
+    <string name="EncryptionKeyDescription">This image and text were derived from the encryption key for this secret chat with **%1$s**.\n\nIf they look the same on **%2$s\'s** device, end-to-end encryption is guaranteed.\n\nLearn more at Telega.org</string>
     <string name="EncryptionKeyLink">https://telegram.org/faq#secret-chats</string>
     <string name="NumberUnknown">Unknown</string>
     <string name="PhoneHidden">Unknown</string>
@@ -2759,7 +2759,7 @@
     <string name="AuthAnotherClientOk">Auth successfull</string>
     <string name="AuthAnotherClientDownloadClientUrl">https://getdesktop.telegram.org/</string>
     <string name="AuthAnotherWebClientUrl">https://web.telegram.org/</string>
-    <string name="AuthAnotherClientInfo1">Download Telega on your computer from *getdesktop.telegram.org*.</string>
+    <string name="AuthAnotherClientInfo1">Download Telega on your computer from *getdesktop.Telega.org*.</string>
     <string name="AuthAnotherClientInfo2">Run Telega Desktop to get the QR code.</string>
     <string name="AuthAnotherClientInfo3">Scan the QR code to connect your account.</string>
     <string name="AuthAnotherClientUrl">This code can be used to allow someone to log in to your Telega account.\n\nTo confirm Telega login, please go to Settings &gt; Devices &gt; Scan QR and scan the code.</string>
@@ -5396,7 +5396,7 @@
     <string name="LinkDesktopDevice">Link Desktop Device</string>
     <string name="TerminateOldSessionHeader">Automatically terminate old sessions</string>
     <string name="IfInactiveFor">if inactive for</string>
-    <string name="AuthAnotherClientInfo5">Go to *getdesktop.telegram.org* or *web.telegram.org* to get a QR code</string>
+    <string name="AuthAnotherClientInfo5">Go to *getdesktop.Telega.org* or *web.Telega.org* to get a QR code</string>
     <string name="SessionsListInfo">The official Telega app is available for Android, iPhone, iPad, Windows, macOS and Linux.</string>
     <string name="MigrateOldFolder">Migrate old folder to Scoped Storage</string>
     <string name="SelectThisDay">Select this day</string>

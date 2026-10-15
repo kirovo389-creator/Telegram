@@ -48,7 +48,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BillingController implements PurchasesUpdatedListener, BillingClientStateListener {
-    public final static String PREMIUM_PRODUCT_ID = "telegram_premium";
+    public final static String PREMIUM_PRODUCT_ID = "Telega_premium";
     public final static QueryProductDetailsParams.Product PREMIUM_PRODUCT = QueryProductDetailsParams.Product.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS)
             .setProductId(PREMIUM_PRODUCT_ID)

@@ -272,7 +272,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                     selectedColor = UserObject.getProfileColorId(user);
                     selectedEmoji = UserObject.getProfileEmojiId(user);
                     selectedEmojiCollectible = user != null && user.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? (TLRPC.TL_emojiStatusCollectible) user.emoji_status : null;
-                    selectedPeerCollectible = null;
+                    selectedPeerCollectible = user != null && user.profile_color instanceof TLRPC.TL_peerColorCollectible ? (TLRPC.TL_peerColorCollectible) user.profile_color : null;
                 }
             } else {
                 if (dialogId < 0) {
@@ -697,12 +697,18 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                     if (selectedTabGift == null) {
                         if (index < 0 || index >= uniqueGifts.size()) return;
                         final TL_stars.TL_starGiftUnique gift = uniqueGifts.get(index);
+                        // TELEGA_PROFILE_COLOR_NFT_SELECTION_V2
                         if (type == PAGE_NAME) {
                             if (!(gift.peer_color instanceof TLRPC.TL_peerColorCollectible)) return;
                             selectedEmoji = 0;
                             selectedColor = -1;
                             selectedResaleGift = null;
                             selectedEmojiCollectible = null;
+                            selectedPeerCollectible = (TLRPC.TL_peerColorCollectible) gift.peer_color;
+                        } else if (gift.peer_color instanceof TLRPC.TL_peerColorCollectible) {
+                            selectedEmoji = 0;
+                            selectedColor = -1;
+                            selectedResaleGift = null;
                             selectedPeerCollectible = (TLRPC.TL_peerColorCollectible) gift.peer_color;
                         } else {
                             selectedEmoji = 0;
@@ -720,11 +726,16 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                     } else if (resaleGifts != null) {
                         if (index < 0 || index >= uniqueGifts.size()) return;
                         final TL_stars.TL_starGiftUnique gift = uniqueGifts.get(index);
+                        // TELEGA_PROFILE_COLOR_NFT_RESALE_V2
                         if (type == PAGE_NAME) {
                             if (!(gift.peer_color instanceof TLRPC.TL_peerColorCollectible)) return;
                             selectedEmoji = 0;
                             selectedColor = -1;
                             selectedEmojiCollectible = null;
+                            selectedPeerCollectible = (TLRPC.TL_peerColorCollectible) gift.peer_color;
+                        } else if (gift.peer_color instanceof TLRPC.TL_peerColorCollectible) {
+                            selectedEmoji = 0;
+                            selectedColor = -1;
                             selectedPeerCollectible = (TLRPC.TL_peerColorCollectible) gift.peer_color;
                         } else {
                             selectedEmoji = 0;
@@ -732,17 +743,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                             selectedEmojiCollectible = MessagesController.emojiStatusCollectibleFromGift(gift);
                             selectedPeerCollectible = null;
                         }
-                        selectedResaleGift = null;
-                        if (gift.peer_color instanceof TLRPC.TL_peerColorCollectible) {
-                            TLRPC.TL_peerColorCollectible telegaNftColor = (TLRPC.TL_peerColorCollectible) gift.peer_color;
-                            selectedColor = telegaClosestPeerColorId(telegaNftColor.accent_color, type);
-                            selectedEmoji = telegaNftColor.background_emoji_id;
-                        } else {
-                            selectedColor = 0;
-                            selectedEmoji = 0;
-                        }
-                        selectedEmojiCollectible = null;
-                        selectedPeerCollectible = null;
+                        selectedResaleGift = gift;
                         updateProfilePreview(true);
                         updateMessages();
                         updateButton(true);
@@ -948,10 +949,11 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                     final boolean c = eq(me.color instanceof TLRPC.TL_peerColorCollectible ? (TLRPC.TL_peerColorCollectible) me.color : null, selectedPeerCollectible);
                     return !(a && b && c);
                 } else {
-                    final boolean a = selectedColor == (me.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? -1 : UserObject.getProfileColorId(me));
-                    final boolean b = selectedEmoji == (me.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? 0 : UserObject.getOnlyProfileEmojiId(me));
-                    final boolean c = eq(me.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? (TLRPC.TL_emojiStatusCollectible) me.emoji_status : null , selectedEmojiCollectible);
-                    return !(a && b && c);
+                    final boolean a = selectedColor == (me.profile_color instanceof TLRPC.TL_peerColorCollectible ? -1 : UserObject.getProfileColorId(me));
+                    final boolean b = selectedEmoji == (me.profile_color instanceof TLRPC.TL_peerColorCollectible ? 0 : UserObject.getOnlyProfileEmojiId(me));
+                    final boolean c = eq(me.profile_color instanceof TLRPC.TL_peerColorCollectible ? (TLRPC.TL_peerColorCollectible) me.profile_color : null, selectedPeerCollectible);
+                    final boolean d = eq(me.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? (TLRPC.TL_emojiStatusCollectible) me.emoji_status : null, selectedEmojiCollectible);
+                    return !(a && b && c && d);
                 }
             }
         }
@@ -1297,20 +1299,32 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
             if (profilePreview != null) {
                 if (selectedEmojiCollectible != null) {
                     profilePreview.setStatusEmoji(selectedEmojiCollectible.document_id, true, animated);
-                    profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedEmojiCollectible), animated);
-                    profilePreview.setEmoji(selectedEmojiCollectible.pattern_document_id, true, animated);
+                    if (type == PAGE_PROFILE && selectedPeerCollectible != null) {
+                        profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);
+                        profilePreview.setEmoji(selectedPeerCollectible.background_emoji_id, false, animated);
+                    } else {
+                        profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedEmojiCollectible), animated);
+                        profilePreview.setEmoji(selectedEmojiCollectible.pattern_document_id, true, animated);
+                    }
                 } else {
                     if (DialogObject.isEmojiStatusCollectible(dialogId)) {
                         profilePreview.setStatusEmoji(0, false, animated);
                     } else {
                         profilePreview.setStatusEmoji(DialogObject.getEmojiStatusDocumentId(dialogId), DialogObject.isEmojiStatusCollectible(dialogId), animated);
                     }
-                    profilePreview.setColor(selectedColor, animated);
-                    profilePreview.setEmoji(selectedEmoji, false, animated);
+                    if (type == PAGE_PROFILE && selectedPeerCollectible != null) {
+                        profilePreview.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);
+                        profilePreview.setEmoji(selectedPeerCollectible.background_emoji_id, false, animated);
+                    } else {
+                        profilePreview.setColor(selectedColor, animated);
+                        profilePreview.setEmoji(selectedEmoji, false, animated);
+                    }
                 }
             }
             if (type == PAGE_PROFILE && colorBar != null) {
-                if (selectedEmojiCollectible != null) {
+                if (selectedPeerCollectible != null) {
+                    colorBar.setColor(MessagesController.PeerColor.fromCollectible(selectedPeerCollectible), animated);
+                } else if (selectedEmojiCollectible != null) {
                     colorBar.setColor(MessagesController.PeerColor.fromCollectible(selectedEmojiCollectible), animated);
                 } else {
                     colorBar.setColor(currentAccount, selectedColor, animated);
@@ -2051,9 +2065,9 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                 getConnectionsManager().sendRequest(req, null);
             }
             if (
-                    profilePage.selectedColor != UserObject.getProfileColorId(me) ||
-                            profilePage.selectedEmoji != UserObject.getOnlyProfileEmojiId(me) ||
-                            (profilePage.selectedEmojiCollectible == null ? 0 : profilePage.selectedEmojiCollectible.collectible_id) != UserObject.getProfileCollectibleId(me)
+                    profilePage.selectedColor != (me.profile_color instanceof TLRPC.TL_peerColorCollectible ? -1 : UserObject.getProfileColorId(me)) ||
+                            profilePage.selectedEmoji != (me.profile_color instanceof TLRPC.TL_peerColorCollectible ? 0 : UserObject.getOnlyProfileEmojiId(me)) ||
+                            (profilePage.selectedPeerCollectible == null ? 0 : profilePage.selectedPeerCollectible.collectible_id) != (me.profile_color instanceof TLRPC.TL_peerColorCollectible ? me.profile_color.collectible_id : 0)
             ) {
                 applyingProfile = true;
                 if (me.profile_color == null) {
@@ -2062,30 +2076,43 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                 TL_account.updateColor req = new TL_account.updateColor();
                 req.for_profile = true;
                 me.flags2 |= 512;
-                if (profilePage.selectedColor < 0) {
-                    me.profile_color.flags &=~ 1;
+                // TELEGA_PROFILE_COLOR_APPLY_V2
+                if (profilePage.selectedPeerCollectible != null) {
+                    req.flags |= 4;
+                    TLRPC.TL_inputPeerColorCollectible telegaInputProfileColor = new TLRPC.TL_inputPeerColorCollectible();
+                    telegaInputProfileColor.collectible_id = profilePage.selectedPeerCollectible.collectible_id;
+                    req.color = telegaInputProfileColor;
+                    me.profile_color = profilePage.selectedPeerCollectible;
                 } else {
-                    if (req.color == null) {
-                        req.flags |= 4;
-                        req.color = new TLRPC.TL_peerColor();
+                    if (me.profile_color instanceof TLRPC.TL_peerColorCollectible) {
+                        me.profile_color = new TLRPC.TL_peerColor();
                     }
-                    req.color.flags |= 1;
-                    req.color.color = profilePage.selectedColor;
-                    me.profile_color.flags |= 1;
-                    me.profile_color.color = profilePage.selectedColor;
-                }
-                if (profilePage.selectedEmoji != 0) {
-                    req.flags |= 1;
-                    me.profile_color.flags |= 2;
-                    if (req.color == null) {
-                        req.flags |= 4;
-                        req.color = new TLRPC.TL_peerColor();
+                    if (profilePage.selectedColor < 0) {
+                        me.profile_color.flags &=~ 1;
+                    } else {
+                        if (req.color == null) {
+                            req.flags |= 4;
+                            req.color = new TLRPC.TL_peerColor();
+                        }
+                        req.color.flags |= 1;
+                        req.color.color = profilePage.selectedColor;
+                        me.profile_color.flags |= 1;
+                        me.profile_color.color = profilePage.selectedColor;
                     }
-                    req.color.flags |= 2;
-                    req.color.background_emoji_id = me.profile_color.background_emoji_id = profilePage.selectedEmoji;
-                } else {
-                    me.profile_color.flags &=~ 2;
-                    me.profile_color.background_emoji_id = 0;
+                    if (profilePage.selectedEmoji != 0) {
+                        req.flags |= 1;
+                        me.profile_color.flags |= 2;
+                        if (req.color == null) {
+                            req.flags |= 4;
+                            req.color = new TLRPC.TL_peerColor();
+                        }
+                        req.color.flags |= 2;
+                        req.color.background_emoji_id = me.profile_color.background_emoji_id = profilePage.selectedEmoji;
+                    } else {
+                        me.profile_color.flags &=~ 2;
+                        me.profile_color.background_emoji_id = 0;
+                    }
+    
                 }
                 getConnectionsManager().sendRequest(req, null);
             }
@@ -2121,17 +2148,53 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
 
     private void saveTelegaProfileStyle(TLRPC.User me, int color, long backgroundEmojiId) {
         if (me == null) return;
-        // Keep a durable device-side copy even if Telegram does not accept the bio metadata.
-        ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + me.id, Context.MODE_PRIVATE)
-                .edit().putInt("color", color).putLong("backgroundEmoji", backgroundEmojiId).apply();
-        if (me.profile_color == null) me.profile_color = new TLRPC.TL_peerColor();
-        if (color >= 0) {
-            me.profile_color.flags |= 1;
-            me.profile_color.color = color;
+
+        if (applyingProfile && profilePage != null && profilePage.selectedPeerCollectible != null) {
+            TLRPC.TL_peerColorCollectible telegaProfileCollectible = profilePage.selectedPeerCollectible;
+            color = telegaClosestPeerColorId(telegaProfileCollectible.accent_color, PAGE_PROFILE);
+            backgroundEmojiId = telegaProfileCollectible.background_emoji_id;
         }
-        if (backgroundEmojiId > 0) {
-            me.profile_color.flags |= 2;
-            me.profile_color.background_emoji_id = backgroundEmojiId;
+        int telegaNameColor = namePage == null ? UserObject.getColorId(me) : namePage.selectedColor;
+        long telegaNameEmoji = namePage == null ? UserObject.getEmojiId(me) : namePage.selectedEmoji;
+        if (applyingName && namePage != null && namePage.selectedPeerCollectible != null) {
+            TLRPC.TL_peerColorCollectible telegaNameCollectible = namePage.selectedPeerCollectible;
+            telegaNameColor = telegaClosestPeerColorId(telegaNameCollectible.accent_color, PAGE_NAME);
+            telegaNameEmoji = telegaNameCollectible.background_emoji_id;
+        }
+
+        android.content.SharedPreferences.Editor telegaStyleEditor =
+                ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + me.id, Context.MODE_PRIVATE).edit();
+        if (applyingProfile) {
+            telegaStyleEditor.putInt("color", color).putLong("backgroundEmoji", backgroundEmojiId);
+        }
+        if (applyingName) {
+            telegaStyleEditor.putInt("nameColor", telegaNameColor).putLong("nameEmoji", telegaNameEmoji);
+        }
+        telegaStyleEditor.apply();
+
+        // Changing the name alone must never replace the saved profile color or emoji.
+        if (applyingProfile) {
+            if (profilePage != null && profilePage.selectedPeerCollectible != null) {
+                me.profile_color = profilePage.selectedPeerCollectible;
+            } else {
+                if (me.profile_color == null || me.profile_color instanceof TLRPC.TL_peerColorCollectible) {
+                    me.profile_color = new TLRPC.TL_peerColor();
+                }
+                if (color >= 0) {
+                    me.profile_color.flags |= 1;
+                    me.profile_color.color = color;
+                } else {
+                    me.profile_color.flags &= ~1;
+                    me.profile_color.color = 0;
+                }
+                if (backgroundEmojiId > 0) {
+                    me.profile_color.flags |= 2;
+                    me.profile_color.background_emoji_id = backgroundEmojiId;
+                } else {
+                    me.profile_color.flags &= ~2;
+                    me.profile_color.background_emoji_id = 0;
+                }
+            }
         }
         TLRPC.UserFull full = getMessagesController().getUserFull(me.id);
         if (full == null) {
@@ -2141,8 +2204,12 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
         String about = full.about == null ? "" : full.about;
         int sharedProfileColor = applyingProfile ? color : TelegaLocalStatus.getProfileColor(about);
         long sharedProfileEmoji = applyingProfile ? backgroundEmojiId : TelegaLocalStatus.getProfileEmoji(about);
-        int sharedNameColor = applyingName ? UserObject.getColorId(me) : TelegaLocalStatus.getNameColor(about);
-        long sharedNameEmoji = applyingName ? UserObject.getEmojiId(me) : TelegaLocalStatus.getNameEmoji(about);
+        int sharedNameColor = applyingName ? (namePage == null ? UserObject.getColorId(me) : namePage.selectedColor) : TelegaLocalStatus.getNameColor(about);
+        long sharedNameEmoji = applyingName ? (namePage == null ? UserObject.getEmojiId(me) : namePage.selectedEmoji) : TelegaLocalStatus.getNameEmoji(about);
+        if (applyingName && namePage != null && namePage.selectedPeerCollectible != null) {
+            sharedNameColor = telegaClosestPeerColorId(namePage.selectedPeerCollectible.accent_color, PAGE_NAME);
+            sharedNameEmoji = namePage.selectedPeerCollectible.background_emoji_id;
+        }
         String newAbout = TelegaLocalStatus.updateAllStyles(about, sharedProfileColor, sharedProfileEmoji, sharedNameColor, sharedNameEmoji);
         if (!about.equals(newAbout)) {
             TL_account.updateProfile request = new TL_account.updateProfile();
@@ -2159,28 +2226,6 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
         } else {
             getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
         }
-    }
-
-    private int telegaClosestPeerColorId(int accentColor, int pageType) {
-        MessagesController mc = getMessagesController();
-        MessagesController.PeerColors palette = pageType == PAGE_NAME ? mc.peerColors : mc.profilePeerColors;
-        if (palette == null || palette.colors == null || palette.colors.isEmpty()) return 0;
-        int targetR = Color.red(accentColor), targetG = Color.green(accentColor), targetB = Color.blue(accentColor);
-        long bestDistance = Long.MAX_VALUE;
-        int bestId = palette.colors.get(0).id;
-        for (int i = 0; i < palette.colors.size(); i++) {
-            MessagesController.PeerColor candidate = palette.colors.get(i);
-            int candidateColor = candidate.getColor1();
-            long dr = Color.red(candidateColor) - targetR;
-            long dg = Color.green(candidateColor) - targetG;
-            long db = Color.blue(candidateColor) - targetB;
-            long distance = dr * dr + dg * dg + db * db;
-            if (distance < bestDistance) {
-                bestDistance = distance;
-                bestId = candidate.id;
-            }
-        }
-        return bestId;
     }
 
     private void showBulletin() {

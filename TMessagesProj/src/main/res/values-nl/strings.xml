@@ -693,7 +693,7 @@
     <string name="AuthAnotherClientOk">Authenticatie gelukt</string>
     <string name="AuthAnotherClientDownloadClientUrl">https://desktop.telegram.org/</string>
     <string name="AuthAnotherWebClientUrl">https://web.telegram.org/</string>
-    <string name="AuthAnotherClientInfo1">Download Telega op je computer via *desktop.telegram.org*</string>
+    <string name="AuthAnotherClientInfo1">Download Telega op je computer via *desktop.Telega.org*</string>
     <string name="AuthAnotherClientInfo2">Gebruik Telega Desktop om de QR-code te krijgen.</string>
     <string name="AuthAnotherClientInfo3">Scan de QR-Code om met je account te verbinden.</string>
     <string name="AuthAnotherClientUrl">Met deze code kun je iemand toestaan om in te loggen op je Telega-account\n\nOm de login te bevestigen ga naar, Instellingen &gt; Apparaten &gt; Scan QR en scan de code.</string>

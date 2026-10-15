@@ -7460,31 +7460,31 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                     } else if (messageObject.isGiveawayOrGiveawayResults()) {
                         drawInstantView = true;
                         drawInstantViewType = 19;
-                    } else if ("telegram_channel_boost".equals(webpageType)) {
+                    } else if ("Telega_channel_boost".equals(webpageType)) {
                         drawInstantView = true;
                         drawInstantViewType = 18;
-                    } else if ("telegram_group_boost".equals(webpageType)) {
+                    } else if ("Telega_group_boost".equals(webpageType)) {
                         drawInstantView = true;
                         drawInstantViewType = 22;
-                    } else if ("telegram_giftcode".equals(webpageType)) {
+                    } else if ("Telega_giftcode".equals(webpageType)) {
                         drawInstantView = true;
                         drawInstantViewType = 20;
-                    } else if ("telegram_livestream".equals(webpageType)) {
+                    } else if ("Telega_livestream".equals(webpageType)) {
                         drawInstantView = true;
                         drawInstantViewType = 11;
-                    } else if ("telegram_voicechat".equals(webpageType)) {
+                    } else if ("Telega_voicechat".equals(webpageType)) {
                         drawInstantView = true;
                         drawInstantViewType = 9;
-                    } else if ("telegram_videochat".equals(webpageType)) {
+                    } else if ("Telega_videochat".equals(webpageType)) {
                         drawInstantView = true;
                         drawInstantViewType = 25;
-                    } else if ("telegram_channel".equals(webpageType)) {
+                    } else if ("Telega_channel".equals(webpageType)) {
                         drawInstantView = true;
                         drawInstantViewType = 1;
-                    } else if ("telegram_channel_direct".equals(webpageType)) {
+                    } else if ("Telega_channel_direct".equals(webpageType)) {
                         drawInstantView = true;
                         drawInstantViewType = 29;
-                    } else if ("telegram_user".equals(webpageType)) {
+                    } else if ("Telega_user".equals(webpageType)) {
                         boolean isProfile = false;
                         if (webpage != null && webpage.url != null) {
                             Uri data = Uri.parse(webpage.url);
@@ -7498,12 +7498,12 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                         } else {
                             drawInstantViewType = 13;
                         }
-                    } else if ("telegram_aicomposetone".equals(webpageType)) {
+                    } else if ("Telega_aicomposetone".equals(webpageType)) {
                         drawInstantView = true;
                         drawInstantViewType = INSTANT_BUTTON_TYPE_AI_STYLE;
                         final TLRPC.TL_webPageAttributeAiComposeTone attr = find(webpage.attributes, TLRPC.TL_webPageAttributeAiComposeTone.class);
                         emoji_id = attr != null ? attr.emoji_id : 0;
-                    } else if ("telegram_nft".equals(webpageType)) {
+                    } else if ("Telega_nft".equals(webpageType)) {
                         for (int b = 0, N2 = webpage.attributes.size(); b < N2; b++) {
                             final TLRPC.WebPageAttribute attribute_ = webpage.attributes.get(b);
                             if (!(attribute_ instanceof TLRPC.TL_webPageAttributeUniqueStarGift)) {
@@ -7517,19 +7517,19 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                             }
                             break;
                         }
-                    } else if ("telegram_megagroup".equals(webpageType)) {
+                    } else if ("Telega_megagroup".equals(webpageType)) {
                         drawInstantView = true;
                         drawInstantViewType = 2;
-                    } else if ("telegram_message".equals(webpageType) || "photo".equals(webpageType) && webpage != null && Browser.isTMe(webpage.url)) {
+                    } else if ("Telega_message".equals(webpageType) || "photo".equals(webpageType) && webpage != null && Browser.isTMe(webpage.url)) {
                         drawInstantView = true;
                         drawInstantViewType = 3;
-                    } else if ("telegram_community".equals(webpageType) || "telegram_chatlist".equals(webpageType)) {
+                    } else if ("Telega_community".equals(webpageType) || "Telega_chatlist".equals(webpageType)) {
                         drawInstantView = true;
                         drawInstantViewType = 14;
-                    } else if ("telegram_botapp".equals(webpageType)) {
+                    } else if ("Telega_botapp".equals(webpageType)) {
                         drawInstantView = true;
                         drawInstantViewType = 15;
-                    } else if ("telegram_theme".equals(webpageType)) {
+                    } else if ("Telega_theme".equals(webpageType)) {
                         for (int b = 0, N2 = MessageObject.getMedia(messageObject.messageOwner).webpage.attributes.size(); b < N2; b++) {
                             TLRPC.WebPageAttribute attribute_ = MessageObject.getMedia(messageObject.messageOwner).webpage.attributes.get(b);
                             if (!(attribute_ instanceof TLRPC.TL_webPageAttributeTheme)) {
@@ -7556,7 +7556,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                                 break;
                             }
                         }
-                    } else if ("telegram_story".equals(webpageType)) {
+                    } else if ("Telega_story".equals(webpageType)) {
                         for (int b = 0, N2 = webpage.attributes.size(); b < N2; b++) {
                             TLRPC.WebPageAttribute attribute_ = webpage.attributes.get(b);
                             if (!(attribute_ instanceof TLRPC.TL_webPageAttributeStory)) {
@@ -7581,7 +7581,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                             }
                             break;
                         }
-                    } else if ("telegram_background".equals(webpageType)) {
+                    } else if ("Telega_background".equals(webpageType)) {
                         drawInstantView = true;
                         drawInstantViewType = 6;
                         try {
@@ -7644,7 +7644,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                         } catch (Exception ignore) {
 
                         }
-                    } else if ("telegram_auction".equals(webpageType)) {
+                    } else if ("Telega_auction".equals(webpageType)) {
                         final TLRPC.TL_webPageAttributeStarGiftAuction attr =
                             TlUtils.findFirstInstance(webpage.attributes, TLRPC.TL_webPageAttributeStarGiftAuction.class);
                         drawInstantView = true;
@@ -7654,7 +7654,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                             stargift = attr.gift;
                             starGiftAuction = attr;
                         }
-                    } else if ("telegram_stickerset".equals(webpageType)) {
+                    } else if ("Telega_stickerset".equals(webpageType)) {
                         final TLRPC.TL_webPageAttributeStickerSet attr =
                             TlUtils.findFirstInstance(webpage.attributes, TLRPC.TL_webPageAttributeStickerSet.class);
                         drawInstantView = true;
@@ -7668,7 +7668,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                             stickers = attr.stickers;
                             stickersTextColor = attr.text_color;
                         }
-                    } else if ("telegram_collection".equals(webpageType)) {
+                    } else if ("Telega_collection".equals(webpageType)) {
                         TLRPC.TL_webPageAttributeStarGiftCollection attr =
                             TlUtils.findFirstInstance(webpage.attributes, TLRPC.TL_webPageAttributeStarGiftCollection.class);
                         drawInstantView = true;
@@ -7678,13 +7678,13 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                             stickers = attr.icons;
                             stickersTextColor = false;
                         }
-                    } else if ("telegram_call".equals(webpageType)) {
+                    } else if ("Telega_call".equals(webpageType)) {
                         drawInstantView = true;
                         drawInstantViewType = 27;
                     }
                 } else if (siteName != null) {
                     siteName = siteName.toLowerCase();
-                    if ((siteName.equals("instagram") || siteName.equals("twitter") || "telegram_album".equals(webpageType) || "telegram_story_album".equals(webpageType)) && webpage.cached_page instanceof TL_iv.TL_page &&
+                    if ((siteName.equals("instagram") || siteName.equals("twitter") || "Telega_album".equals(webpageType) || "Telega_story_album".equals(webpageType)) && webpage.cached_page instanceof TL_iv.TL_page &&
                             (webpage.photo instanceof TLRPC.TL_photo || MessageObject.isVideoDocument(webpage.document))) {
                         drawInstantView = false;
                         slideshow = true;
@@ -7985,7 +7985,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                         site_name = getString("VoipGroupVideoChat", R.string.VoipGroupVideoChat);
                     } else if (drawInstantViewType == 6) {
                         site_name = getString("ChatBackground", R.string.ChatBackground);
-                    } else if ("telegram_theme".equals(webpageType)) {
+                    } else if ("Telega_theme".equals(webpageType)) {
                         site_name = getString("ColorTheme", R.string.ColorTheme);
                     }
                     if (stargift != null) {
@@ -10914,7 +10914,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                                     final Uri uri = Uri.parse(buttonTypeUrl.url);
                                     final String host = uri.getHost().toLowerCase();
                                     botButton.isInviteButton = (uri.getQueryParameter("startgroup") != null && (
-                                            ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) && ("t.me".equals(host) || "telegram.me".equals(host) || "telegram.dog".equals(host)) ||
+                                            ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) && ("t.me".equals(host) || "Telega.me".equals(host) || "Telega.dog".equals(host)) ||
                                                     "tg".equals(uri.getScheme()) && (buttonTypeUrl.url.startsWith("tg:resolve") || buttonTypeUrl.url.startsWith("tg://resolve"))
                                     ));
                                 } catch (Exception ignore) {
@@ -29477,11 +29477,11 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     
     private static boolean isSmallImageLinkPreviewType(String type) {
         return "app".equals(type) || "profile".equals(type) ||
-                "article".equals(type) || "telegram_bot".equals(type) ||
-                "telegram_user".equals(type) || "telegram_channel".equals(type) || "telegram_channel_direct".equals(type) ||
-                "telegram_megagroup".equals(type) || "telegram_voicechat".equals(type) || "telegram_videochat".equals(type) ||
-                "telegram_livestream".equals(type) || "telegram_channel_boost".equals(type) || "telegram_group_boost".equals(type) ||
-                "telegram_aicomposetone".equals(type);
+                "article".equals(type) || "Telega_bot".equals(type) ||
+                "Telega_user".equals(type) || "Telega_channel".equals(type) || "Telega_channel_direct".equals(type) ||
+                "Telega_megagroup".equals(type) || "Telega_voicechat".equals(type) || "Telega_videochat".equals(type) ||
+                "Telega_livestream".equals(type) || "Telega_channel_boost".equals(type) || "Telega_group_boost".equals(type) ||
+                "Telega_aicomposetone".equals(type);
     }
     
     private static void normalizePollPercents(boolean hasDifferent, int restPercent, ArrayList<PollButton> sortedPollButtons) {
@@ -29588,19 +29588,25 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 && currentMessageObject.messageOwner != null
                 && org.telegram.messenger.TelegaDeletedMessages.isDeleted(org.telegram.messenger.UserConfig.selectedAccount,
                     currentMessageObject.messageOwner.dialog_id, currentMessageObject.messageOwner.id);
-        setAlpha(telegaDeletedForDraw ? 0.56f : 1.0f);
+        setAlpha(telegaDeletedForDraw ? 0.64f : 1.0f);
         super.dispatchDraw(canvas);
 
         if (currentMessageObject != null && currentMessageObject.messageOwner != null
                 && org.telegram.messenger.TelegaDeletedMessages.isDeleted(org.telegram.messenger.UserConfig.selectedAccount,
                     currentMessageObject.messageOwner.dialog_id, currentMessageObject.messageOwner.id)) {
             android.graphics.Paint telegaDeletedPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-            telegaDeletedPaint.setColor(0xFF858585);
+            telegaDeletedPaint.setColor(0xFFFF1744);
             telegaDeletedPaint.setStyle(android.graphics.Paint.Style.STROKE);
-            telegaDeletedPaint.setStrokeWidth(org.telegram.messenger.AndroidUtilities.dp(1.25f));
+            telegaDeletedPaint.setStrokeWidth(org.telegram.messenger.AndroidUtilities.dp(1.35f));
             telegaDeletedPaint.setStrokeCap(android.graphics.Paint.Cap.ROUND);
-            float telegaTrashX = getWidth() - org.telegram.messenger.AndroidUtilities.dp(29);
-            float telegaTrashY = getHeight() - org.telegram.messenger.AndroidUtilities.dp(16);
+            android.graphics.Rect telegaBubbleBounds = currentBackgroundDrawable == null ? null : currentBackgroundDrawable.getBounds();
+            float telegaBubbleRight = telegaBubbleBounds != null && !telegaBubbleBounds.isEmpty()
+                    ? telegaBubbleBounds.right
+                    : backgroundDrawableLeft + Math.max(backgroundDrawableRight, backgroundWidth);
+            float telegaBubbleBottom = telegaBubbleBounds != null && !telegaBubbleBounds.isEmpty()
+                    ? telegaBubbleBounds.bottom : getHeight();
+            float telegaTrashX = telegaBubbleRight - org.telegram.messenger.AndroidUtilities.dp(17);
+            float telegaTrashY = telegaBubbleBottom - org.telegram.messenger.AndroidUtilities.dp(13);
             float telegaTrashW = org.telegram.messenger.AndroidUtilities.dp(8);
             float telegaTrashH = org.telegram.messenger.AndroidUtilities.dp(9);
             canvas.drawRoundRect(telegaTrashX, telegaTrashY + org.telegram.messenger.AndroidUtilities.dp(3), telegaTrashX + telegaTrashW, telegaTrashY + telegaTrashH, org.telegram.messenger.AndroidUtilities.dp(1), org.telegram.messenger.AndroidUtilities.dp(1), telegaDeletedPaint);

@@ -51,14 +51,14 @@ import java.io.File;
 
 public class MusicPlayerService extends Service implements NotificationCenter.NotificationCenterDelegate {
 
-    public static final String NOTIFY_PREVIOUS = "org.telegram.android.musicplayer.previous";
-    public static final String NOTIFY_CLOSE = "org.telegram.android.musicplayer.close";
-    public static final String NOTIFY_PAUSE = "org.telegram.android.musicplayer.pause";
-    public static final String NOTIFY_PLAY = "org.telegram.android.musicplayer.play";
-    public static final String NOTIFY_NEXT = "org.telegram.android.musicplayer.next";
-    public static final String NOTIFY_SEEK = "org.telegram.android.musicplayer.seek";
-    public static final String NOTIFY_REPEAT = "org.telegram.android.musicplayer.repeat";
-    public static final String NOTIFY_SHUFFLE = "org.telegram.android.musicplayer.shuffle";
+    public static final String NOTIFY_PREVIOUS = "org.Telega.android.musicplayer.previous";
+    public static final String NOTIFY_CLOSE = "org.Telega.android.musicplayer.close";
+    public static final String NOTIFY_PAUSE = "org.Telega.android.musicplayer.pause";
+    public static final String NOTIFY_PLAY = "org.Telega.android.musicplayer.play";
+    public static final String NOTIFY_NEXT = "org.Telega.android.musicplayer.next";
+    public static final String NOTIFY_SEEK = "org.Telega.android.musicplayer.seek";
+    public static final String NOTIFY_REPEAT = "org.Telega.android.musicplayer.repeat";
+    public static final String NOTIFY_SHUFFLE = "org.Telega.android.musicplayer.shuffle";
 
     private static final int ID_NOTIFICATION = 5;
 

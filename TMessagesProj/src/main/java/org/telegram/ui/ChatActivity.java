@@ -14404,7 +14404,7 @@ public class ChatActivity extends BaseFragment implements
                 }
             }
             if (media != null) {
-                if (media.webpage != null && "telegram_story".equals(media.webpage.type)) {
+                if (media.webpage != null && "Telega_story".equals(media.webpage.type)) {
                     TLRPC.TL_webPageAttributeStory _attrStory = null;
                     if (media.webpage.attributes != null) {
                         for (int i = 0; i < media.webpage.attributes.size(); ++i) {
@@ -26805,7 +26805,7 @@ public class ChatActivity extends BaseFragment implements
                 }
                 if (old.isWebpage() && messageObject.isWebpage()) {
                     TLRPC.TL_messageMediaWebPage media = (TLRPC.TL_messageMediaWebPage) MessageObject.getMedia(old.messageOwner);
-                    if (media.webpage != null && "telegram_story".equals(media.webpage.type)) {
+                    if (media.webpage != null && "Telega_story".equals(media.webpage.type)) {
                         TL_stories.StoryItem storyItem = null;
                         for (int i = 0; i < media.webpage.attributes.size(); ++i) {
                             TLRPC.WebPageAttribute attr = media.webpage.attributes.get(i);
@@ -28437,7 +28437,7 @@ public class ChatActivity extends BaseFragment implements
         if (
             message != null && message.messageOwner != null &&
             message.messageOwner.media != null && message.messageOwner.media.webpage != null &&
-            "telegram_call".equalsIgnoreCase(message.messageOwner.media.webpage.type)
+            "Telega_call".equalsIgnoreCase(message.messageOwner.media.webpage.type)
         ) {
             return message.messageOwner.media.webpage.display_url;
         }
@@ -28701,7 +28701,7 @@ public class ChatActivity extends BaseFragment implements
                         pinnedMessageObject.messageOwner != null &&
                         pinnedMessageObject.messageOwner.media != null &&
                         pinnedMessageObject.messageOwner.media.webpage != null &&
-                        "telegram_call".equalsIgnoreCase(pinnedMessageObject.messageOwner.media.webpage.type)
+                        "Telega_call".equalsIgnoreCase(pinnedMessageObject.messageOwner.media.webpage.type)
                     ) {
                         final SpannableStringBuilder sb = new SpannableStringBuilder("x ").append(getString(R.string.PinnedCall));
                         final ColoredImageSpan span = new ColoredImageSpan(R.drawable.call);
@@ -36801,7 +36801,7 @@ public class ChatActivity extends BaseFragment implements
                     if (messageObject != null && messageObject.messageOwner.media instanceof TLRPC.TL_messageMediaWebPage && messageObject.messageOwner.media.webpage != null && messageObject.messageOwner.media.webpage.cached_page != null) {
                         String lowerUrl = urlFinal.toLowerCase();
                         String lowerUrl2 = messageObject.messageOwner.media.webpage.url.toLowerCase();
-                        if ((lowerUrl.contains("telegram.org/blog") || Browser.isTelegraphUrl(lowerUrl, false) || lowerUrl.contains("t.me/iv")) && (lowerUrl.contains(lowerUrl2) || lowerUrl2.contains(lowerUrl))) {
+                        if ((lowerUrl.contains("Telega.org/blog") || Browser.isTelegraphUrl(lowerUrl, false) || lowerUrl.contains("t.me/iv")) && (lowerUrl.contains(lowerUrl2) || lowerUrl2.contains(lowerUrl))) {
                             if (LaunchActivity.instance != null && LaunchActivity.instance.getBottomSheetTabs() != null && LaunchActivity.instance.getBottomSheetTabs().tryReopenTab(messageObject) != null) {
                                 return;
                             }

@@ -294,7 +294,7 @@ public class CopyUtilities {
                 if (opening) {
                     final String className = HTMLTagAttributesHandler.getValue(attributes, "class");
                     final boolean collapsed = HTMLTagAttributesHandler.getValue(attributes, "data-collapsed") != null
-                            || className != null && className.contains("telegram-collapsed-quote");
+                            || className != null && className.contains("Telega-collapsed-quote");
                     output.setSpan(new ParsedSpan(collapsed ? TYPE_COLLAPSE : TYPE_QUOTE), output.length(), output.length(), Spanned.SPAN_MARK_MARK);
                     return true;
                 } else {

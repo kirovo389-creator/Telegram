@@ -260,7 +260,7 @@ public class ExternalActionActivity extends Activity implements INavigationLayou
         if (!checkPasscode(intent, isNew, restore, fromPassword, intentAccount, state)) {
             return false;
         }
-        if ("org.telegram.passport.AUTHORIZE".equals(intent.getAction())) {
+        if ("org.Telega.passport.AUTHORIZE".equals(intent.getAction())) {
             if (state == 0) {
                 int activatedAccountsCount = UserConfig.getActivatedAccountsCount();
                 if (activatedAccountsCount == 0) {

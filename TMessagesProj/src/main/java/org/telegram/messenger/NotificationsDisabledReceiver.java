@@ -98,7 +98,7 @@ public class NotificationsDisabledReceiver extends BroadcastReceiver {
             }
             int topicId = 0;
             String key = NotificationsController.getSharedPrefKey(dialogId, topicId);
-            String currentChannel = preferences.getString("org.telegram.key" + dialogId, null);
+            String currentChannel = preferences.getString("org.Telega.key" + dialogId, null);
             if (!channelId.equals(currentChannel)) {
                 return;
             }

@@ -11309,12 +11309,22 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             }
         }
 
-
+ 
         if (userInfo != null && userId != 0) {
             TLRPC.User telegaNameUser = getMessagesController().getUser(userId);
             int telegaNameColor = TelegaLocalStatus.getNameColor(userInfo.about);
             long telegaNameEmoji = TelegaLocalStatus.getNameEmoji(userInfo.about);
-            if (telegaNameUser != null && (telegaNameColor >= 0 || telegaNameEmoji > 0)) {
+            boolean telegaHasLocalNameStyle = false;
+            if (telegaNameUser != null && userId == UserConfig.getInstance(currentAccount).getClientUserId()) {
+                android.content.SharedPreferences telegaNamePrefs = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + userId, 0);
+                telegaHasLocalNameStyle = telegaNamePrefs.contains("nameColor");
+                if (telegaHasLocalNameStyle) {
+                    telegaNameColor = telegaNamePrefs.getInt("nameColor", -1);
+                    telegaNameEmoji = telegaNamePrefs.getLong("nameEmoji", 0);
+                }
+            }
+            if (telegaNameUser != null && (telegaNameColor >= 0 || telegaNameEmoji > 0 || telegaHasLocalNameStyle)
+                    && !(telegaNameUser.color instanceof TLRPC.TL_peerColorCollectible)) {
                 if (telegaNameUser.color == null || !(telegaNameUser.color instanceof TLRPC.TL_peerColor)) {
                     telegaNameUser.color = new TLRPC.TL_peerColor();
                 }
@@ -11322,10 +11332,16 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (telegaNameColor >= 0) {
                     telegaPeerNameColor.flags |= 1;
                     telegaPeerNameColor.color = telegaNameColor;
+                } else if (telegaHasLocalNameStyle) {
+                    telegaPeerNameColor.flags &= ~1;
+                    telegaPeerNameColor.color = 0;
                 }
                 if (telegaNameEmoji > 0) {
                     telegaPeerNameColor.flags |= 2;
                     telegaPeerNameColor.background_emoji_id = telegaNameEmoji;
+                } else if (telegaHasLocalNameStyle) {
+                    telegaPeerNameColor.flags &= ~2;
+                    telegaPeerNameColor.background_emoji_id = 0;
                 }
             }
         }
@@ -11408,12 +11424,31 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             }
             int telegaProfileColor = userInfo == null ? -1 : TelegaLocalStatus.getProfileColor(userInfo.about);
             long telegaBackgroundEmoji = userInfo == null ? 0 : TelegaLocalStatus.getProfileEmoji(userInfo.about);
+            boolean telegaHasLocalProfileStyle = false;
             if (user.id == UserConfig.getInstance(currentAccount).getClientUserId()) {
                 android.content.SharedPreferences telegaStylePrefs = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + user.id, 0);
-                if (telegaStylePrefs.contains("color")) telegaProfileColor = telegaStylePrefs.getInt("color", -1);
-                if (telegaStylePrefs.contains("backgroundEmoji")) telegaBackgroundEmoji = telegaStylePrefs.getLong("backgroundEmoji", 0);
+                telegaHasLocalProfileStyle = telegaStylePrefs.contains("color");
+                if (telegaHasLocalProfileStyle && !(user.profile_color instanceof TLRPC.TL_peerColorCollectible)) {
+                    if (user.profile_color == null) user.profile_color = new TLRPC.TL_peerColor();
+                    telegaProfileColor = telegaStylePrefs.getInt("color", -1);
+                    telegaBackgroundEmoji = telegaStylePrefs.getLong("backgroundEmoji", 0);
+                    if (telegaProfileColor >= 0) {
+                        user.profile_color.flags |= 1;
+                        user.profile_color.color = telegaProfileColor;
+                    } else {
+                        user.profile_color.flags &= ~1;
+                        user.profile_color.color = 0;
+                    }
+                    if (telegaBackgroundEmoji > 0) {
+                        user.profile_color.flags |= 2;
+                        user.profile_color.background_emoji_id = telegaBackgroundEmoji;
+                    } else {
+                        user.profile_color.flags &= ~2;
+                        user.profile_color.background_emoji_id = 0;
+                    }
+                }
             }
-            if (telegaProfileColor >= 0 || telegaBackgroundEmoji != 0) {
+            if (!telegaHasLocalProfileStyle && (telegaProfileColor >= 0 || telegaBackgroundEmoji != 0)) {
                 if (user.profile_color == null) user.profile_color = new TLRPC.TL_peerColor();
                 if (telegaProfileColor >= 0) {
                     user.profile_color.flags |= 1;

@@ -51,7 +51,7 @@ public class EarListener implements SensorEventListener {
         }
 
         powerManager = (PowerManager) ApplicationLoader.applicationContext.getSystemService(Context.POWER_SERVICE);
-        proximityWakeLock = powerManager.newWakeLock(0x00000020, "telegram:proximity_lock2");
+        proximityWakeLock = powerManager.newWakeLock(0x00000020, "Telega:proximity_lock2");
 
         audioManager = (AudioManager) ApplicationLoader.applicationContext.getSystemService(Context.AUDIO_SERVICE);
     }

@@ -5715,7 +5715,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                 MessageObject message = groupMessages.get(i);
                 if (message != null && !message.needDrawBluredPreview() && (message.isPhoto() || message.isNewGif() || message.isVideo() || message.isRoundVideo() || message.isStoryMedia())) {
                     String type = message.isWebpage() ? message.messageOwner.media.webpage.type : null;
-                    if (!("app".equals(type) || "profile".equals(type) || "article".equals(type) || type != null && type.startsWith("telegram_"))) {
+                    if (!("app".equals(type) || "profile".equals(type) || "article".equals(type) || type != null && type.startsWith("Telega_"))) {
                         setThumb(i, message);
                     }
                 }
@@ -5725,7 +5725,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
             hasVideoThumb = false;
             if (!message.needDrawBluredPreview() && (message.isPhoto() || message.isNewGif() || message.isVideo() || message.isRoundVideo() || message.isStoryMedia())) {
                 String type = message.isWebpage() ? message.messageOwner.media.webpage.type : null;
-                if (!("app".equals(type) || "profile".equals(type) || "article".equals(type) || type != null && type.startsWith("telegram_"))) {
+                if (!("app".equals(type) || "profile".equals(type) || "article".equals(type) || type != null && type.startsWith("Telega_"))) {
                     setThumb(0, message);
                 }
             }
