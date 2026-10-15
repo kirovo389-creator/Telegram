@@ -49,6 +49,17 @@ jobs:
           echo "Version name: $app_version_name"
           echo "Expected APK version code: $final_version_code"
 
+          # Build the in-app changelog from commits since the previous Telega release tag.
+          last_release_tag="$(git tag --list 'telega-v2-build-*' --sort=-creatordate | head -n 1)"
+          if [[ -n "$last_release_tag" ]]; then
+            git log --no-merges --format='• %s' "$last_release_tag..HEAD" > /tmp/telega-changelog.txt
+          else
+            git log --no-merges --format='• %s' -n 8 HEAD > /tmp/telega-changelog.txt
+          fi
+          if [[ ! -s /tmp/telega-changelog.txt ]]; then
+            git log --no-merges --format='• %s' -n 5 HEAD > /tmp/telega-changelog.txt
+          fi
+
       - name: Import upstream Android source and apply Telega patches
         shell: bash
         run: |
@@ -59,6 +70,10 @@ jobs:
           cp -a .github /tmp/telega-preserve/github
           cp README.md /tmp/telega-preserve/README.md
           cp TMessagesProj/src/main/java/org/telegram/messenger/TelegaBadgeSync.java /tmp/telega-preserve/TelegaBadgeSync.java
+          cp TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java /tmp/telega-preserve/LaunchActivity.java
+          cp TMessagesProj/src/main/java/org/telegram/ui/TelegaSettingsActivity.java /tmp/telega-preserve/TelegaSettingsActivity.java
+          cp TMessagesProj/src/main/java/org/telegram/messenger/TelegaOtaUpdater.java /tmp/telega-preserve/TelegaOtaUpdater.java
+          cp /tmp/telega-changelog.txt /tmp/telega-preserve/telega_changelog.txt
           git fetch --depth=1 https://github.com/DrKLO/Telegram.git master
           git read-tree --reset FETCH_HEAD
           git checkout-index --all --force
@@ -97,6 +112,12 @@ jobs:
 
           # Keep the committed TelegaBadgeSync implementation; upstream does not contain it.
           cp /tmp/telega-preserve/TelegaBadgeSync.java TMessagesProj/src/main/java/org/telegram/messenger/TelegaBadgeSync.java
+          # Keep direct GitHub source edits after the upstream source import.
+          cp /tmp/telega-preserve/LaunchActivity.java TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+          cp /tmp/telega-preserve/TelegaSettingsActivity.java TMessagesProj/src/main/java/org/telegram/ui/TelegaSettingsActivity.java
+          cp /tmp/telega-preserve/TelegaOtaUpdater.java TMessagesProj/src/main/java/org/telegram/messenger/TelegaOtaUpdater.java
+          mkdir -p TMessagesProj/src/main/assets
+          cp /tmp/telega-preserve/telega_changelog.txt TMessagesProj/src/main/assets/telega_changelog.txt
 
           python3 - <<'PY'
           import ast
@@ -235,16 +256,19 @@ jobs:
           mkdir -p release-assets
           cp "$APK" release-assets/Telega-Beta.apk
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose release-assets/Telega-Beta.apk
-          cat > release-notes.md <<EOF
-          Automated Telega Beta build from upstream Android source.
-
-          - Version: $TELEGA_VERSION_NAME
-          - GitHub Actions run: $GITHUB_RUN_NUMBER
-          - Supported native ABIs: arm64-v8a, armeabi-v7a
-          - Build configuration: afatDebug, R8 minification and resource shrinking disabled to avoid aggressive release shrinking
-
-          Telega-Version-Code: $TELEGA_FINAL_VERSION_CODE
-          EOF
+          {
+            echo "Automated Telega Beta build from upstream Android source."
+            echo ""
+            echo "- Version: $TELEGA_VERSION_NAME"
+            echo "- GitHub Actions run: $GITHUB_RUN_NUMBER"
+            echo "- Supported native ABIs: arm64-v8a, armeabi-v7a"
+            echo "- Build configuration: afatDebug, R8 minification and resource shrinking disabled"
+            echo ""
+            echo "Changes in this update:"
+            cat /tmp/telega-changelog.txt
+            echo ""
+            echo "Telega-Version-Code: $TELEGA_FINAL_VERSION_CODE"
+          } > release-notes.md
           echo "APK prepared and signature verified: release-assets/Telega-Beta.apk"
           stat -c "APK size: %s bytes" release-assets/Telega-Beta.apk
 
