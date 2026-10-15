@@ -86,6 +86,7 @@ jobs:
             .github/patches/telega_advanced_fixes.py
             .github/patches/telega_ota_hardening.py
             .github/patches/telega_build_config.py
+            .github/patches/telega_glass_chats.py
           )
           for patch in "${patches[@]}"; do
             test -f "$patch"
