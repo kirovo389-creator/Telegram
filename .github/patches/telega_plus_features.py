@@ -132,10 +132,10 @@ if "public static boolean hasUserBadge(String about)" not in s:
 
 # Keep all hidden metadata (emoji status, profile style, badge) when editing the BIO.
 b = bio_path.read_text(encoding="utf-8")
-new_name_pattern = re.compile(r'final String newName = TelegaLocalStatus\.update\(firstNameField\.getText\(\)\.toString\(\)\.replace\("\\\\n", ""\), TelegaLocalStatus\.getDocumentId\(userFull\.about\), TelegaLocalStatus\.getUntil\(userFull\.about\)\);')
+new_name_pattern = re.compile(r'final String newName = TelegaLocalStatus\.update\(firstNameField\.getText\(\)\.toString\(\)\.replace\("\\n", ""\), TelegaLocalStatus\.getDocumentId\(userFull\.about\), TelegaLocalStatus\.getUntil\(userFull\.about\)\);')
 if "TelegaLocalStatus.updateBio(firstNameField.getText().toString().replace" not in b:
     b, count = new_name_pattern.subn(
-        r'final String newName = TelegaLocalStatus.updateBio(firstNameField.getText().toString().replace("\\n", ""), userFull.about);',
+        r'final String newName = TelegaLocalStatus.updateBio(firstNameField.getText().toString().replace("\n", ""), userFull.about);',
         b, count=1)
     if count != 1:
         print("ERROR: ChangeBioActivity metadata-preserving save anchor not found", file=sys.stderr)
