@@ -271,6 +271,28 @@ u = require_replace(u, '''                    .setNegativeButton("Позже", (
                                     .putLong("deferred_at", System.currentTimeMillis()).apply())''',
 "remember Later choice for six hours")
 
+# Keep all OTA prompts inside Telegram's themed dialog system and avoid exposing
+# GitHub implementation details in user-facing copy.
+u = u.replace("import android.app.AlertDialog;", "import org.telegram.ui.ActionBar.AlertDialog;", 1)
+u = u.replace("APK будет загружен из GitHub Releases. Для установки Android может запросить разрешение. Системный диалог установки нужно подтвердить.",
+              "Для установки Android может запросить разрешение. Подтверди установку в системном окне.")
+u = u.replace("progress.setMessage(\\"Загрузка APK из GitHub Releases…\\");",
+              "progress.setMessage(\\"Скачивание новой версии…\\");")
+u = u.replace('''                    .setNeutralButton("Релиз", (dialog, which) ->
+                            openReleasePage(activity, release.optString("html_url",
+                                    "https://github.com/kirovo389-creator/Telegram/releases")))
+''', "")
+u = u.replace('.setPositiveButton("Скачать и установить",', '.setPositiveButton("Обновить",')
+u = u.replace("Чтобы установить APK из GitHub Releases, разреши Telega устанавливать обновления из этого источника. Android покажет системный экран разрешений.",
+              "Разреши Telega устанавливать обновления из этого источника. Android откроет системный экран разрешений.")
+# The settings row is part of this patch's generated source, so keep its copy provider-neutral too.
+settings_text = settings.read_text(encoding="utf-8")
+settings_text = settings_text.replace(
+    "Проверять GitHub Releases при каждом запуске приложения и предлагать установить новую версию.",
+    "Проверять наличие новой версии при запуске приложения и предлагать установить обновление."
+)
+settings.write_text(settings_text, encoding="utf-8")
+
 updater.write_text(u, encoding="utf-8")
 
 l = launch.read_text(encoding="utf-8")
