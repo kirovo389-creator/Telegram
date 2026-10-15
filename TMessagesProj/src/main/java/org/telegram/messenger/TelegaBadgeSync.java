@@ -4,6 +4,7 @@ import android.util.Log;
 
 import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLRPC;
+import org.telegram.tgnet.tl.TL_account;
 
 /** Writes the user's opt-in Telega identity flag into the hidden BIO metadata. */
 public final class TelegaBadgeSync {
@@ -25,7 +26,7 @@ public final class TelegaBadgeSync {
                 String oldAbout = full.about == null ? "" : full.about;
                 String newAbout = TelegaLocalStatus.updateUserBadge(oldAbout, enabled);
                 if (oldAbout.equals(newAbout)) return;
-                TLRPC.TL_account_updateProfile request = new TLRPC.TL_account_updateProfile();
+                TL_account.updateProfile request = new TL_account.updateProfile();
                 request.flags |= 4;
                 request.about = newAbout;
                 ConnectionsManager.getInstance(account).sendRequest(request, (updateResponse, updateError) ->
