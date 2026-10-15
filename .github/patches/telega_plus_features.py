@@ -155,7 +155,7 @@ b = bio_path.read_text(encoding="utf-8")
 new_name_pattern = re.compile(r'final String newName = TelegaLocalStatus\.update\(firstNameField\.getText\(\)\.toString\(\)\.replace\("\\n", ""\), TelegaLocalStatus\.getDocumentId\(userFull\.about\), TelegaLocalStatus\.getUntil\(userFull\.about\)\);')
 if "TelegaLocalStatus.updateBio(firstNameField.getText().toString().replace" not in b:
     b, count = new_name_pattern.subn(
-        r'final String newName = TelegaLocalStatus.updateBio(firstNameField.getText().toString().replace("\n", ""), userFull.about);',
+        lambda _: r'final String newName = TelegaLocalStatus.updateBio(firstNameField.getText().toString().replace("\n", ""), userFull.about);',
         b, count=1)
     if count != 1:
         print("ERROR: ChangeBioActivity metadata-preserving save anchor not found", file=sys.stderr)
