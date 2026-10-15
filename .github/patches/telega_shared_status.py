@@ -195,7 +195,7 @@ render_call = "nameTextView[a].setRightDrawable(getEmojiStatusDrawable(user.emoj
 if render_call not in s:
     print("ERROR: profile emoji drawable call not found", file=sys.stderr)
     sys.exit(1)
-s = s.replace(render_call, "user.emoji_status = telegaStatusToShow;\\n                        nameTextView[a].setRightDrawable(getEmojiStatusDrawable(telegaStatusToShow, false, false, a));", 1)
+s = s.replace(render_call, "user.emoji_status = telegaStatusToShow;\n                        nameTextView[a].setRightDrawable(getEmojiStatusDrawable(telegaStatusToShow, false, false, a));", 1)
 
 profile.write_text(s, encoding="utf-8")
 
