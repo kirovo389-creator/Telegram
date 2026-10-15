@@ -117,7 +117,8 @@ jobs:
           assert "messageEditText.setSelection(i + inserted.length(), i + inserted.length())" in entry_view, "premium emoji Unicode metadata must remain attached after typing"
           assert "TL_users_getFullUser loadFull = new TLRPC.TL_users_getFullUser();" in peer_color, "profile style sync must load user info when cache is empty"
           assert "syncTelegaProfileStyleMetadata(fetchedFull, telegaPendingColor, telegaPendingEmoji);" in peer_color, "profile style sync fallback is missing"
-          print("Patch syntax, Android XML, Telega branding, Unicode emoji cursor, shared profile sync, OTA wiring/versioning and release ABI configuration validated.")
+          assert "private int telegaClosestPeerColorId(int accentColor, int pageType)" in peer_color, "collectible accent color mapper is missing"
+          print("Patch syntax, Android XML, Telega branding, Unicode emoji cursor, shared profile sync/color mapper, OTA wiring/versioning and release ABI configuration validated.")
           PY
 
           sed -i 's/<string name="AppName">Telegram<\/string>/<string name="AppName">Telega<\/string>/' TMessagesProj/src/main/res/values/strings.xml
