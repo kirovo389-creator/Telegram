@@ -630,6 +630,10 @@ elif "TELEGA_PROFILE_COLOR_NFT_RESALE_V2" not in pc:
 
 # The profile page has independent color and emoji-status collectible fields.
 profile_unsaved_old = """                    return !(selectedColor == (me.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? -1 : UserObject.getProfileColorId(me)) && selectedEmoji == (me.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? 0 : UserObject.getOnlyProfileEmojiId(me)) && eq(me.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? (TLRPC.TL_emojiStatusCollectible) me.emoji_status : null , selectedEmojiCollectible));"""
+profile_unsaved_alt = """                    final boolean a = selectedColor == (me.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? -1 : UserObject.getProfileColorId(me));
+                    final boolean b = selectedEmoji == (me.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? 0 : UserObject.getOnlyProfileEmojiId(me));
+                    final boolean c = eq(me.emoji_status instanceof TLRPC.TL_emojiStatusCollectible ? (TLRPC.TL_emojiStatusCollectible) me.emoji_status : null , selectedEmojiCollectible);
+                    return !(a && b && c);"""
 profile_unsaved_new = """                    final boolean a = selectedColor == (me.profile_color instanceof TLRPC.TL_peerColorCollectible ? -1 : UserObject.getProfileColorId(me));
                     final boolean b = selectedEmoji == (me.profile_color instanceof TLRPC.TL_peerColorCollectible ? 0 : UserObject.getOnlyProfileEmojiId(me));
                     final boolean c = eq(me.profile_color instanceof TLRPC.TL_peerColorCollectible ? (TLRPC.TL_peerColorCollectible) me.profile_color : null, selectedPeerCollectible);
@@ -637,6 +641,8 @@ profile_unsaved_new = """                    final boolean a = selectedColor == 
                     return !(a && b && c && d);"""
 if profile_unsaved_old in pc:
     pc = pc.replace(profile_unsaved_old, profile_unsaved_new, 1)
+elif profile_unsaved_alt in pc:
+    pc = pc.replace(profile_unsaved_alt, profile_unsaved_new, 1)
 elif "final boolean c = eq(me.profile_color instanceof TLRPC.TL_peerColorCollectible" not in pc:
     print("ERROR: profile NFT unsaved-state anchor missing", file=sys.stderr)
     sys.exit(1)
