@@ -204,8 +204,7 @@ public class ChangeBioActivity extends BaseFragment {
         if (currentName == null) {
             currentName = "";
         }
-        final String newName = TelegaLocalStatus.updateBio(firstNameField.getText().toString().replace("
-", ""), userFull.about);
+        final String newName = TelegaLocalStatus.updateBio(firstNameField.getText().toString().replace("\n", ""), userFull.about);
         if (currentName.equals(newName)) {
             finishFragment();
             return;
