@@ -558,7 +558,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         checkCurrentAccount();
         updateCurrentConnectionState(currentAccount);
         getWindow().getDecorView().postDelayed(this::showTelegaChangelogIfNeeded, 3000);
-        getWindow().getDecorView().postDelayed(() -> org.telegram.messenger.TelegaFeatures.markAllUnreadReactionsAsRead(currentAccount), 3800);
+        getWindow().getDecorView().postDelayed(() -> org.telegram.messenger.TelegaFeatures.markAllUnreadReactionsAsRead(currentAccount), 6500);
         getWindow().getDecorView().postDelayed(this::showTelegaChannelPromptIfNeeded, 900);
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.closeOtherAppActivities, this);
 
@@ -7030,7 +7030,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     @Override
     protected void onResume() {
         super.onResume();
-        getWindow().getDecorView().postDelayed(() -> org.telegram.messenger.TelegaOtaUpdater.check(this), 2500);
+        getWindow().getDecorView().postDelayed(() -> org.telegram.messenger.TelegaOtaUpdater.check(this), 6000);
         org.telegram.messenger.TelegaOtaUpdater.installPending(this);
         isResumed = true;
         pipActivityHandler.onResume();
