@@ -6715,7 +6715,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         TLRPC.UserFull full = userInfo != null ? userInfo : getMessagesController().getUserFull(selfId);
         String oldAbout = full == null || full.about == null ? "" : full.about;
         String newAbout = TelegaLocalStatus.update(oldAbout, documentId, until);
-        if (oldAbout.equals(newAbout)) return;
+        if (oldAbout.equals(newAbout)) {
+            ApplicationLoader.applicationContext.getSharedPreferences("telega_local_status", 0).edit()
+                    .putLong("document_id", documentId).putInt("until", until).apply();
+            updateProfileData(true);
+            return;
+        }
 
         TL_account.updateProfile request = new TL_account.updateProfile();
         request.flags |= 4;
@@ -6729,6 +6734,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 return;
             }
             if (full != null) full.about = newAbout;
+            ApplicationLoader.applicationContext.getSharedPreferences("telega_local_status", 0).edit()
+                    .putLong("document_id", documentId).putInt("until", until).apply();
             if (response instanceof TLRPC.User) {
                 TLRPC.User updatedUser = (TLRPC.User) response;
                 if (full != null) {
@@ -11635,14 +11642,23 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         nameTextView[a].setRightDrawable2(null);
                         nameTextViewRightDrawable2ContentDescription = null;
                     }
-                    if (user != null/* && !getMessagesController().premiumFeaturesBlocked()*/ && !MessagesController.isSupportUser(user) && (DialogObject.getEmojiStatusDocumentId(user.emoji_status) != 0 || (userInfo != null && TelegaLocalStatus.getDocumentId(userInfo.about) != 0))) {
+                    if (user != null/* && !getMessagesController().premiumFeaturesBlocked()*/ && !MessagesController.isSupportUser(user) && (DialogObject.getEmojiStatusDocumentId(user.emoji_status) != 0
+                            || (userInfo != null && TelegaLocalStatus.getDocumentId(userInfo.about) != 0)
+                            || (user.id == UserConfig.getInstance(currentAccount).getClientUserId()
+                                && ApplicationLoader.applicationContext.getSharedPreferences("telega_local_status", 0).getLong("document_id", 0L) != 0))) {
                         TLRPC.EmojiStatus telegaStatusToShow = user.emoji_status;
-                        if (DialogObject.getEmojiStatusDocumentId(telegaStatusToShow) == 0 && userInfo != null) {
-                            long telegaDocumentId = TelegaLocalStatus.getDocumentId(userInfo.about);
+                        if (DialogObject.getEmojiStatusDocumentId(telegaStatusToShow) == 0
+                                && (userInfo != null || user.id == UserConfig.getInstance(currentAccount).getClientUserId())) {
+                            long telegaDocumentId = userInfo == null ? 0 : TelegaLocalStatus.getDocumentId(userInfo.about);
+                            int telegaUntil = userInfo == null ? 0 : TelegaLocalStatus.getUntil(userInfo.about);
+                            if (telegaDocumentId == 0 && user.id == UserConfig.getInstance(currentAccount).getClientUserId()) {
+                                android.content.SharedPreferences localStatusPrefs = ApplicationLoader.applicationContext.getSharedPreferences("telega_local_status", 0);
+                                telegaDocumentId = localStatusPrefs.getLong("document_id", 0L);
+                                telegaUntil = localStatusPrefs.getInt("until", 0);
+                            }
                             if (telegaDocumentId != 0) {
                                 TLRPC.TL_emojiStatus localStatus = new TLRPC.TL_emojiStatus();
                                 localStatus.document_id = telegaDocumentId;
-                                int telegaUntil = TelegaLocalStatus.getUntil(userInfo.about);
                                 if (telegaUntil > 0) {
                                     localStatus.flags |= 1;
                                     localStatus.until = telegaUntil;
