@@ -143,7 +143,7 @@ helpers = r"""
         }
         try {
             long run = Long.parseLong(tag.substring(prefix.length()));
-            return (versionBase + run) * 10L + 9L;
+            return versionBase + run;
         } catch (NumberFormatException ignored) {
             return -1L;
         }
