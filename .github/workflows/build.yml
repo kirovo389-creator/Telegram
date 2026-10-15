@@ -169,7 +169,7 @@ jobs:
       - name: Initialize source submodules
         run: git submodule update --init --recursive --depth=1
 
-      - name: Build optimized Telega Beta APK
+      - name: Build stable Telega Beta APK (R8 and resource shrinking disabled)
         shell: bash
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 || secrets.TELEGA_KEYSTORE_BASE64 }}
@@ -180,12 +180,12 @@ jobs:
           set -euo pipefail
           chmod +x gradlew
           if [ -n "${KEYSTORE_BASE64:-}" ]; then
-            ./gradlew :TMessagesProj_App:assembleAfatRelease --stacktrace \
+            ./gradlew :TMessagesProj_App:assembleAfatDebug --stacktrace \
               -PRELEASE_STORE_PASSWORD="$KEYSTORE_PASSWORD" \
               -PRELEASE_KEY_ALIAS="$KEY_ALIAS" \
               -PRELEASE_KEY_PASSWORD="$KEY_PASSWORD"
           else
-            ./gradlew :TMessagesProj_App:assembleAfatRelease --stacktrace
+            ./gradlew :TMessagesProj_App:assembleAfatDebug --stacktrace
           fi
 
       - name: Prepare APK and release notes
@@ -196,17 +196,19 @@ jobs:
           test -n "$APK"
           mkdir -p release-assets
           cp "$APK" release-assets/Telega-Beta.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose release-assets/Telega-Beta.apk
           cat > release-notes.md <<EOF
           Automated Telega Beta build from Telegram Android upstream.
 
           - Version: $TELEGA_VERSION_NAME
           - GitHub Actions run: $GITHUB_RUN_NUMBER
           - Supported native ABIs: arm64-v8a, armeabi-v7a
-          - Build configuration: release, R8 minification and resource shrinking enabled
+          - Build configuration: afatDebug, R8 minification and resource shrinking disabled to avoid aggressive release shrinking
 
           Telega-Version-Code: $TELEGA_FINAL_VERSION_CODE
           EOF
-          echo "APK prepared: release-assets/Telega-Beta.apk"
+          echo "APK prepared and signature verified: release-assets/Telega-Beta.apk"
+          stat -c "APK size: %s bytes" release-assets/Telega-Beta.apk
 
       - name: Publish GitHub Release
         env:
