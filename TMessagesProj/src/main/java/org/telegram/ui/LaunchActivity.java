@@ -6995,22 +6995,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     }
 
 
-    private String readTelegaChangelog() {
-        try (java.io.InputStream input = getAssets().open("telega_changelog.txt");
-             java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream()) {
-            byte[] buffer = new byte[2048];
-            int count;
-            while ((count = input.read(buffer)) != -1) {
-                output.write(buffer, 0, count);
-            }
-            String text = new String(output.toByteArray(), java.nio.charset.StandardCharsets.UTF_8).trim();
-            if (!text.isEmpty()) return text;
-        } catch (Throwable error) {
-            android.util.Log.w("Telega", "Unable to read build changelog", error);
-        }
-        return "• Исправления и улучшения именно этой сборки.";
-    }
-
     private void showTelegaChangelogIfNeeded() {
         if (isFinishing() || isDestroyed() || passcodeDialog != null
                 || org.telegram.messenger.UserConfig.getInstance(currentAccount).getClientUserId() == 0) return;
@@ -7026,7 +7010,11 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         prefs.edit().putLong("last_version", version).apply();
         new AlertDialog.Builder(this)
                 .setTitle("Что нового в Telega Beta")
-                .setMessage(readTelegaChangelog())
+                .setMessage("• Обновлён раздел «Настройки Telega».\n\n"
+                        + "• Auto Proxy переключает только между прокси, которые ты сам сохранил.\n\n"
+                        + "• Счётчик непрочитанных реакций скрывается, а приложение отправляет запрос на их прочтение.\n\n"
+                        + "• Обычные статьи и списки отправляются через совместимый текстовый режим.\n\n"
+                        + "• Исправления стабильности и интерфейса.")
                 .setNeutralButton("Канал TelegaForks", (dialog, which) -> {
                     try {
                         startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,

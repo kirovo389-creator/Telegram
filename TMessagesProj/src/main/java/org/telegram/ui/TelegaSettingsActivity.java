@@ -1,6 +1,7 @@
 package org.telegram.ui;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
@@ -19,7 +20,7 @@ import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 
-/** Telega-specific settings, grouped by purpose and backed by real feature state. */
+/** Telega-specific behavior toggles. */
 public class TelegaSettingsActivity extends BaseFragment {
 
     @Override
@@ -36,108 +37,80 @@ public class TelegaSettingsActivity extends BaseFragment {
 
         ScrollView scroll = new ScrollView(context);
         scroll.setFillViewport(true);
-        scroll.setClipToPadding(false);
         scroll.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
-
         LinearLayout list = new LinearLayout(context);
         list.setOrientation(LinearLayout.VERTICAL);
-        list.setPadding(0, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(24));
-
+        list.setPadding(0, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(20));
+        // TELEGA_BETA_SETTINGS_HEADER
         TextView pageTitle = new TextView(context);
         pageTitle.setText("TELEGA BETA");
-        pageTitle.setTextSize(24);
+        pageTitle.setTextSize(23);
         pageTitle.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
-        pageTitle.setLetterSpacing(0.035f);
         pageTitle.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
         pageTitle.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(14), AndroidUtilities.dp(20), 0);
         list.addView(pageTitle, new LinearLayout.LayoutParams(-1, -2));
-
         TextView pageSubtitle = new TextView(context);
-        pageSubtitle.setText("Управляй функциями, приватностью и производительностью");
+        pageSubtitle.setText("Приватность, автоматизация и дополнительные возможности");
         pageSubtitle.setTextSize(13);
-        pageSubtitle.setLineSpacing(AndroidUtilities.dp(2), 1.0f);
         pageSubtitle.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
-        pageSubtitle.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(5), AndroidUtilities.dp(20), AndroidUtilities.dp(12));
+        pageSubtitle.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(4), AndroidUtilities.dp(20), AndroidUtilities.dp(14));
         list.addView(pageSubtitle, new LinearLayout.LayoutParams(-1, -2));
 
-        addSection(context, list, "ПРИВАТНОСТЬ");
+        scroll.addView(list, new ScrollView.LayoutParams(-1, -2));
+
         addToggle(context, list, "Удалённые сообщения",
-                "Сохранять локальную отметку о сообщениях, удалённых собеседником для всех.",
+                "Оставлять у себя сообщения, которые собеседник удалил для всех.",
                 TelegaFeatures.isDeletedMessagesEnabled(currentAccount),
                 (button, enabled) -> TelegaFeatures.setDeletedMessagesEnabled(enabled));
         addToggle(context, list, "Призрак",
-                "Ограничивает отправку отметок о прочтении и обновление онлайн-статуса там, где это позволяет сервер.",
+                "Не отправлять отметки о прочтении и не обновлять онлайн-статус. Серверные ограничения всё равно действуют.",
                 TelegaFeatures.isGhostModeEnabled(),
                 (button, enabled) -> TelegaFeatures.setGhostModeEnabled(enabled));
-
-        addSection(context, list, "СЕТЬ И ОБНОВЛЕНИЯ");
         addToggle(context, list, "Auto Proxy",
-                "Переключение между сохранёнными прокси. Для включения нужно минимум два прокси.",
+                "Автоматически переключается между сохранёнными прокси при проблемах с соединением. Нужно минимум два прокси, добавленных тобой.",
                 TelegaFeatures.isAutoProxyEnabled(),
                 (button, enabled) -> {
                     if (!TelegaFeatures.setAutoProxyEnabled(enabled)) {
-                        button.setOnCheckedChangeListener(null);
                         button.setChecked(false);
-                        button.setOnCheckedChangeListener((CompoundButton.OnCheckedChangeListener) (changed, value) -> {
-                            if (!TelegaFeatures.setAutoProxyEnabled(value)) {
-                                changed.setOnCheckedChangeListener(null);
-                                changed.setChecked(false);
-                                changed.setOnCheckedChangeListener((b, v) -> TelegaFeatures.setAutoProxyEnabled(v));
-                                Toast.makeText(context, "Добавь минимум два прокси в настройках прокси Telegram", Toast.LENGTH_LONG).show();
-                            }
-                        });
                         Toast.makeText(context, "Добавь минимум два прокси в настройках прокси Telegram", Toast.LENGTH_LONG).show();
                     }
                 });
+
         addToggle(context, list, "Автообновление",
-                "Проверять новые стабильные сборки и предлагать обновление. Установка всё равно подтверждается Android.",
+                "Проверять GitHub Releases при каждом запуске приложения и предлагать установить новую версию.",
                 TelegaOtaUpdater.isEnabled(context),
                 (button, enabled) -> TelegaOtaUpdater.setEnabled(context, enabled));
 
-        addSection(context, list, "АВТОМАТИЗАЦИЯ");
         addToggle(context, list, "Auto Archive",
                 "Автоматически архивировать новые группы, каналы и ботов и отключать им звук.",
                 TelegaFeatures.isAutoArchiveEnabled(),
                 (button, enabled) -> TelegaFeatures.setAutoArchiveEnabled(enabled));
         addToggle(context, list, "Анти звук",
-                "Отключать уведомления у новых групп, каналов и ботов.",
+                "Автоматически отключать уведомления у новых групп, каналов и ботов.",
                 TelegaFeatures.isAntiSoundEnabled(),
                 (button, enabled) -> TelegaFeatures.setAntiSoundEnabled(enabled));
 
-        addSection(context, list, "ВИД И ЭФФЕКТЫ");
         addToggle(context, list, "Стеклянные чаты",
-                "Полупрозрачные карточки в списке диалогов. Можно выключить в любой момент.",
+                "Добавляет полупрозрачные карточки в списке диалогов. Можно выключить в любой момент; остальные функции и оформление не меняются.",
                 TelegaFeatures.isGlassChatsEnabled(),
                 (button, enabled) -> TelegaFeatures.setGlassChatsEnabled(enabled));
+
         addToggle(context, list, "Значок Telega",
-                "Скрытая отметка в BIO отображает значок другим пользователям Telega Beta.",
+                "Скрытая отметка в BIO показывает значок другим пользователям Telega Beta.",
                 TelegaFeatures.isBadgeEnabled(),
                 (button, enabled) -> TelegaFeatures.setBadgeEnabled(enabled));
+
+        addToggle(context, list, "Турбо-загрузка",
+                "Увеличивает число одновременно обрабатываемых загрузок до 10 на очередь. Скорость всё равно зависит от сети и серверов.",
+                TelegaFeatures.isTurboDownloadEnabled(),
+                (button, enabled) -> TelegaFeatures.setTurboDownloadEnabled(enabled));
         addToggle(context, list, "Эффекты сообщений",
-                "Локальные анимации для отдельных эмодзи при появлении сообщения; ничего дополнительно не отправляется.",
+                "Локальные анимации 🎉 ❤️ 🔥 👍 при появлении сообщения; данные для эффекта на сервер не отправляются.",
                 TelegaFeatures.isMessageEffectsEnabled(),
                 (button, enabled) -> TelegaFeatures.setMessageEffectsEnabled(enabled));
 
-        addSection(context, list, "ПРОИЗВОДИТЕЛЬНОСТЬ");
-        addToggle(context, list, "Турбо-загрузка",
-                "Увеличивает число параллельных загрузок. Реальная скорость зависит от сети и серверов.",
-                TelegaFeatures.isTurboDownloadEnabled(),
-                (button, enabled) -> TelegaFeatures.setTurboDownloadEnabled(enabled));
-
-        scroll.addView(list, new ScrollView.LayoutParams(-1, -2));
         fragmentView = scroll;
         return fragmentView;
-    }
-
-    private void addSection(Context context, LinearLayout parent, String title) {
-        TextView label = new TextView(context);
-        label.setText(title);
-        label.setTextSize(11);
-        label.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
-        label.setLetterSpacing(0.09f);
-        label.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
-        label.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(14), AndroidUtilities.dp(20), AndroidUtilities.dp(7));
-        parent.addView(label, new LinearLayout.LayoutParams(-1, -2));
     }
 
     private void addToggle(Context context, LinearLayout parent, String title, String summary,
@@ -145,44 +118,35 @@ public class TelegaSettingsActivity extends BaseFragment {
         LinearLayout row = new LinearLayout(context);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(14), AndroidUtilities.dp(14), AndroidUtilities.dp(14));
-
+        row.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(13), AndroidUtilities.dp(16), AndroidUtilities.dp(13));
         GradientDrawable rowBackground = new GradientDrawable();
         rowBackground.setColor(Theme.getColor(Theme.key_windowBackgroundWhite));
-        rowBackground.setCornerRadius(AndroidUtilities.dp(14));
+        rowBackground.setCornerRadius(AndroidUtilities.dp(12));
         row.setBackground(rowBackground);
-        row.setFocusable(true);
-        row.setClickable(true);
-
         LinearLayout textColumn = new LinearLayout(context);
         textColumn.setOrientation(LinearLayout.VERTICAL);
-
         TextView titleView = new TextView(context);
         titleView.setText(title);
-        titleView.setTextSize(15);
-        titleView.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        titleView.setTextSize(16);
         titleView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
-
         TextView summaryView = new TextView(context);
         summaryView.setText(summary);
-        summaryView.setTextSize(12);
+        summaryView.setTextSize(13);
         summaryView.setLineSpacing(AndroidUtilities.dp(2), 1.0f);
         summaryView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
-
-        textColumn.addView(titleView, new LinearLayout.LayoutParams(-1, -2));
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(-1, -2);
+        textColumn.addView(titleView, titleParams);
         LinearLayout.LayoutParams summaryParams = new LinearLayout.LayoutParams(-1, -2);
-        summaryParams.topMargin = AndroidUtilities.dp(5);
+        summaryParams.topMargin = AndroidUtilities.dp(4);
         textColumn.addView(summaryView, summaryParams);
         row.addView(textColumn, new LinearLayout.LayoutParams(0, -2, 1f));
-
         Switch toggle = new Switch(context);
         toggle.setChecked(checked);
         toggle.setOnCheckedChangeListener(listener);
         LinearLayout.LayoutParams toggleParams = new LinearLayout.LayoutParams(-2, -2);
-        toggleParams.leftMargin = AndroidUtilities.dp(10);
+        toggleParams.leftMargin = AndroidUtilities.dp(12);
         row.addView(toggle, toggleParams);
         row.setOnClickListener(v -> toggle.setChecked(!toggle.isChecked()));
-
         LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(-1, -2);
         rowParams.setMargins(AndroidUtilities.dp(12), 0, AndroidUtilities.dp(12), AndroidUtilities.dp(8));
         parent.addView(row, rowParams);
