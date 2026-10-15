@@ -154,26 +154,45 @@ method = '''    private void saveTelegaProfileStyle(TLRPC.User me, int color, lo
         }
         TLRPC.UserFull full = getMessagesController().getUserFull(me.id);
         if (full == null) {
+            final int telegaPendingColor = color;
+            final long telegaPendingEmoji = backgroundEmojiId;
+            TLRPC.TL_users_getFullUser loadFull = new TLRPC.TL_users_getFullUser();
+            loadFull.id = getMessagesController().getInputUser(me);
+            getConnectionsManager().sendRequest(loadFull, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+                if (error != null || !(response instanceof TLRPC.TL_users_userFull)) {
+                    if (error != null) Log.e("Telega", "Unable to load profile before syncing style: " + error.text);
+                    getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
+                    return;
+                }
+                TLRPC.UserFull fetchedFull = ((TLRPC.TL_users_userFull) response).full_user;
+                if (fetchedFull != null) {
+                    syncTelegaProfileStyleMetadata(fetchedFull, telegaPendingColor, telegaPendingEmoji);
+                }
+            }));
             getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
             return;
         }
+        syncTelegaProfileStyleMetadata(full, color, backgroundEmojiId);
+    }
+
+    private void syncTelegaProfileStyleMetadata(TLRPC.UserFull full, int color, long backgroundEmojiId) {
         String about = full.about == null ? "" : full.about;
         String newAbout = TelegaLocalStatus.updateProfileStyle(about, color, backgroundEmojiId);
-        if (!about.equals(newAbout)) {
-            TL_account.updateProfile request = new TL_account.updateProfile();
-            request.flags |= 4;
-            request.about = newAbout;
-            getConnectionsManager().sendRequest(request, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
-                if (error != null) {
-                    Log.e("Telega", "Profile style metadata sync failed: " + error.text);
-                    return;
-                }
-                full.about = newAbout;
-                getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
-            }));
-        } else {
+        if (about.equals(newAbout)) {
             getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
+            return;
         }
+        TL_account.updateProfile request = new TL_account.updateProfile();
+        request.flags |= 4;
+        request.about = newAbout;
+        getConnectionsManager().sendRequest(request, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            if (error != null) {
+                Log.e("Telega", "Profile style metadata sync failed: " + error.text);
+                return;
+            }
+            full.about = newAbout;
+            getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
+        }));
     }
 
 '''
