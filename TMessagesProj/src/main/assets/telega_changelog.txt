@@ -1,3 +1,8 @@
+• ci: preserve direct emoji-status and deleted-message UI fixes
+• fix: place deleted-message trash marker before timestamp
+• fix: persist and render local emoji status reliably
+• Import upstream source and configure Telega [skip ci]
+• Import upstream source and configure Telega [skip ci]
 • ci: preserve direct Telega source edits and generate per-build changelog
 • fix: show changelog generated for this exact build
 • fix: remove confusing APK installer startup toast
