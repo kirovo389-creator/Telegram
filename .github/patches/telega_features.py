@@ -483,6 +483,53 @@ if "telegaDeletedForDraw" in dc:
             canvas.drawRoundRect(telegaTrashX, telegaTrashY + org.telegram.messenger.AndroidUtilities.dp(3), telegaTrashX + telegaTrashW, telegaTrashY + telegaTrashH, org.telegram.messenger.AndroidUtilities.dp(1), org.telegram.messenger.AndroidUtilities.dp(1), telegaDeletedPaint);
             canvas.drawLine(telegaTrashX - org.telegram.messenger.AndroidUtilities.dp(1), telegaTrashY + org.telegram.messenger.AndroidUtilities.dp(2), telegaTrashX + telegaTrashW + org.telegram.messenger.AndroidUtilities.dp(1), telegaTrashY + org.telegram.messenger.AndroidUtilities.dp(2), telegaDeletedPaint);
             canvas.drawLine(telegaTrashX + org.telegram.messenger.AndroidUtilities.dp(2), telegaTrashY, telegaTrashX + org.telegram.messenger.AndroidUtilities.dp(6), telegaTrashY, telegaDeletedPaint);'''
+    if trash_old in dc:
+        dc = dc.replace(trash_old, trash_new, 1)
+    elif 'canvas.drawText("🗑"' in dc:
+        print("ERROR: deleted-message emoji marker source changed", file=sys.stderr)
+        sys.exit(1)
+    deleted_cell_path.write_text(dc, encoding="utf-8")
+
+# Extend hidden profile metadata to keep name color/name emoji when profile color is changed, and vice versa.
+st = status_path.read_text(encoding="utf-8")
+if "getNameColor(String about)" not in st:
+    old_sig = "private static String encodePayload(String clean, long documentId, int until, int color, long backgroundEmojiId) {"
+    if old_sig not in st:
+        print("ERROR: TelegaLocalStatus encodePayload signature changed", file=sys.stderr)
+        sys.exit(1)
+    st = st.replace(old_sig, "private static String encodePayload(String clean, long documentId, int until, int color, long backgroundEmojiId, int nameColor, long nameEmojiId) {", 1)
+    old_guard = "if (documentId == 0 && color < 0 && backgroundEmojiId == 0) return clean;"
+    st = st.replace(old_guard, "if (documentId == 0 && color < 0 && backgroundEmojiId == 0 && nameColor < 0 && nameEmojiId == 0) return clean;", 1)
+    old_payload = 'String payload = PREFIX + Long.toString(Math.max(0, documentId), 36) + "." + Integer.toString(Math.max(0, until), 36) + "." + Integer.toString(color + 1, 36) + "." + Long.toString(Math.max(0, backgroundEmojiId), 36);'
+    new_payload = 'String payload = PREFIX + Long.toString(Math.max(0, documentId), 36) + "." + Integer.toString(Math.max(0, until), 36) + "." + Integer.toString(color + 1, 36) + "." + Long.toString(Math.max(0, backgroundEmojiId), 36) + "." + Integer.toString(nameColor + 1, 36) + "." + Long.toString(Math.max(0, nameEmojiId), 36);'
+    if old_payload not in st:
+        print("ERROR: TelegaLocalStatus payload layout anchor not found", file=sys.stderr)
+        sys.exit(1)
+    st = st.replace(old_payload, new_payload, 1)
+    # Profile changes preserve name style unless a separate name edit is applied.
+    st = st.replace("return encodePayload(clean, documentId, until, color, backgroundEmojiId);",
+                    "return encodePayload(clean, documentId, until, color, backgroundEmojiId, getNameColor(source), getNameEmoji(source));", 1)
+    st = st.replace("return encodePayload(strip(source), documentId, until, color, backgroundEmojiId);",
+                    "return encodePayload(strip(source), documentId, until, color, backgroundEmojiId, getNameColor(source), getNameEmoji(source));", 1)
+    insert_anchor = "    private static String[] getParts(String about) {"
+    methods = r'''    public static int getNameColor(String about) {
+        String[] parts = getParts(about);
+        if (parts == null || parts.length < 7) return -1;
+        try { return Integer.parseInt(parts[5], 36) - 1; } catch (Throwable ignore) { return -1; }
+    }
+
+    public static long getNameEmoji(String about) {
+        String[] parts = getParts(about);
+        if (parts == null || parts.length < 7) return 0;
+        try { return Long.parseLong(parts[6], 36); } catch (Throwable ignore) { return 0; }
+    }
+
+    public static String updateAllStyles(String about, int profileColor, long profileEmoji, int nameColor, long nameEmoji) {
+        String source = about == null ? "" : about;
+        return encodePayload(strip(source), getDocumentId(source), getUntil(source), profileColor, profileEmoji, nameColor, nameEmoji);
+    }
+
+'''
     if insert_anchor not in st:
         print("ERROR: TelegaLocalStatus parts method anchor not found", file=sys.stderr)
         sys.exit(1)
