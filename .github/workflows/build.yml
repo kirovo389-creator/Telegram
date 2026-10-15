@@ -58,6 +58,7 @@ jobs:
           git reset --hard origin/main
           cp -a .github /tmp/telega-preserve/github
           cp README.md /tmp/telega-preserve/README.md
+          cp TMessagesProj/src/main/java/org/telegram/messenger/TelegaBadgeSync.java /tmp/telega-preserve/TelegaBadgeSync.java
           git fetch --depth=1 https://github.com/DrKLO/Telegram.git master
           git read-tree --reset FETCH_HEAD
           git checkout-index --all --force
@@ -93,6 +94,9 @@ jobs:
             test -f "$patch"
             python3 "$patch"
           done
+
+          # Keep the committed TelegaBadgeSync implementation; upstream does not contain it.
+          cp /tmp/telega-preserve/TelegaBadgeSync.java TMessagesProj/src/main/java/org/telegram/messenger/TelegaBadgeSync.java
 
           python3 - <<'PY'
           import ast
