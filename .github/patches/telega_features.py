@@ -551,10 +551,25 @@ if helper_start >= 0 and "TelegaLocalStatus.updateAllStyles" not in pc[helper_st
             sharedNameEmoji = namePage.selectedPeerCollectible.background_emoji_id;
         }
         String newAbout = TelegaLocalStatus.updateAllStyles(about, sharedProfileColor, sharedProfileEmoji, sharedNameColor, sharedNameEmoji);'''
-    if about_line not in pc:
-        print("ERROR: profile-style metadata merge anchor not found", file=sys.stderr)
-        sys.exit(1)
-    pc = pc.replace(about_line, about_new, 1)
+    if about_line in pc:
+        pc = pc.replace(about_line, about_new, 1)
+    else:
+        sync_line = '        String newAbout = TelegaLocalStatus.updateProfileStyle(about, syncColor, syncBackgroundEmoji);'
+        sync_new = """        android.content.SharedPreferences saved = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + full.id, Context.MODE_PRIVATE);
+        int sharedProfileColor = syncColor;
+        long sharedProfileEmoji = syncBackgroundEmoji;
+        int sharedNameColor = TelegaLocalStatus.getNameColor(about);
+        long sharedNameEmoji = TelegaLocalStatus.getNameEmoji(about);
+        if (saved.contains("nameColor")) {
+            sharedNameColor = saved.getInt("nameColor", sharedNameColor);
+            sharedNameEmoji = saved.getLong("nameEmoji", sharedNameEmoji);
+        }
+        String newAbout = TelegaLocalStatus.updateAllStyles(about, sharedProfileColor, sharedProfileEmoji, sharedNameColor, sharedNameEmoji);"""
+        if sync_line in pc:
+            pc = pc.replace(sync_line, sync_new, 1)
+        elif "TelegaLocalStatus.updateAllStyles(about," not in pc:
+            print("ERROR: profile-style metadata merge anchor not found", file=sys.stderr)
+            sys.exit(1)
 
 # NFT resale preview: choose the closest ordinary supported color and emoji, never invoke the buy flow.
 if "telegaClosestPeerColorId" not in pc:
