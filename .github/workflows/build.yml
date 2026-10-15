@@ -57,7 +57,7 @@ jobs:
             git log --no-merges --format='• %s' -n 8 HEAD | sed -e '/^• Import upstream source and configure Telega/d' -e '/^• ci:/d' -e '/^• test:/d' -e '/^• build:/d' -e '/^• docs:/d' -e '/^• chore:/d' > /tmp/telega-changelog.txt
           fi
           if [[ ! -s /tmp/telega-changelog.txt ]]; then
-            git log --no-merges --format='• %s' -n 5 HEAD > /tmp/telega-changelog.txt
+            echo "• В этой сборке нет пользовательских изменений; выполнены внутренние улучшения сборки." > /tmp/telega-changelog.txt
           fi
 
       - name: Import upstream Android source and apply Telega patches
