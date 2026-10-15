@@ -49,7 +49,7 @@ jobs:
           echo "Version name: $app_version_name"
           echo "Expected APK version code: $final_version_code"
 
-      - name: Sync Telegram Android upstream and apply Telega patches
+      - name: Import upstream Android source and apply Telega patches
         shell: bash
         run: |
           set -euo pipefail
@@ -107,11 +107,17 @@ jobs:
           ota = Path("TMessagesProj/src/main/java/org/telegram/messenger/TelegaOtaUpdater.java").read_text(encoding="utf-8")
           settings = Path("TMessagesProj/src/main/java/org/telegram/ui/TelegaSettingsActivity.java").read_text(encoding="utf-8")
           app_gradle = Path("TMessagesProj_App/build.gradle").read_text(encoding="utf-8")
+          entry_view = Path("TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java").read_text(encoding="utf-8")
+          peer_color = Path("TMessagesProj/src/main/java/org/telegram/ui/PeerColorActivity.java").read_text(encoding="utf-8")
           assert launch.count("TelegaOtaUpdater.check(this)") == 1, "OTA check must be wired exactly once"
-          assert "releases/latest" in ota, "OTA must query the latest stable GitHub release"
+          assert "releases/latest" in ota, "OTA must query the latest stable GitHub Release"
+          assert "return (versionBase + run) * 10L + 9L;" in ota, "OTA versionCode must match the ABI-aware APK versionCode"
           assert "TelegaOtaUpdater.isEnabled(context)" in settings, "OTA toggle is missing"
           assert 'abiFilters "armeabi-v7a", "arm64-v8a"' in app_gradle, "release ABI filters were not narrowed"
-          print("Patch Python syntax, Android XML, OTA wiring, settings toggle and release ABI configuration validated.")
+          assert "messageEditText.setSelection(i + inserted.length(), i + inserted.length())" in entry_view, "premium emoji Unicode metadata must remain attached after typing"
+          assert "TL_users_getFullUser loadFull = new TLRPC.TL_users_getFullUser();" in peer_color, "profile style sync must load user info when cache is empty"
+          assert "syncTelegaProfileStyleMetadata(fetchedFull, telegaPendingColor, telegaPendingEmoji);" in peer_color, "profile style sync fallback is missing"
+          print("Patch syntax, Android XML, Telega branding, Unicode emoji cursor, shared profile sync, OTA wiring/versioning and release ABI configuration validated.")
           PY
 
           sed -i 's/<string name="AppName">Telegram<\/string>/<string name="AppName">Telega<\/string>/' TMessagesProj/src/main/res/values/strings.xml
@@ -198,7 +204,7 @@ jobs:
           cp "$APK" release-assets/Telega-Beta.apk
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose release-assets/Telega-Beta.apk
           cat > release-notes.md <<EOF
-          Automated Telega Beta build from Telegram Android upstream.
+          Automated Telega Beta build from upstream Android source.
 
           - Version: $TELEGA_VERSION_NAME
           - GitHub Actions run: $GITHUB_RUN_NUMBER
