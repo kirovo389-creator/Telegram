@@ -195,6 +195,33 @@ method = '''    private void saveTelegaProfileStyle(TLRPC.User me, int color, lo
         }));
     }
 
+    private int telegaClosestPeerColorId(int accentColor, int pageType) {
+        MessagesController.PeerColors availableColors = pageType == PAGE_NAME
+                ? getMessagesController().peerColors
+                : getMessagesController().profilePeerColors;
+        if (availableColors == null || availableColors.colors.isEmpty()) {
+            return 0;
+        }
+        int target = accentColor | 0xFF000000;
+        int bestId = availableColors.colors.get(0).id;
+        long bestDistance = Long.MAX_VALUE;
+        for (MessagesController.PeerColor candidate : availableColors.colors) {
+            if (candidate == null || candidate.hidden) {
+                continue;
+            }
+            int rgb = candidate.getColor1(false);
+            long red = ((target >>> 16) & 0xFF) - ((rgb >>> 16) & 0xFF);
+            long green = ((target >>> 8) & 0xFF) - ((rgb >>> 8) & 0xFF);
+            long blue = (target & 0xFF) - (rgb & 0xFF);
+            long distance = 2L * red * red + 4L * green * green + blue * blue;
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestId = candidate.id;
+            }
+        }
+        return bestId;
+    }
+
 '''
 if method_anchor not in c:
     print("ERROR: PeerColorActivity method insertion anchor not found", file=sys.stderr)
