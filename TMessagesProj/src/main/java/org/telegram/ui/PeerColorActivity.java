@@ -2221,13 +2221,23 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
 
     private void syncTelegaProfileStyleMetadata(TLRPC.UserFull full, int color, long backgroundEmojiId) {
         String about = full.about == null ? "" : full.about;
-        int sharedProfileColor = applyingProfile ? color : TelegaLocalStatus.getProfileColor(about);
-        long sharedProfileEmoji = applyingProfile ? backgroundEmojiId : TelegaLocalStatus.getProfileEmoji(about);
-        int sharedNameColor = applyingName ? (namePage == null ? UserObject.getColorId(me) : namePage.selectedColor) : TelegaLocalStatus.getNameColor(about);
-        long sharedNameEmoji = applyingName ? (namePage == null ? UserObject.getEmojiId(me) : namePage.selectedEmoji) : TelegaLocalStatus.getNameEmoji(about);
-        if (applyingName && namePage != null && namePage.selectedPeerCollectible != null) {
-            sharedNameColor = telegaClosestPeerColorId(namePage.selectedPeerCollectible.accent_color, PAGE_NAME);
-            sharedNameEmoji = namePage.selectedPeerCollectible.background_emoji_id;
+        int syncColor = color;
+        long syncBackgroundEmoji = backgroundEmojiId;
+        if (!applyingProfile) {
+            android.content.SharedPreferences savedStyle = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + full.id, Context.MODE_PRIVATE);
+            syncColor = TelegaLocalStatus.getProfileColor(about);
+            syncBackgroundEmoji = TelegaLocalStatus.getProfileEmoji(about);
+            if (syncColor < 0 && savedStyle.contains("color")) syncColor = savedStyle.getInt("color", -1);
+            if (syncBackgroundEmoji == 0 && savedStyle.contains("backgroundEmoji")) syncBackgroundEmoji = savedStyle.getLong("backgroundEmoji", 0);
+        }
+        android.content.SharedPreferences saved = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + full.id, Context.MODE_PRIVATE);
+        int sharedProfileColor = syncColor;
+        long sharedProfileEmoji = syncBackgroundEmoji;
+        int sharedNameColor = TelegaLocalStatus.getNameColor(about);
+        long sharedNameEmoji = TelegaLocalStatus.getNameEmoji(about);
+        if (saved.contains("nameColor")) {
+            sharedNameColor = saved.getInt("nameColor", sharedNameColor);
+            sharedNameEmoji = saved.getLong("nameEmoji", sharedNameEmoji);
         }
         String newAbout = TelegaLocalStatus.updateAllStyles(about, sharedProfileColor, sharedProfileEmoji, sharedNameColor, sharedNameEmoji);
         if (about.equals(newAbout)) {
@@ -2258,10 +2268,10 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
         int bestId = availableColors.colors.get(0).id;
         long bestDistance = Long.MAX_VALUE;
         for (MessagesController.PeerColor candidate : availableColors.colors) {
-            if (candidate == null || candidate.hidden) {
+            if (candidate == null) {
                 continue;
             }
-            int rgb = candidate.getColor1(false);
+            int rgb = candidate.getColor1();
             long red = ((target >>> 16) & 0xFF) - ((rgb >>> 16) & 0xFF);
             long green = ((target >>> 8) & 0xFF) - ((rgb >>> 8) & 0xFF);
             long blue = (target & 0xFF) - (rgb & 0xFF);

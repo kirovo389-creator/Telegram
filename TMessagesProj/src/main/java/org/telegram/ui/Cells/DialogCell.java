@@ -4028,7 +4028,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
         }
 
         float cornersRadius = dp(8) * cornerProgress;
-        // TELEGA_GLASS_CHATS: a local, opt-in visual treatment; dialog behavior is unchanged.
+        // TELEGA_GLASS_CHATS: opt-in translucent cards; dialog behavior remains unchanged.
         if (org.telegram.messenger.TelegaFeatures.isGlassChatsEnabled()
                 && !isSelected && translationX == 0 && rightFragmentOpenedProgress == 0) {
             rect.set(dp(7), dp(3), getMeasuredWidth() - dp(7), getMeasuredHeight() - dp(3));
