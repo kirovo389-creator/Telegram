@@ -87,6 +87,7 @@ jobs:
             .github/patches/telega_ota_hardening.py
             .github/patches/telega_build_config.py
             .github/patches/telega_glass_chats.py
+            .github/patches/telega_plus_features.py
           )
           for patch in "${patches[@]}"; do
             test -f "$patch"
@@ -125,7 +126,14 @@ jobs:
           assert "Загрузка APK из GitHub Releases…" not in ota, "provider-specific text remains in the OTA progress UI"
           assert "android.permission.REQUEST_INSTALL_PACKAGES" in Path("TMessagesProj/src/main/AndroidManifest.xml").read_text(encoding="utf-8"), "unknown-source install permission is missing"
           assert "TelegaInstallReceiver" in Path("TMessagesProj/src/main/AndroidManifest.xml").read_text(encoding="utf-8"), "PackageInstaller result receiver is missing"
-          print("Patch syntax, Android XML, Telega branding, Unicode emoji cursor, shared profile sync/color mapper, themed OTA, installer permission, OTA versioning and release ABI configuration validated.")
+          dialog_cell = Path("TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java").read_text(encoding="utf-8")
+          message_cell = Path("TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java").read_text(encoding="utf-8")
+          download_queue = Path("TMessagesProj/src/main/java/org/telegram/messenger/FileLoaderPriorityQueue.java").read_text(encoding="utf-8")
+          assert "TelegaBadgeRendering.decorateDialogName" in dialog_cell, "shared badge/status row rendering is missing"
+          assert "TelegaMessageEffects.onMessageBound(this," in message_cell, "message effect hook is missing"
+          assert "Telega turbo downloads" in download_queue, "turbo download queue toggle is not wired"
+          assert "TelegaLocalStatus.updateBio(" in Path("TMessagesProj/src/main/java/org/telegram/ui/ChangeBioActivity.java").read_text(encoding="utf-8"), "BIO metadata would be lost while editing the profile"
+          print("Patch syntax, Android XML, Telega branding, Unicode emoji cursor, shared profile sync/color mapper, themed OTA, installer permission, OTA versioning, badge/status transport, message effects, turbo downloads and release ABI configuration validated.")
           PY
 
           sed -i 's/<string name="AppName">Telegram<\/string>/<string name="AppName">Telega<\/string>/' TMessagesProj/src/main/res/values/strings.xml
