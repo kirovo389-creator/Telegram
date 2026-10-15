@@ -554,6 +554,16 @@ if helper_start >= 0 and "TelegaLocalStatus.updateAllStyles" not in pc[helper_st
     if about_line in pc:
         pc = pc.replace(about_line, about_new, 1)
     else:
+        sync_new = """        android.content.SharedPreferences saved = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + full.id, Context.MODE_PRIVATE);
+        int sharedProfileColor = syncColor;
+        long sharedProfileEmoji = syncBackgroundEmoji;
+        int sharedNameColor = TelegaLocalStatus.getNameColor(about);
+        long sharedNameEmoji = TelegaLocalStatus.getNameEmoji(about);
+        if (saved.contains("nameColor")) {
+            sharedNameColor = saved.getInt("nameColor", sharedNameColor);
+            sharedNameEmoji = saved.getLong("nameEmoji", sharedNameEmoji);
+        }
+        String newAbout = TelegaLocalStatus.updateAllStyles(about, sharedProfileColor, sharedProfileEmoji, sharedNameColor, sharedNameEmoji);"""
         sync_pattern = re.compile(r'String newAbout = TelegaLocalStatus\.updateProfileStyle\(about,\s*syncColor,\s*syncBackgroundEmoji\);')
         if sync_pattern.search(pc):
             pc = sync_pattern.sub(lambda match: sync_new, pc, count=1)
