@@ -119,7 +119,13 @@ jobs:
           assert "TL_users_getFullUser loadFull = new TLRPC.TL_users_getFullUser();" in peer_color, "profile style sync must load user info when cache is empty"
           assert "syncTelegaProfileStyleMetadata(fetchedFull, telegaPendingColor, telegaPendingEmoji);" in peer_color, "profile style sync fallback is missing"
           assert "private int telegaClosestPeerColorId(int accentColor, int pageType)" in peer_color, "collectible accent color mapper is missing"
-          print("Patch syntax, Android XML, Telega branding, Unicode emoji cursor, shared profile sync/color mapper, OTA wiring/versioning and release ABI configuration validated.")
+          assert "import org.telegram.ui.ActionBar.AlertDialog;" in ota, "OTA prompt must use Telegram-themed dialogs"
+          assert "progress.setMessage(\"Скачивание новой версии…\");" in ota, "OTA progress copy must not expose GitHub"
+          assert '.setPositiveButton("Обновить",' in ota and '.setNegativeButton("Позже",' in ota, "OTA actions are missing"
+          assert "Загрузка APK из GitHub Releases…" not in ota, "provider-specific text remains in the OTA progress UI"
+          assert "android.permission.REQUEST_INSTALL_PACKAGES" in Path("TMessagesProj/src/main/AndroidManifest.xml").read_text(encoding="utf-8"), "unknown-source install permission is missing"
+          assert "TelegaInstallReceiver" in Path("TMessagesProj/src/main/AndroidManifest.xml").read_text(encoding="utf-8"), "PackageInstaller result receiver is missing"
+          print("Patch syntax, Android XML, Telega branding, Unicode emoji cursor, shared profile sync/color mapper, themed OTA, installer permission, OTA versioning and release ABI configuration validated.")
           PY
 
           sed -i 's/<string name="AppName">Telegram<\/string>/<string name="AppName">Telega<\/string>/' TMessagesProj/src/main/res/values/strings.xml
