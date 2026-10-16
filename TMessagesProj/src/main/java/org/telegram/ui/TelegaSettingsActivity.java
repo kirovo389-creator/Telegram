@@ -152,4 +152,15 @@ public class TelegaSettingsActivity extends BaseFragment {
         rowParams.setMargins(AndroidUtilities.dp(12), 0, AndroidUtilities.dp(12), AndroidUtilities.dp(8));
         parent.addView(row, rowParams);
     }
+    private void addSection(Context context, LinearLayout parent, String title) {
+        TextView heading = new TextView(context);
+        heading.setText(title);
+        heading.setTextSize(11);
+        heading.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        heading.setLetterSpacing(0.08f);
+        heading.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
+        heading.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(18), AndroidUtilities.dp(20), AndroidUtilities.dp(9));
+        parent.addView(heading, new LinearLayout.LayoutParams(-1, -2));
+    }
+
 }
