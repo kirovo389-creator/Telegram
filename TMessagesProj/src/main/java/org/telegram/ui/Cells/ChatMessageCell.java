@@ -29616,11 +29616,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                     : backgroundDrawableLeft + Math.max(backgroundDrawableRight, backgroundWidth);
             float telegaBubbleBottom = telegaBubbleBounds != null && !telegaBubbleBounds.isEmpty()
                     ? telegaBubbleBounds.bottom : getHeight();
-            // Keep the trash marker before the timestamp, never on top of it.
+            // Keep the timestamp exactly where it is; draw the trash marker after its text.
             float telegaTimeX = drawTimeX > 0 && drawTimeY > 0 ? drawTimeX : timeX;
-            float telegaTrashX = telegaTimeX > org.telegram.messenger.AndroidUtilities.dp(12)
-                    ? telegaTimeX - org.telegram.messenger.AndroidUtilities.dp(12)
-                    : telegaBubbleRight - org.telegram.messenger.AndroidUtilities.dp(30);
+            float telegaTrashX = telegaTimeX + timeTextWidth + org.telegram.messenger.AndroidUtilities.dp(3);
             float telegaTrashY = drawTimeY > 0
                     ? drawTimeY + org.telegram.messenger.AndroidUtilities.dp(3)
                     : telegaBubbleBottom - org.telegram.messenger.AndroidUtilities.dp(13);
