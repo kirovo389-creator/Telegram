@@ -45,6 +45,14 @@ public final class TelegaRemoteCatalog {
         return prefs(context).getLong("last_sync", 0L);
     }
 
+    /** Refresh public catalogs at most once per day; read the last known cache immediately. */
+    public static void syncIfStale(Context context) {
+        long lastSync = getLastSyncTime(context);
+        if (lastSync <= 0L || System.currentTimeMillis() - lastSync >= 24L * 60L * 60L * 1000L) {
+            sync(context, null);
+        }
+    }
+
     public static String getUnicodeCatalog(Context context) {
         return prefs(context).getString("unicode_json", "");
     }
@@ -285,13 +293,14 @@ if "applyRemoteUnicodeCatalog" not in emoji_source:
 
 app_loader = root / "messenger" / "ApplicationLoader.java"
 loader_source = app_loader.read_text(encoding="utf-8")
-if "TelegaRemoteCatalog.applyCachedCatalog(applicationContext)" not in loader_source:
+if "TelegaRemoteCatalog.syncIfStale(applicationContext)" not in loader_source:
     anchor = "        SharedConfig.loadConfig();"
     if anchor not in loader_source:
         raise SystemExit("ApplicationLoader startup anchor missing")
     loader_source = loader_source.replace(
         anchor,
-        anchor + "\n        TelegaRemoteCatalog.applyCachedCatalog(applicationContext);",
+        anchor + "\n        TelegaRemoteCatalog.applyCachedCatalog(applicationContext);"
+                + "\n        TelegaRemoteCatalog.syncIfStale(applicationContext);",
         1
     )
     app_loader.write_text(loader_source, encoding="utf-8")
