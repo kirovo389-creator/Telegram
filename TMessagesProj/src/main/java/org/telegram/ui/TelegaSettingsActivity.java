@@ -8,11 +8,13 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
 import org.telegram.messenger.TelegaFeatures;
 import org.telegram.messenger.TelegaOtaUpdater;
+import org.telegram.messenger.TelegaRemoteCatalog;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
@@ -57,6 +59,12 @@ public class TelegaSettingsActivity extends BaseFragment {
         pageSubtitle.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
         pageSubtitle.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(5), AndroidUtilities.dp(20), AndroidUtilities.dp(12));
         list.addView(pageSubtitle, new LinearLayout.LayoutParams(-1, -2));
+
+        addSection(context, list, "ОБЛАКО TELEGA");
+        addAction(context, list, "Обновить каталоги с GitHub",
+                "Загружает публичные каталоги Unicode и custom emoji. Личные настройки и данные аккаунта не отправляются.",
+                () -> TelegaRemoteCatalog.sync(context, (success, message) ->
+                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()));
 
         addSection(context, list, "ПРИВАТНОСТЬ");
         addToggle(context, list, "Удалённые сообщения",
@@ -103,6 +111,40 @@ public class TelegaSettingsActivity extends BaseFragment {
         scroll.addView(list, new ScrollView.LayoutParams(-1, -2));
         fragmentView = scroll;
         return fragmentView;
+    }
+
+    private void addAction(Context context, LinearLayout parent, String title, String summary, Runnable action) {
+        LinearLayout row = new LinearLayout(context);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(14), AndroidUtilities.dp(16), AndroidUtilities.dp(14));
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        background.setCornerRadius(AndroidUtilities.dp(14));
+        row.setBackground(background);
+        row.setFocusable(true);
+        row.setClickable(true);
+
+        TextView titleView = new TextView(context);
+        titleView.setText(title);
+        titleView.setTextSize(15);
+        titleView.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        titleView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+
+        TextView summaryView = new TextView(context);
+        summaryView.setText(summary);
+        summaryView.setTextSize(12);
+        summaryView.setLineSpacing(AndroidUtilities.dp(2), 1.0f);
+        summaryView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
+
+        row.addView(titleView, new LinearLayout.LayoutParams(-1, -2));
+        LinearLayout.LayoutParams summaryParams = new LinearLayout.LayoutParams(-1, -2);
+        summaryParams.topMargin = AndroidUtilities.dp(5);
+        row.addView(summaryView, summaryParams);
+        row.setOnClickListener(v -> action.run());
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.setMargins(AndroidUtilities.dp(12), 0, AndroidUtilities.dp(12), AndroidUtilities.dp(8));
+        parent.addView(row, params);
     }
 
     private void addToggle(Context context, LinearLayout parent, String title, String summary,
