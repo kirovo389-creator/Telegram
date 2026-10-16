@@ -101,7 +101,7 @@ public final class TelegaFeatures {
             Method getInputPeer = controller.getClass().getMethod("getInputPeer", long.class);
             Field unreadField = TLRPC.Dialog.class.getField("unread_reactions_count");
             Field idField = TLRPC.Dialog.class.getField("id");
-            Class<?> requestClass = Class.forName("org.telegram.tgnet.TLRPC$TL_messages_readReactions");
+            Class<?> requestClass = Class.forName("org.Telega.tgnet.TLRPC$TL_messages_readReactions");
             Field peerField = requestClass.getField("peer");
             int size = ((Number) sizeMethod.invoke(dialogs)).intValue();
             for (int i = 0; i < size; i++) {
@@ -210,13 +210,13 @@ public final class TelegaFeatures {
         try {
             Class<?> requestClass;
             try {
-                requestClass = Class.forName("org.telegram.tgnet.TLRPC$TL_folders_editPeerFolders");
+                requestClass = Class.forName("org.Telega.tgnet.TLRPC$TL_folders_editPeerFolders");
             } catch (ClassNotFoundException missingFoldersNamespace) {
-                requestClass = Class.forName("org.telegram.tgnet.TLRPC$TL_messages_editPeerFolders");
+                requestClass = Class.forName("org.Telega.tgnet.TLRPC$TL_messages_editPeerFolders");
             }
             Object request = requestClass.getDeclaredConstructor().newInstance();
             Field peersField = requestClass.getField("folder_peers");
-            Class<?> folderPeerClass = Class.forName("org.telegram.tgnet.TLRPC$TL_inputFolderPeer");
+            Class<?> folderPeerClass = Class.forName("org.Telega.tgnet.TLRPC$TL_inputFolderPeer");
             Object folderPeer = folderPeerClass.getDeclaredConstructor().newInstance();
             Object controller = MessagesController.getInstance(account);
             Method getInputPeer = controller.getClass().getMethod("getInputPeer", long.class);
