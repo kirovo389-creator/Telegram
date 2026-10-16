@@ -258,8 +258,9 @@ public final class TelegaOtaUpdater {
         final AlertDialog progress = new AlertDialog.Builder(activity)
                 .setTitle("Обновление Telega")
                 .setView(progressContent)
-                .setCancelable(false)
                 .create();
+        progress.setCancelable(false);
+        progress.setCanceledOnTouchOutside(false);
         try {
             progress.show();
         } catch (Throwable error) {
