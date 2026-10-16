@@ -92,6 +92,10 @@ jobs:
           sed -i "s/^APP_VERSION_CODE=.*/APP_VERSION_CODE=${TELEGA_BASE_VERSION_CODE}/" gradle.properties
           sed -i "s/^APP_VERSION_NAME=.*/APP_VERSION_NAME=${TELEGA_VERSION_NAME}/" gradle.properties
 
+          # Restore directly edited UI sources before running patches, so later patch steps
+          # (including Firestore profile-style loading) are not overwritten by the preserved copy.
+          cp /tmp/telega-preserve/ProfileActivity.java TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+
           patches=(
             .github/patches/retain_deleted_messages.py
             .github/patches/telega_local_premium.py
@@ -122,7 +126,6 @@ jobs:
           cp /tmp/telega-preserve/LaunchActivity.java TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
           cp /tmp/telega-preserve/TelegaSettingsActivity.java TMessagesProj/src/main/java/org/telegram/ui/TelegaSettingsActivity.java
           cp /tmp/telega-preserve/TelegaOtaUpdater.java TMessagesProj/src/main/java/org/telegram/messenger/TelegaOtaUpdater.java
-          cp /tmp/telega-preserve/ProfileActivity.java TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
           cp /tmp/telega-preserve/ChatMessageCell.java TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
           cp /tmp/telega-preserve/MessageObject.java TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
           cp /tmp/telega-preserve/PushListenerController.java TMessagesProj/src/main/java/org/telegram/messenger/PushListenerController.java
