@@ -16,11 +16,12 @@ The app uses a named Firebase instance called `TelegaSync`. Its configuration is
 
 ## Security boundary
 
-The rules do not allow unauthenticated Firestore reads or writes, and a Firebase identity can only
-edit its own document. However, Android clients cannot cryptographically prove that a Telegram user
-ID supplied by the client belongs to that person. This design is suitable for cosmetic style syncing,
-not for private information or access control. Preventing Telegram-ID spoofing would require a trusted
-server to verify Telegram identity before issuing permission to publish that ID.
+The rules deny unauthenticated access, allow any authenticated TelegaSync client to read and publish
+cosmetic profile-style documents, validate the expected fields, and disallow deletion. This is
+intentionally permissive for cross-user profile display. Android clients cannot cryptographically
+prove that a Telegram user ID supplied by the client belongs to that person, so this design is suitable
+only for cosmetic style syncing, not private information or access control. Preventing Telegram-ID
+spoofing would require a trusted server to verify Telegram identity before issuing permission to publish it.
 
 ## Important separation
 
