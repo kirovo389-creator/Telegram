@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "506170550453",
+    "project_id": "telegasync",
+    "storage_bucket": "telegasync.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:506170550453:android:6bfb5e73959735c2de36fc",
+        "android_client_info": {
+          "package_name": "org.telega.messenger"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "AIzaSyCArGFy2DQPtGpUmz8gke-jA6DgUYdN7ks"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:506170550453:android:41d29dbfad291fc2de36fc",
+        "android_client_info": {
+          "package_name": "org.telega.messenger.beta"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "AIzaSyCArGFy2DQPtGpUmz8gke-jA6DgUYdN7ks"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
