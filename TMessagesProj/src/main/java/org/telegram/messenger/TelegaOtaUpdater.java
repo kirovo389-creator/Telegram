@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -397,25 +399,69 @@ public final class TelegaOtaUpdater {
         if (archiveVersion <= installedVersion) {
             throw new IllegalStateException("Downloaded APK is not newer than the installed version");
         }
+        if (!hasSameSigningCertificate(context, file)) {
+            throw new SecurityException("Подпись загруженного APK отличается от установленной версии. Android не разрешит обновление поверх неё.");
+        }
         PackageInstaller installer = context.getPackageManager().getPackageInstaller();
         PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
         params.setAppPackageName(context.getPackageName());
         params.setSize(file.length());
         int sessionId = installer.createSession(params);
-        try (PackageInstaller.Session session = installer.openSession(sessionId);
-             InputStream input = new FileInputStream(file);
-             OutputStream output = session.openWrite("Telega-update.apk", 0, file.length())) {
-            byte[] buffer = new byte[32768];
-            int read;
-            while ((read = input.read(buffer)) != -1) output.write(buffer, 0, read);
-            session.fsync(output);
+        try (PackageInstaller.Session session = installer.openSession(sessionId)) {
+            // Close the APK output stream before commit. Committing while the
+            // session's write stream is still open can make PackageInstaller
+            // reject an otherwise completely downloaded APK.
+            try (InputStream input = new FileInputStream(file);
+                 OutputStream output = session.openWrite("Telega-update.apk", 0, file.length())) {
+                byte[] buffer = new byte[32768];
+                int read;
+                while ((read = input.read(buffer)) != -1) output.write(buffer, 0, read);
+                session.fsync(output);
+            }
             Intent result = new Intent(context, TelegaInstallReceiver.class);
             result.putExtra("sessionId", sessionId);
             int flags = PendingIntent.FLAG_UPDATE_CURRENT;
             if (Build.VERSION.SDK_INT >= 31) flags |= PendingIntent.FLAG_MUTABLE;
             PendingIntent pending = PendingIntent.getBroadcast(context, sessionId, result, flags);
             session.commit(pending.getIntentSender());
+        } catch (Exception error) {
+            try {
+                installer.abandonSession(sessionId);
+            } catch (Throwable ignored) {
+            }
+            throw error;
         }
+    }
+
+
+    private static boolean hasSameSigningCertificate(Context context, File apk) throws Exception {
+        PackageManager manager = context.getPackageManager();
+        int flags = Build.VERSION.SDK_INT >= 28
+                ? PackageManager.GET_SIGNING_CERTIFICATES : PackageManager.GET_SIGNATURES;
+        PackageInfo installed = manager.getPackageInfo(context.getPackageName(), flags);
+        PackageInfo downloaded = manager.getPackageArchiveInfo(apk.getAbsolutePath(), flags);
+        if (downloaded == null) return false;
+        Signature[] installedSignatures;
+        Signature[] downloadedSignatures;
+        if (Build.VERSION.SDK_INT >= 28) {
+            if (installed.signingInfo == null || downloaded.signingInfo == null) return false;
+            installedSignatures = installed.signingInfo.getApkContentsSigners();
+            downloadedSignatures = downloaded.signingInfo.getApkContentsSigners();
+        } else {
+            installedSignatures = installed.signatures;
+            downloadedSignatures = downloaded.signatures;
+        }
+        if (installedSignatures == null || downloadedSignatures == null
+                || installedSignatures.length == 0
+                || installedSignatures.length != downloadedSignatures.length) {
+            return false;
+        }
+        java.util.Arrays.sort(installedSignatures, (a, b) -> a.toCharsString().compareTo(b.toCharsString()));
+        java.util.Arrays.sort(downloadedSignatures, (a, b) -> a.toCharsString().compareTo(b.toCharsString()));
+        for (int i = 0; i < installedSignatures.length; i++) {
+            if (!installedSignatures[i].equals(downloadedSignatures[i])) return false;
+        }
+        return true;
     }
 
     private static void dismissProgress(AlertDialog progress) {
