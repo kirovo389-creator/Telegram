@@ -1,11 +1,1 @@
-• fix: add missing section helper to Telega settings source
-• fix: add missing settings section helper to generated Telega settings
-• ui: render edited message history as quote block
-• fix: make emoji status selector available by default
-• fix: reserve room for deleted-message trash marker
-• fix: retry Firebase push registration after failures
-• fix: remove OTA APK after installer result
-• fix: validate OTA APK and clean failed updates
-• feat: show previous text on edited messages
-• ui: remove Glass Chats and Auto Proxy settings
-• ui: remove Glass Chats and Auto Proxy controls
+• fix: move deleted-message trash marker after timestamp
