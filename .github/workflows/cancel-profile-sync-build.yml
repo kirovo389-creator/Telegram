@@ -1,0 +1,19 @@
+name: Cancel current Telega build
+
+on:
+  push:
+    branches: [telega-sync-integration]
+    paths:
+      - ".github/workflows/cancel-profile-sync-build.yml"
+
+permissions:
+  actions: write
+
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel current Android build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh api --method POST repos/${GITHUB_REPOSITORY}/actions/runs/38938465973/cancel
