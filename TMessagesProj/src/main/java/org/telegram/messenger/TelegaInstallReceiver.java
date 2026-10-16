@@ -28,10 +28,16 @@ public final class TelegaInstallReceiver extends BroadcastReceiver {
             clearPendingUpdate(context);
             Log.w("TelegaOTA", "Install failed, status=" + status + ", detail=" + detail);
             String message = "Android не установил обновление";
-            if (detail != null && !detail.trim().isEmpty()) {
+            if (status == PackageInstaller.STATUS_FAILURE_INCOMPATIBLE) {
+                message += ": пакет несовместим с установленной версией или подписан другим ключом. Переустанови обновление, подписанное тем же ключом.";
+            } else if (status == PackageInstaller.STATUS_FAILURE_INVALID) {
+                message += ": APK повреждён или не прошёл проверку. Скачай обновление ещё раз.";
+            } else if (status == PackageInstaller.STATUS_FAILURE_VERSION_DOWNGRADE) {
+                message += ": версия APK старее установленной.";
+            } else if (detail != null && !detail.trim().isEmpty()) {
                 message += ": " + detail;
             } else {
-                message += ". Проверь, что APK подписан тем же ключом, что и установленная версия.";
+                message += ". Проверь подпись APK и свободное место на устройстве.";
             }
             Toast.makeText(context, message, Toast.LENGTH_LONG).show();
         }
