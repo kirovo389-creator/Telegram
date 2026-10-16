@@ -11,6 +11,10 @@ package org.telegram.messenger;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class EmojiData {
 
@@ -535,6 +539,75 @@ public class EmojiData {
 
     public static boolean hasEmojiSupportVibration(String emoji) {
         return isHeartEmoji(emoji) || isPeachEmoji(emoji) || isCofinEmoji(emoji);
+    }
+
+
+    /**
+     * Replaces Telegram's static emoji keyboard categories with the fully-qualified entries
+     * from the verified remote Unicode catalog. Native categories remain as offline fallback
+     * until a catalog has been downloaded successfully.
+     */
+    public static synchronized int applyRemoteUnicodeCatalog(String catalogJson) {
+        if (catalogJson == null || catalogJson.isEmpty()) return 0;
+        try {
+            JSONObject root = new JSONObject(catalogJson);
+            if (root.optInt("schema_version", -1) != 1) return 0;
+            JSONArray emojis = root.optJSONArray("emojis");
+            if (emojis == null) return 0;
+
+            ArrayList<LinkedHashSet<String>> categories = new ArrayList<>(data.length);
+            for (int i = 0; i < data.length; i++) {
+                categories.add(new LinkedHashSet<>());
+            }
+
+            for (int i = 0; i < emojis.length(); i++) {
+                JSONObject item = emojis.optJSONObject(i);
+                if (item == null || !"fully-qualified".equals(item.optString("qualification"))) continue;
+                String sequence = item.optString("sequence");
+                if (sequence.isEmpty()) continue;
+                int category = remoteEmojiCategory(item.optString("group"));
+                if (category >= 0 && category < categories.size()) {
+                    categories.get(category).add(sequence);
+                }
+            }
+
+            int total = 0;
+            for (LinkedHashSet<String> category : categories) total += category.size();
+            if (total < 1000) return 0;
+
+            for (int i = 0; i < data.length; i++) {
+                String[] values = categories.get(i).toArray(new String[0]);
+                data[i] = values;
+                if (i < dataColored.length) {
+                    dataColored[i] = values.clone();
+                }
+                for (String sequence : values) {
+                    for (int offset = 0; offset < sequence.length();) {
+                        int codePoint = sequence.codePointAt(offset);
+                        if (codePoint >= 0x203C && codePoint <= 0x3299) {
+                            dataCharsMap.put((char) codePoint, true);
+                        }
+                        offset += Character.charCount(codePoint);
+                    }
+                }
+            }
+            return total;
+        } catch (Exception error) {
+            FileLog.e("TelegaSync: invalid Unicode catalog " + error);
+            return 0;
+        }
+    }
+
+    private static int remoteEmojiCategory(String group) {
+        if ("Smileys & Emotion".equals(group) || "People & Body".equals(group)) return 0;
+        if ("Animals & Nature".equals(group)) return 1;
+        if ("Food & Drink".equals(group)) return 2;
+        if ("Activities".equals(group)) return 3;
+        if ("Travel & Places".equals(group)) return 4;
+        if ("Objects".equals(group)) return 5;
+        if ("Symbols".equals(group)) return 6;
+        if ("Flags".equals(group)) return 7;
+        return -1;
     }
 
     static {

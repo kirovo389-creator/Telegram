@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
@@ -21,7 +22,7 @@ public final class TelegaRemoteCatalog {
     private static final String PREFS = "telega_remote_catalog";
     private static final String MANIFEST_URL =
             "https://raw.githubusercontent.com/kirovo389-creator/TelegaSync/main/config/v1/manifest.json";
-    private static final int MAX_BYTES = 1024 * 1024;
+    private static final int MAX_BYTES = 4 * 1024 * 1024;
     private static volatile boolean syncing;
 
     private TelegaRemoteCatalog() {}
@@ -36,6 +37,14 @@ public final class TelegaRemoteCatalog {
 
     public static long getLastSyncTime(Context context) {
         return prefs(context).getLong("last_sync", 0L);
+    }
+
+    /** Refresh public catalogs at most once per day; read the last known cache immediately. */
+    public static void syncIfStale(Context context) {
+        long lastSync = getLastSyncTime(context);
+        if (lastSync <= 0L || System.currentTimeMillis() - lastSync >= 24L * 60L * 60L * 1000L) {
+            sync(context, null);
+        }
     }
 
     public static String getUnicodeCatalog(Context context) {
@@ -57,6 +66,7 @@ public final class TelegaRemoteCatalog {
         }
         Utilities.globalQueue.postRunnable(() -> {
             boolean success = false;
+            int catalogCount = 0;
             String message = "Не удалось загрузить каталоги";
             try {
                 JSONObject manifest = new JSONObject(download(MANIFEST_URL));
@@ -84,6 +94,7 @@ public final class TelegaRemoteCatalog {
                         .putString("custom_emoji_json", customJson.toString())
                         .putLong("last_sync", System.currentTimeMillis())
                         .apply();
+                catalogCount = EmojiData.applyRemoteUnicodeCatalog(unicodeJson.toString());
                 success = true;
                 message = "Каталоги TelegaSync обновлены";
             } catch (Exception error) {
@@ -93,11 +104,58 @@ public final class TelegaRemoteCatalog {
                 syncing = false;
             }
             final boolean result = success;
+            final int resultCount = catalogCount;
             final String resultMessage = message;
             AndroidUtilities.runOnUIThread(() -> {
-                if (callback != null) callback.onComplete(result, resultMessage);
+                if (result) {
+                    Log.i(TAG, "Remote Unicode catalog applied; entries=" + resultCount);
+                    if (callback != null) callback.onComplete(true,
+                            "Каталоги обновлены. Эмодзи в каталоге: " + resultCount
+                                    + ". Перезапусти Telega, чтобы обновились уже открытые панели.");
+                } else if (callback != null) {
+                    callback.onComplete(false, resultMessage);
+                }
             });
         });
+    }
+
+    /** Applies the last successfully downloaded Unicode catalog without requiring network access. */
+    public static void applyCachedCatalog(Context context) {
+        String json = getUnicodeCatalog(context);
+        if (json == null || json.isEmpty()) return;
+        final String cached = json;
+        Utilities.globalQueue.postRunnable(() -> {
+            int count = EmojiData.applyRemoteUnicodeCatalog(cached);
+            Log.i(TAG, "Applied cached Unicode catalog; entries=" + count);
+        });
+    }
+
+    public static int getCustomEmojiCount(Context context) {
+        try {
+            JSONObject json = new JSONObject(getCustomEmojiCatalog(context));
+            JSONArray emojis = json.optJSONArray("emojis");
+            return emojis == null ? 0 : emojis.length();
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
+    /** Looks up an explicitly curated fallback -> document ID mapping from the remote catalog. */
+    public static long findCustomEmojiDocumentId(Context context, String fallback) {
+        if (fallback == null || fallback.isEmpty()) return 0L;
+        try {
+            JSONArray emojis = new JSONObject(getCustomEmojiCatalog(context)).optJSONArray("emojis");
+            if (emojis == null) return 0L;
+            for (int i = 0; i < emojis.length(); i++) {
+                JSONObject item = emojis.optJSONObject(i);
+                if (item != null && fallback.equals(item.optString("fallback"))
+                        && item.optLong("document_id", 0L) > 0L) {
+                    return item.optLong("document_id", 0L);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return 0L;
     }
 
     private static SharedPreferences prefs(Context context) {

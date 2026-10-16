@@ -1,2 +1,4 @@
+± Исправлено: validate TelegaSync source generation before build
++Добавлено: integrate TelegaSync Unicode and custom emoji catalog
 +Добавлено: add manual TelegaSync catalog sync setting
 +Добавлено: add TelegaSync remote catalog client patch

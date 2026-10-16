@@ -245,6 +245,8 @@ public class ApplicationLoader extends Application {
         }
 
         SharedConfig.loadConfig();
+        TelegaRemoteCatalog.applyCachedCatalog(applicationContext);
+        TelegaRemoteCatalog.syncIfStale(applicationContext);
         SharedPrefsHelper.init(applicationContext);
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) { //TODO improve account
             UserConfig.getInstance(a).loadConfig();
