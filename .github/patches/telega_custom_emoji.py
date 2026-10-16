@@ -122,7 +122,7 @@ if "import org.telegram.messenger.TelegaRemoteCatalog;" not in s:
     if import_anchor not in s:
         print("ERROR: ChatActivityEnterView package anchor not found", file=sys.stderr)
         sys.exit(1)
-    s = s.replace(import_anchor, import_anchor + "\\n\\nimport org.telegram.messenger.TelegaRemoteCatalog;", 1)
+    s = s.replace(import_anchor, import_anchor + "\n\nimport org.telegram.messenger.TelegaRemoteCatalog;", 1)
 old = '''                    try {
                         innerTextChange = 2;
                         SpannableString emoji = new SpannableString(emoticon == null ? "\\uD83D\\uDE00" : emoticon);
