@@ -116,6 +116,13 @@ helper.parent.mkdir(parents=True, exist_ok=True)
 helper.write_text(helper_source, encoding="utf-8")
 
 s = enter_view.read_text(encoding="utf-8")
+# This source lives in org.telegram.ui.Components; explicitly import the remote catalog helper.
+import_anchor = "package org.telegram.ui.Components;"
+if "import org.telegram.messenger.TelegaRemoteCatalog;" not in s:
+    if import_anchor not in s:
+        print("ERROR: ChatActivityEnterView package anchor not found", file=sys.stderr)
+        sys.exit(1)
+    s = s.replace(import_anchor, import_anchor + "\n\nimport org.telegram.messenger.TelegaRemoteCatalog;", 1)
 old = '''                    try {
                         innerTextChange = 2;
                         SpannableString emoji = new SpannableString(emoticon == null ? "\\uD83D\\uDE00" : emoticon);
@@ -137,6 +144,11 @@ new = '''                    try {
                         innerTextChange = 2;
                         String fallbackEmoji = emoticon == null ? "\\uD83D\\uDE00" : emoticon;
                         long customDocumentId = document != null ? document.id : documentId;
+                        if (customDocumentId <= 0) {
+                            // Curated TelegaSync IDs are only a fallback; Telegram's selected document ID wins.
+                            customDocumentId = TelegaRemoteCatalog.findCustomEmojiDocumentId(
+                                    ApplicationLoader.applicationContext, fallbackEmoji);
+                        }
                         SpannableStringBuilder inserted = new SpannableStringBuilder(fallbackEmoji);
                         if (customDocumentId > 0) {
                             // Keep the animated span while typing; invisible metadata is appended after the visible grapheme.
