@@ -2220,41 +2220,15 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
     }
 
     private void syncTelegaProfileStyleMetadata(TLRPC.UserFull full, int color, long backgroundEmojiId) {
-        String about = full.about == null ? "" : full.about;
-        int syncColor = color;
-        long syncBackgroundEmoji = backgroundEmojiId;
-        if (!applyingProfile) {
-            android.content.SharedPreferences savedStyle = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + full.id, Context.MODE_PRIVATE);
-            syncColor = TelegaLocalStatus.getProfileColor(about);
-            syncBackgroundEmoji = TelegaLocalStatus.getProfileEmoji(about);
-            if (syncColor < 0 && savedStyle.contains("color")) syncColor = savedStyle.getInt("color", -1);
-            if (syncBackgroundEmoji == 0 && savedStyle.contains("backgroundEmoji")) syncBackgroundEmoji = savedStyle.getLong("backgroundEmoji", 0);
-        }
-                android.content.SharedPreferences saved = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + full.id, Context.MODE_PRIVATE);
-        int sharedProfileColor = syncColor;
-        long sharedProfileEmoji = syncBackgroundEmoji;
-        int sharedNameColor = TelegaLocalStatus.getNameColor(about);
-        long sharedNameEmoji = TelegaLocalStatus.getNameEmoji(about);
-        if (saved.contains("nameColor")) {
-            sharedNameColor = saved.getInt("nameColor", sharedNameColor);
-            sharedNameEmoji = saved.getLong("nameEmoji", sharedNameEmoji);
-        }
-        String newAbout = TelegaLocalStatus.updateAllStyles(about, sharedProfileColor, sharedProfileEmoji, sharedNameColor, sharedNameEmoji);
-        if (about.equals(newAbout)) {
+        if (full == null || !applyingProfile) {
             getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
             return;
         }
-        TL_account.updateProfile request = new TL_account.updateProfile();
-        request.flags |= 4;
-        request.about = newAbout;
-        getConnectionsManager().sendRequest(request, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
-            if (error != null) {
-                Log.e("Telega", "Profile style metadata sync failed: " + error.text);
-                return;
-            }
-            full.about = newAbout;
-            getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
-        }));
+        TelegaProfileSync.saveProfileStyle(
+                ApplicationLoader.applicationContext, full.id, color, backgroundEmojiId,
+                style -> getNotificationCenter().postNotificationName(
+                        NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL)
+        );
     }
 
     private int telegaClosestPeerColorId(int accentColor, int pageType) {

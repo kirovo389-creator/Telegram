@@ -1,3 +1,10 @@
+± Изменено: Keep Firestore profile sync separate from legacy bio metadata merge
+± Изменено: Select only balanced profile-bio metadata wrappers for removal
+± Изменено: Remove legacy profile-bio style block before Firestore sync patch
+± Изменено: Make Firebase profile patch parse Java braces safely
+± Изменено: Fix shared-status patch anchors for upstream Telegram source
+± Изменено: Add Firebase profile-style sync and enable build validation
+± Изменено: ops: pause Android builds during shared profile sync work
 ± Исправлено: validate TelegaSync source generation before build
 +Добавлено: integrate TelegaSync Unicode and custom emoji catalog
 +Добавлено: add manual TelegaSync catalog sync setting

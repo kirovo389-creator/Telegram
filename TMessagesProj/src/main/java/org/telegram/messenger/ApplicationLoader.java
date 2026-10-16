@@ -291,6 +291,7 @@ public class ApplicationLoader extends Application {
         }
 
         super.onCreate();
+        TelegaSyncFirebase.initialize(this);
 
         // AndroidUtilities must be initialized before FileLog
         final String helloWorld = AndroidUtilities.getHelloWorld();
