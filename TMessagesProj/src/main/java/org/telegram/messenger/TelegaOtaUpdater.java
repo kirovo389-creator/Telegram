@@ -350,16 +350,33 @@ public final class TelegaOtaUpdater {
         try {
             installWithPackageInstaller(app, file);
         } catch (Throwable error) {
-            // Keep the failure in the diagnostic log; do not show the confusing
-            // installer toast during ordinary app startup.
             Log.e(TAG, "Android installer session failed", error);
+            preferences.edit().remove("pending_file").remove("pending_tag")
+                    .putBoolean("awaiting_unknown_sources", false).apply();
+            // Do not leave a failed update APK behind in app storage.
+            //noinspection ResultOfMethodCallIgnored
+            file.delete();
+            Toast.makeText(app, "Не удалось запустить установку обновления. APK удалён; повтори попытку позже.", Toast.LENGTH_LONG).show();
         }
     }
 
     private static void installWithPackageInstaller(Context context, File file) throws Exception {
+        android.content.pm.PackageInfo archiveInfo = context.getPackageManager().getPackageArchiveInfo(file.getAbsolutePath(), 0);
+        if (archiveInfo == null || !context.getPackageName().equals(archiveInfo.packageName)) {
+            throw new SecurityException("Downloaded APK package does not match the installed Telega variant");
+        }
+        long archiveVersion = Build.VERSION.SDK_INT >= 28
+                ? archiveInfo.getLongVersionCode() : archiveInfo.versionCode;
+        PackageInfo installedInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+        long installedVersion = Build.VERSION.SDK_INT >= 28
+                ? installedInfo.getLongVersionCode() : installedInfo.versionCode;
+        if (archiveVersion <= installedVersion) {
+            throw new IllegalStateException("Downloaded APK is not newer than the installed version");
+        }
         PackageInstaller installer = context.getPackageManager().getPackageInstaller();
         PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
         params.setAppPackageName(context.getPackageName());
+        params.setSize(file.length());
         int sessionId = installer.createSession(params);
         try (PackageInstaller.Session session = installer.openSession(sessionId);
              InputStream input = new FileInputStream(file);
