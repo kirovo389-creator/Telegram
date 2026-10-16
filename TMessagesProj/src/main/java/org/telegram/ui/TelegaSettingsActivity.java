@@ -114,26 +114,6 @@ public class TelegaSettingsActivity extends BaseFragment {
         return fragmentView;
     }
 
-    private void setAutoProxy(Context context, CompoundButton button, boolean enabled) {
-        if (!TelegaFeatures.setAutoProxyEnabled(enabled)) {
-            button.setOnCheckedChangeListener(null);
-            button.setChecked(false);
-            button.setOnCheckedChangeListener((changed, value) -> setAutoProxy(context, changed, value));
-            Toast.makeText(context, "Добавь минимум два прокси в настройках прокси Telegram", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private void addSection(Context context, LinearLayout parent, String title) {
-        TextView label = new TextView(context);
-        label.setText(title);
-        label.setTextSize(11);
-        label.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
-        label.setLetterSpacing(0.09f);
-        label.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
-        label.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(14), AndroidUtilities.dp(20), AndroidUtilities.dp(7));
-        parent.addView(label, new LinearLayout.LayoutParams(-1, -2));
-    }
-
     private void addToggle(Context context, LinearLayout parent, String title, String summary,
                            boolean checked, CompoundButton.OnCheckedChangeListener listener) {
         LinearLayout row = new LinearLayout(context);
