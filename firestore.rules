@@ -1,0 +1,27 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    match /profile_styles/{ownerUid} {
+      // Profile accent and background-emoji values are visible to signed-in Telega clients.
+      allow read: if signedIn();
+
+      // Each Firebase identity may change only its own document.
+      allow create, update: if signedIn()
+        && ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.telegramUserId is int
+        && request.resource.data.profileColor is int
+        && request.resource.data.backgroundEmojiId is int
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if signedIn()
+        && ownerUid == request.auth.uid
+        && resource.data.ownerUid == request.auth.uid;
+    }
+  }
+}
