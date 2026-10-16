@@ -1,1 +1,2 @@
+• ui: remove Glass Chats and Auto Proxy settings
 • ui: remove Glass Chats and Auto Proxy controls
