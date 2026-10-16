@@ -382,7 +382,18 @@ public final class TelegaOtaUpdater {
             // Do not leave a failed update APK behind in app storage.
             //noinspection ResultOfMethodCallIgnored
             file.delete();
-            Toast.makeText(app, "Не удалось запустить установку обновления. APK удалён; повтори попытку позже.", Toast.LENGTH_LONG).show();
+            String reason = error.getMessage() == null ? "" : error.getMessage();
+            String userMessage;
+            if (reason.contains("Подпись загруженного APK")) {
+                userMessage = "Не удалось обновить Telega: подпись APK отличается от установленной версии. Не удаляй приложение, иначе можно потерять локальные данные; нужна сборка с прежним ключом подписи.";
+            } else if (reason.contains("not newer than the installed version")) {
+                userMessage = "Эта версия Telega уже установлена или APK старее. Проверь, есть ли более новое обновление.";
+            } else if (reason.contains("package does not match")) {
+                userMessage = "Этот APK собран для другого варианта Telega. Установка отменена.";
+            } else {
+                userMessage = "Не удалось подготовить установку обновления. Проверь свободное место и повтори попытку.";
+            }
+            Toast.makeText(app, userMessage, Toast.LENGTH_LONG).show();
         }
     }
 
