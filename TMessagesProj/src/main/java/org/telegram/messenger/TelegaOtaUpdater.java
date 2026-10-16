@@ -3,7 +3,6 @@ package org.telegram.messenger;
 import android.app.Activity;
 import org.telegram.ui.ActionBar.AlertDialog;
 import android.app.PendingIntent;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -17,6 +16,11 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
+import android.view.View;
+import android.view.Gravity;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -229,12 +233,31 @@ public final class TelegaOtaUpdater {
 
     private static void downloadApk(Activity activity, String url, String digest, long expectedSize, String tag) {
         if (url == null || !url.startsWith(RELEASE_PREFIX)) return;
-        final ProgressDialog progress = new ProgressDialog(activity);
-        progress.setTitle("Обновление Telega");
-        progress.setMessage("Скачивание новой версии…");
-        progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        progress.setIndeterminate(true);
-        progress.setCancelable(false);
+        final LinearLayout progressContent = new LinearLayout(activity);
+        progressContent.setOrientation(LinearLayout.VERTICAL);
+        progressContent.setPadding(AndroidUtilities.dp(24), AndroidUtilities.dp(8), AndroidUtilities.dp(24), AndroidUtilities.dp(12));
+        TextView progressLabel = new TextView(activity);
+        progressLabel.setText("Загрузка обновления Telega");
+        progressLabel.setTextSize(15);
+        progressLabel.setTextColor(org.telegram.ui.ActionBar.Theme.getColor(org.telegram.ui.ActionBar.Theme.key_dialogTextBlack));
+        progressContent.addView(progressLabel, new LinearLayout.LayoutParams(-1, -2));
+        ProgressBar progressBar = new ProgressBar(activity, null, android.R.attr.progressBarStyleHorizontal);
+        progressBar.setIndeterminate(true);
+        LinearLayout.LayoutParams barParams = new LinearLayout.LayoutParams(-1, AndroidUtilities.dp(4));
+        barParams.topMargin = AndroidUtilities.dp(18);
+        progressContent.addView(progressBar, barParams);
+        TextView progressDetail = new TextView(activity);
+        progressDetail.setText("Подготавливаем загрузку…");
+        progressDetail.setTextSize(13);
+        progressDetail.setTextColor(org.telegram.ui.ActionBar.Theme.getColor(org.telegram.ui.ActionBar.Theme.key_dialogTextBlack));
+        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
+        detailParams.topMargin = AndroidUtilities.dp(10);
+        progressContent.addView(progressDetail, detailParams);
+        final AlertDialog progress = new AlertDialog.Builder(activity)
+                .setTitle("Обновление Telega")
+                .setView(progressContent)
+                .setCancelable(false)
+                .create();
         try {
             progress.show();
         } catch (Throwable error) {
@@ -259,8 +282,9 @@ public final class TelegaOtaUpdater {
                     MAIN.post(() -> {
                         try {
                             if (progress.isShowing()) {
-                                progress.setIndeterminate(false);
-                                progress.setMax(100);
+                                progressBar.setIndeterminate(false);
+                                progressBar.setMax(100);
+                                progressDetail.setText("Скачано 0%");
                             }
                         } catch (Throwable ignored) {}
                     });
@@ -283,7 +307,7 @@ public final class TelegaOtaUpdater {
                             final int percent = (int) Math.min(100L, (written * 100L) / totalBytes);
                             MAIN.post(() -> {
                                 try {
-                                    if (progress.isShowing()) progress.setProgress(percent);
+                                    if (progress.isShowing()) { progressBar.setProgress(percent); progressDetail.setText("Загрузка APK — " + percent + "%"); }
                                 } catch (Throwable ignored) {}
                             });
                         }
@@ -299,7 +323,7 @@ public final class TelegaOtaUpdater {
                         .putString("pending_tag", tag).putBoolean("awaiting_unknown_sources", false).apply();
                 MAIN.post(() -> {
                     dismissProgress(progress);
-                    Toast.makeText(app, "Обновление загружено. Подготавливаю установку…", Toast.LENGTH_LONG).show();
+                    Toast.makeText(app, "APK загружен. Проверяю пакет и готовлю установку…", Toast.LENGTH_LONG).show();
                     if (!activity.isFinishing() && !activity.isDestroyed()) installPending(activity);
                 });
             } catch (Throwable error) {
@@ -394,7 +418,7 @@ public final class TelegaOtaUpdater {
         }
     }
 
-    private static void dismissProgress(ProgressDialog progress) {
+    private static void dismissProgress(AlertDialog progress) {
         try {
             if (progress != null && progress.isShowing()) progress.dismiss();
         } catch (Throwable ignored) {}
