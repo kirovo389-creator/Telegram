@@ -6234,8 +6234,8 @@ public class MessageObject {
             int oldStart = result.length();
             result.append(previous);
             int oldEnd = result.length();
-            result.setSpan(new StyleSpan(Typeface.ITALIC), oldStart, oldEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            result.append("\n────────\n");
+            QuoteSpan.putQuote(result, oldStart, oldEnd, false);
+            result.append("\n");
             result.append(displayText);
             return result;
         } catch (Throwable error) {
