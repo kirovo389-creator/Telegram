@@ -8,7 +8,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
@@ -70,10 +69,6 @@ public class TelegaSettingsActivity extends BaseFragment {
                 (button, enabled) -> TelegaFeatures.setGhostModeEnabled(enabled));
 
         addSection(context, list, "СЕТЬ И ОБНОВЛЕНИЯ");
-        addToggle(context, list, "Auto Proxy",
-                "Переключение между сохранёнными прокси. Для включения нужно минимум два прокси.",
-                TelegaFeatures.isAutoProxyEnabled(),
-                (button, enabled) -> setAutoProxy(context, button, enabled));
         addToggle(context, list, "Автообновление",
                 "Проверять новые стабильные сборки и предлагать обновление. Установка всё равно подтверждается Android.",
                 TelegaOtaUpdater.isEnabled(context),
@@ -90,10 +85,6 @@ public class TelegaSettingsActivity extends BaseFragment {
                 (button, enabled) -> TelegaFeatures.setAntiSoundEnabled(enabled));
 
         addSection(context, list, "ВИД И ЭФФЕКТЫ");
-        addToggle(context, list, "Стеклянные чаты",
-                "Полупрозрачные карточки в списке диалогов. Можно выключить в любой момент.",
-                TelegaFeatures.isGlassChatsEnabled(),
-                (button, enabled) -> TelegaFeatures.setGlassChatsEnabled(enabled));
         addToggle(context, list, "Значок Telega",
                 "Скрытая отметка в BIO отображает значок другим пользователям Telega Beta.",
                 TelegaFeatures.isBadgeEnabled(),
