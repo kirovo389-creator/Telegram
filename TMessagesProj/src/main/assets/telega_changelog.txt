@@ -1,3 +1,5 @@
+± Исправлено: support SDK without downgrade status constant
+± Исправлено: use AlertDialog cancellation API correctly
 ± Исправлено: explain OTA pre-install validation errors
 ± Исправлено: close OTA installer stream before commit and verify signing key
 ± Исправлено: validate new Telegram-style OTA progress UI
