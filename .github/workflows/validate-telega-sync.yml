@@ -1,0 +1,43 @@
+name: Validate TelegaSync integration
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/patches/**"
+      - ".github/workflows/build.yml"
+      - "TMessagesProj/src/main/java/org/telegram/ui/TelegaSettingsActivity.java"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate patch scripts and integration anchors
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+
+          for path in Path(".github/patches").glob("*.py"):
+              ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+
+          sync_patch = Path(".github/patches/telega_sync.py").read_text(encoding="utf-8")
+          custom_patch = Path(".github/patches/telega_custom_emoji.py").read_text(encoding="utf-8")
+          build = Path(".github/workflows/build.yml").read_text(encoding="utf-8")
+          settings = Path("TMessagesProj/src/main/java/org/telegram/ui/TelegaSettingsActivity.java").read_text(encoding="utf-8")
+
+          assert ".github/patches/telega_sync.py" in build
+          assert "applyRemoteUnicodeCatalog" in sync_patch
+          assert "MAX_BYTES = 4 * 1024 * 1024" in sync_patch
+          assert "findCustomEmojiDocumentId" in custom_patch
+          assert "TelegaRemoteCatalog" in settings
+
+          print("TelegaSync integration static checks passed.")
+          PY
