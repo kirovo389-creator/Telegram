@@ -1785,6 +1785,9 @@ public class PushListenerController {
     public final static class GooglePushListenerServiceProvider implements IPushListenerServiceProvider {
         public final static GooglePushListenerServiceProvider INSTANCE = new GooglePushListenerServiceProvider();
 
+        private volatile boolean tokenRequestInProgress;
+        private volatile int tokenRetryAttempt;
+
         private Boolean hasServices;
 
         private GooglePushListenerServiceProvider() {}
@@ -1806,11 +1809,11 @@ public class PushListenerController {
                 if (BuildVars.DEBUG_PRIVATE_VERSION && BuildVars.LOGS_ENABLED) {
                     FileLog.d("FCM regId = " + currentPushString);
                 }
-            } else {
-                if (BuildVars.LOGS_ENABLED) {
-                    FileLog.d("FCM Registration not found.");
-                }
+            } else if (BuildVars.LOGS_ENABLED) {
+                FileLog.d("FCM Registration not found.");
             }
+            if (tokenRequestInProgress) return;
+            tokenRequestInProgress = true;
             Utilities.globalQueue.postRunnable(() -> {
                 try {
                     SharedConfig.pushStringGetTimeStart = SystemClock.elapsedRealtime();
@@ -1818,23 +1821,43 @@ public class PushListenerController {
                     FirebaseMessaging.getInstance().getToken()
                             .addOnCompleteListener(task -> {
                                 SharedConfig.pushStringGetTimeEnd = SystemClock.elapsedRealtime();
+                                tokenRequestInProgress = false;
                                 if (!task.isSuccessful()) {
                                     if (BuildVars.LOGS_ENABLED) {
-                                        FileLog.d("Failed to get regid");
+                                        FileLog.d("Failed to get regid; will retry in background");
                                     }
                                     SharedConfig.pushStringStatus = "__FIREBASE_FAILED__";
                                     PushListenerController.sendRegistrationToServer(getPushType(), null);
+                                    scheduleTokenRetry();
                                     return;
                                 }
                                 String token = task.getResult();
                                 if (!TextUtils.isEmpty(token)) {
+                                    tokenRetryAttempt = 0;
                                     PushListenerController.sendRegistrationToServer(getPushType(), token);
+                                } else {
+                                    SharedConfig.pushStringStatus = "__FIREBASE_EMPTY_TOKEN__";
+                                    PushListenerController.sendRegistrationToServer(getPushType(), null);
+                                    scheduleTokenRetry();
                                 }
                             });
                 } catch (Throwable e) {
+                    tokenRequestInProgress = false;
                     FileLog.e(e);
+                    SharedConfig.pushStringStatus = "__FIREBASE_FAILED__";
+                    PushListenerController.sendRegistrationToServer(getPushType(), null);
+                    scheduleTokenRetry();
                 }
             });
+        }
+
+        private void scheduleTokenRetry() {
+            int attempt = Math.min(tokenRetryAttempt++, 4);
+            long delayMillis = Math.min(300000L, 15000L << attempt);
+            Utilities.globalQueue.postRunnable(() -> {
+                tokenRequestInProgress = false;
+                onRequestPushToken();
+            }, delayMillis);
         }
 
         @Override
