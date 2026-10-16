@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
@@ -27,7 +28,7 @@ public final class TelegaRemoteCatalog {
     private static final String PREFS = "telega_remote_catalog";
     private static final String MANIFEST_URL =
             "https://raw.githubusercontent.com/kirovo389-creator/TelegaSync/main/config/v1/manifest.json";
-    private static final int MAX_BYTES = 1024 * 1024;
+    private static final int MAX_BYTES = 4 * 1024 * 1024;
     private static volatile boolean syncing;
 
     private TelegaRemoteCatalog() {}
@@ -101,9 +102,53 @@ public final class TelegaRemoteCatalog {
             final boolean result = success;
             final String resultMessage = message;
             AndroidUtilities.runOnUIThread(() -> {
-                if (callback != null) callback.onComplete(result, resultMessage);
+                if (result) {
+                    int added = EmojiData.applyRemoteUnicodeCatalog(getUnicodeCatalog(appContext));
+                    Log.i(TAG, "Remote Unicode catalog applied; newly added=" + added);
+                    if (callback != null) callback.onComplete(true,
+                            "Каталоги обновлены. Добавлено новых эмодзи: " + added
+                                    + ". Перезапусти клавиатуру эмодзи.");
+                } else if (callback != null) {
+                    callback.onComplete(false, resultMessage);
+                }
             });
         });
+    }
+
+    /** Applies the last successfully downloaded Unicode catalog without requiring network access. */
+    public static void applyCachedCatalog(Context context) {
+        String json = getUnicodeCatalog(context);
+        if (json == null || json.isEmpty()) return;
+        int added = EmojiData.applyRemoteUnicodeCatalog(json);
+        Log.i(TAG, "Applied cached Unicode catalog; added=" + added);
+    }
+
+    public static int getCustomEmojiCount(Context context) {
+        try {
+            JSONObject json = new JSONObject(getCustomEmojiCatalog(context));
+            JSONArray emojis = json.optJSONArray("emojis");
+            return emojis == null ? 0 : emojis.length();
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
+    /** Looks up an explicitly curated fallback -> document ID mapping from the remote catalog. */
+    public static long findCustomEmojiDocumentId(Context context, String fallback) {
+        if (fallback == null || fallback.isEmpty()) return 0L;
+        try {
+            JSONArray emojis = new JSONObject(getCustomEmojiCatalog(context)).optJSONArray("emojis");
+            if (emojis == null) return 0L;
+            for (int i = 0; i < emojis.length(); i++) {
+                JSONObject item = emojis.optJSONObject(i);
+                if (item != null && fallback.equals(item.optString("fallback"))
+                        && item.optLong("document_id", 0L) > 0L) {
+                    return item.optLong("document_id", 0L);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return 0L;
     }
 
     private static SharedPreferences prefs(Context context) {
@@ -149,4 +194,118 @@ public final class TelegaRemoteCatalog {
     }
 }
 ''', encoding="utf-8")
+
+emoji_data = root / "messenger" / "EmojiData.java"
+emoji_source = emoji_data.read_text(encoding="utf-8")
+if "applyRemoteUnicodeCatalog" not in emoji_source:
+    emoji_source = emoji_source.replace(
+        "import java.util.HashSet;",
+        "import java.util.HashSet;\nimport java.util.ArrayList;\nimport java.util.LinkedHashSet;\nimport org.json.JSONArray;\nimport org.json.JSONObject;",
+        1
+    )
+    merge_method = r'''
+    /**
+     * Merges the verified Unicode emoji catalog from TelegaSync into Telegram's existing
+     * keyboard categories. Existing ordering and skin-tone variants are retained; new
+     * fully-qualified sequences are appended to the closest supported category.
+     */
+    public static synchronized int applyRemoteUnicodeCatalog(String catalogJson) {
+        if (catalogJson == null || catalogJson.isEmpty()) return 0;
+        try {
+            JSONObject root = new JSONObject(catalogJson);
+            if (root.optInt("schema_version", -1) != 1) return 0;
+            JSONArray emojis = root.optJSONArray("emojis");
+            if (emojis == null) return 0;
+
+            ArrayList<LinkedHashSet<String>> merged = new ArrayList<>(data.length);
+            ArrayList<LinkedHashSet<String>> additions = new ArrayList<>(data.length);
+            for (int i = 0; i < data.length; i++) {
+                LinkedHashSet<String> existing = new LinkedHashSet<>();
+                if (data[i] != null) {
+                    Collections.addAll(existing, data[i]);
+                }
+                merged.add(existing);
+                additions.add(new LinkedHashSet<>());
+            }
+
+            int added = 0;
+            for (int i = 0; i < emojis.length(); i++) {
+                JSONObject item = emojis.optJSONObject(i);
+                if (item == null || !"fully-qualified".equals(item.optString("qualification"))) {
+                    continue;
+                }
+                String sequence = item.optString("sequence");
+                if (sequence.isEmpty()) continue;
+                int category = remoteEmojiCategory(item.optString("group"));
+                if (category < 0 || category >= merged.size()) continue;
+
+                String normalized = normalizeRemoteEmoji(sequence);
+                boolean found = false;
+                for (String existing : merged.get(category)) {
+                    if (normalized.equals(normalizeRemoteEmoji(existing))) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    merged.get(category).add(sequence);
+                    additions.get(category).add(sequence);
+                    added++;
+                }
+            }
+
+            for (int i = 0; i < data.length; i++) {
+                data[i] = merged.get(i).toArray(new String[0]);
+                if (i < dataColored.length) {
+                    LinkedHashSet<String> colored = new LinkedHashSet<>();
+                    if (dataColored[i] != null) {
+                        Collections.addAll(colored, dataColored[i]);
+                    }
+                    colored.addAll(additions.get(i));
+                    dataColored[i] = colored.toArray(new String[0]);
+                }
+            }
+            return added;
+        } catch (Exception error) {
+            FileLog.e("TelegaSync: invalid Unicode catalog", error);
+            return 0;
+        }
+    }
+
+    private static int remoteEmojiCategory(String group) {
+        if ("Smileys & Emotion".equals(group) || "People & Body".equals(group)) return 0;
+        if ("Animals & Nature".equals(group)) return 1;
+        if ("Food & Drink".equals(group)) return 2;
+        if ("Activities".equals(group)) return 3;
+        if ("Travel & Places".equals(group)) return 4;
+        if ("Objects".equals(group)) return 5;
+        if ("Symbols".equals(group)) return 6;
+        if ("Flags".equals(group)) return 7;
+        return -1;
+    }
+
+    private static String normalizeRemoteEmoji(String emoji) {
+        return emoji == null ? "" : emoji.replace("\uFE0F", "");
+    }
+
+'''
+    if "    static {" not in emoji_source:
+        raise SystemExit("EmojiData static initializer anchor missing")
+    emoji_source = emoji_source.replace("    static {", merge_method + "    static {", 1)
+    emoji_data.write_text(emoji_source, encoding="utf-8")
+
+app_loader = root / "messenger" / "ApplicationLoader.java"
+loader_source = app_loader.read_text(encoding="utf-8")
+if "TelegaRemoteCatalog.applyCachedCatalog(applicationContext)" not in loader_source:
+    anchor = "        applicationInited = true;"
+    if anchor not in loader_source:
+        raise SystemExit("ApplicationLoader startup anchor missing")
+    loader_source = loader_source.replace(
+        anchor,
+        anchor + "\n        TelegaRemoteCatalog.applyCachedCatalog(applicationContext);",
+        1
+    )
+    app_loader.write_text(loader_source, encoding="utf-8")
+
+
 print(f"Wrote {target}")
