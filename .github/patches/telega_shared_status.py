@@ -171,7 +171,7 @@ s = s.replace(anchor, method + anchor, 1)
 
 # In the profile header, prefer the server status; if absent, show the shared
 # Telega status decoded from the viewed user's profile bio.
-condition = "if (user != null/* && !getMessagesController().premiumFeaturesBlocked()*/ && !MessagesController.isSupportUser(user) && DialogObject.getEmojiStatusDocumentId(user.emoji_status) != 0) {"
+condition = "if (/*!getMessagesController().premiumFeaturesBlocked() && */user != null && !MessagesController.isSupportUser(user) && DialogObject.getEmojiStatusDocumentId(user.emoji_status) != 0) {"
 condition_new = """if (user != null/* && !getMessagesController().premiumFeaturesBlocked()*/ && !MessagesController.isSupportUser(user) && (DialogObject.getEmojiStatusDocumentId(user.emoji_status) != 0 || (userInfo != null && TelegaLocalStatus.getDocumentId(userInfo.about) != 0))) {
                         TLRPC.EmojiStatus telegaStatusToShow = user.emoji_status;
                         if (DialogObject.getEmojiStatusDocumentId(telegaStatusToShow) == 0 && userInfo != null) {
@@ -191,7 +191,7 @@ if condition not in s:
     print("ERROR: profile emoji status rendering anchor not found", file=sys.stderr)
     sys.exit(1)
 s = s.replace(condition, condition_new, 1)
-render_call = "nameTextView[a].setRightDrawable(getEmojiStatusDrawable(user.emoji_status, false, false, a));"
+render_call = "nameTextView[a].setRightDrawable(getEmojiStatusDrawable(user.emoji_status, true, true, a));"
 if render_call not in s:
     print("ERROR: profile emoji drawable call not found", file=sys.stderr)
     sys.exit(1)
