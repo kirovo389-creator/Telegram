@@ -99,6 +99,7 @@ jobs:
             .github/patches/telega_custom_emoji.py
             .github/patches/telega_profile_style.py
             .github/patches/telega_profile_style_fix.py
+            .github/patches/telega_profile_sync_firebase.py
             .github/patches/telega_local_gifts.py
             .github/patches/telega_channel_prompt.py
             .github/patches/telega_features.py
@@ -180,6 +181,10 @@ jobs:
           assert 'addToggle(context, list, "Auto Proxy"' not in settings, "Auto Proxy toggle must remain removed"
           assert "Стеклянные чаты" not in settings, "Glass chats toggle must remain removed"
           assert "TelegaLocalStatus.updateBio(" in Path("TMessagesProj/src/main/java/org/telegram/ui/ChangeBioActivity.java").read_text(encoding="utf-8"), "BIO metadata would be lost while editing the profile"
+          assert "TelegaProfileSync.saveProfileStyle" in peer_color, "Firestore profile-style save is missing"
+          assert "TelegaProfileSync.loadProfileStyle" in profile, "Firestore profile-style load is missing"
+          assert "TelegaSyncFirebase.initialize(this);" in Path("TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java").read_text(encoding="utf-8"), "secondary Firebase initialization is missing"
+          assert Path("TMessagesProj/src/main/assets/telega-sync-google-services.json").is_file(), "secondary Firebase config asset is missing"
           assert "readTelegaChangelog()" in launch and "telega_changelog.txt" in launch, "in-app changelog must use this build's generated notes"
           assert "Не удалось открыть системный установщик" not in ota, "confusing installer toast must stay removed"
           assert 'getSharedPreferences("telega_local_status"' in profile, "local emoji status fallback is missing"
