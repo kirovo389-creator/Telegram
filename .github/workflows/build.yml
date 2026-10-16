@@ -101,7 +101,6 @@ jobs:
             .github/patches/telega_profile_style_fix.py
             .github/patches/telega_local_gifts.py
             .github/patches/telega_channel_prompt.py
-            .github/patches/telega_branding.py
             .github/patches/telega_features.py
             .github/patches/telega_ota.py
             .github/patches/telega_badge.py
