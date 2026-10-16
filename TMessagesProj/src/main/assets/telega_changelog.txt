@@ -1,3 +1,4 @@
+• fix: add missing settings section helper to generated Telega settings
 • ui: render edited message history as quote block
 • fix: make emoji status selector available by default
 • fix: reserve room for deleted-message trash marker
