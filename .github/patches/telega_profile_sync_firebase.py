@@ -141,6 +141,24 @@ def matching_brace(text, opening):
         index += 1
     return -1
 
+# The oldest profile-style patch also injected one unwrapped bio-reading block
+# before the two guarded wrappers below. Remove that exact inserted section first.
+legacy_style_start = "int telegaProfileColor = userInfo == null ? -1 : TelegaLocalStatus.getProfileColor(userInfo.about);"
+legacy_style_end = "if (!telegaHasLocalProfileStyle && (telegaProfileColor >= 0 || telegaBackgroundEmoji != 0)) {"
+if legacy_style_start in profile:
+    occurrence = profile.find(legacy_style_start)
+    start = profile.rfind("\n", 0, occurrence) + 1
+    end_marker = profile.find(legacy_style_end, start)
+    if end_marker < 0:
+        print("ERROR: legacy profile-style block end marker not found", file=sys.stderr)
+        sys.exit(1)
+    opening = profile.find("{", end_marker)
+    closing = matching_brace(profile, opening)
+    if closing < 0 or closing < end_marker:
+        print("ERROR: malformed legacy profile-style block", file=sys.stderr)
+        sys.exit(1)
+    profile = profile[:start] + profile[closing + 1:]
+
 for needle in (
     "TelegaLocalStatus.getProfileColor(userInfo.about)",
     "TelegaLocalStatus.getProfileColor(about)",
