@@ -17,7 +17,6 @@ concurrency:
 
 jobs:
   build-release:
-    if: false # Temporarily paused while shared profile-sync implementation is prepared.
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
