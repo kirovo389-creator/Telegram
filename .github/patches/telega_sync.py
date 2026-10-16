@@ -2,7 +2,8 @@
 """Generate the TelegaSync remote, read-only JSON catalog client."""
 from pathlib import Path
 
-target = Path("TMessagesProj/src/main/java/org/telegram/messenger/TelegaRemoteCatalog.java")
+root = Path("TMessagesProj/src/main/java/org/telegram")
+target = root / "messenger" / "TelegaRemoteCatalog.java"
 target.parent.mkdir(parents=True, exist_ok=True)
 target.write_text(r'''package org.telegram.messenger;
 
