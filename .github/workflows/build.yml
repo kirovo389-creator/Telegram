@@ -17,7 +17,6 @@ concurrency:
 
 jobs:
   build-release:
-    if: false # Temporarily disabled while source fixes are being completed.
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
