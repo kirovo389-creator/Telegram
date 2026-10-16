@@ -1,0 +1,23 @@
+name: Cancel stale Telega build (one-off)
+
+on:
+  push:
+    branches:
+      - telega-sync-integration
+    paths:
+      - ".github/workflows/cancel-old-telega-build.yml"
+
+permissions:
+  actions: write
+
+jobs:
+  cancel-stale-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel the earlier incomplete Android build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run cancel 38936212691 --repo "$GITHUB_REPOSITORY"
