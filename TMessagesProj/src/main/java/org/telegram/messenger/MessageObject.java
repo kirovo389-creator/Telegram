@@ -27,6 +27,8 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.text.Layout;
@@ -40,6 +42,7 @@ import android.text.TextUtils;
 import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
 import android.text.style.RelativeSizeSpan;
+import android.text.style.StyleSpan;
 import android.text.style.URLSpan;
 import android.text.util.Linkify;
 import android.util.Base64;
@@ -6171,9 +6174,74 @@ public class MessageObject {
             }
         }
 
+        messageText = applyTelegaEditHistory(messageText);
         isEmbedVideoCached = null;
         cachedStartsTimestamp = null;
         cachedSavedTimestamp = null;
+    }
+
+    /**
+     * Retain the previous text locally when an already-seen message is edited.
+     * Telegram does not expose full edit history through the normal message API,
+     * so this shows edits observed by Telega on this device.
+     */
+    private CharSequence applyTelegaEditHistory(CharSequence displayText) {
+        if (ApplicationLoader.applicationContext == null || messageOwner == null
+                || messageOwner instanceof TLRPC.TL_messageService
+                || messageOwner.id <= 0 || messageOwner.dialog_id == 0
+                || messageOwner.message == null || messageOwner.message.isEmpty()
+                || displayText == null || displayText.length() == 0) {
+            return displayText;
+        }
+        try {
+            SharedPreferences preferences = ApplicationLoader.applicationContext.getSharedPreferences(
+                    "telega_edit_history", Context.MODE_PRIVATE);
+            String key = "message_" + currentAccount + "_" + messageOwner.dialog_id + "_" + messageOwner.id;
+            String current = messageOwner.message;
+            String stored = preferences.getString(key + "_current", null);
+            int storedEditDate = preferences.getInt(key + "_edit_date", 0);
+            if (stored == null) {
+                preferences.edit().putString(key + "_current", current)
+                        .putInt(key + "_edit_date", messageOwner.edit_date).apply();
+                return displayText;
+            }
+            if (!stored.equals(current)) {
+                SharedPreferences.Editor editor = preferences.edit()
+                        .putString(key + "_current", current)
+                        .putInt(key + "_edit_date", messageOwner.edit_date);
+                if (messageOwner.edit_date > 0) {
+                    editor.putString(key + "_previous", stored)
+                            .putBoolean(key + "_has_edit", true);
+                } else {
+                    editor.remove(key + "_previous").putBoolean(key + "_has_edit", false);
+                }
+                editor.apply();
+                stored = current;
+                storedEditDate = messageOwner.edit_date;
+            } else if (storedEditDate != messageOwner.edit_date) {
+                preferences.edit().putInt(key + "_edit_date", messageOwner.edit_date).apply();
+                storedEditDate = messageOwner.edit_date;
+            }
+            if (!preferences.getBoolean(key + "_has_edit", false)
+                    || storedEditDate != messageOwner.edit_date) {
+                return displayText;
+            }
+            String previous = preferences.getString(key + "_previous", null);
+            if (previous == null || previous.isEmpty() || previous.equals(current)) {
+                return displayText;
+            }
+            SpannableStringBuilder result = new SpannableStringBuilder("Изменения\n");
+            int oldStart = result.length();
+            result.append(previous);
+            int oldEnd = result.length();
+            result.setSpan(new StyleSpan(Typeface.ITALIC), oldStart, oldEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            result.append("\n────────\n");
+            result.append(displayText);
+            return result;
+        } catch (Throwable error) {
+            FileLog.e("Telega edit history could not be read or saved", error);
+            return displayText;
+        }
     }
 
     private CharSequence formatTaskTitle(TLRPC.TodoItem task) {
