@@ -32,7 +32,7 @@ public final class TelegaInstallReceiver extends BroadcastReceiver {
                 message += ": пакет несовместим с установленной версией или подписан другим ключом. Переустанови обновление, подписанное тем же ключом.";
             } else if (status == PackageInstaller.STATUS_FAILURE_INVALID) {
                 message += ": APK повреждён или не прошёл проверку. Скачай обновление ещё раз.";
-            } else if (status == PackageInstaller.STATUS_FAILURE_VERSION_DOWNGRADE) {
+            } else if (detail != null && detail.toLowerCase(java.util.Locale.US).contains("downgrade")) {
                 message += ": версия APK старее установленной.";
             } else if (detail != null && !detail.trim().isEmpty()) {
                 message += ": " + detail;
