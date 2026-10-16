@@ -34,6 +34,15 @@ assets.mkdir(parents=True, exist_ok=True)
 # Keep the legacy Google Services configuration untouched; Firestore and Auth use the named app.
 gradle_path = root / "TMessagesProj" / "build.gradle"
 gradle = gradle_path.read_text(encoding="utf-8")
+# Keep Firebase SDKs aligned through the BOM, including the existing push client.
+gradle = gradle.replace(
+    "implementation 'com.google.firebase:firebase-messaging:22.0.0'",
+    "implementation 'com.google.firebase:firebase-messaging'"
+)
+gradle = gradle.replace(
+    "implementation 'com.google.firebase:firebase-datatransport:18.1.0'",
+    "implementation 'com.google.firebase:firebase-datatransport'"
+)
 if "com.google.firebase:firebase-firestore" not in gradle:
     anchor = "dependencies {"
     index = gradle.find(anchor)
