@@ -157,7 +157,7 @@ jobs:
           assert "syncTelegaProfileStyleMetadata(fetchedFull, telegaPendingColor, telegaPendingEmoji);" in peer_color, "profile style sync fallback is missing"
           assert "private int telegaClosestPeerColorId(int accentColor, int pageType)" in peer_color, "collectible accent color mapper is missing"
           assert "import org.telegram.ui.ActionBar.AlertDialog;" in ota, "OTA prompt must use Telegram-themed dialogs"
-          assert "progress.setMessage(\"Скачивание новой версии…\");" in ota, "OTA progress copy must not expose GitHub"
+          assert "ProgressBar progressBar" in ota and "Загрузка APK — " in ota and "setView(progressContent)" in ota, "Telegram-style OTA progress UI is missing"
           assert '.setPositiveButton("Обновить",' in ota and '.setNegativeButton("Позже",' in ota, "OTA actions are missing"
           assert "Загрузка APK из GitHub Releases…" not in ota, "provider-specific text remains in the OTA progress UI"
           assert "android.permission.REQUEST_INSTALL_PACKAGES" in Path("TMessagesProj/src/main/AndroidManifest.xml").read_text(encoding="utf-8"), "unknown-source install permission is missing"
