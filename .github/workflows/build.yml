@@ -17,7 +17,6 @@ concurrency:
 
 jobs:
   build-release:
-    if: false # Temporarily hold builds until the requested source fixes are committed.
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -76,6 +75,9 @@ jobs:
           cp TMessagesProj/src/main/java/org/telegram/messenger/TelegaOtaUpdater.java /tmp/telega-preserve/TelegaOtaUpdater.java
           cp TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java /tmp/telega-preserve/ProfileActivity.java
           cp TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java /tmp/telega-preserve/ChatMessageCell.java
+          cp TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java /tmp/telega-preserve/MessageObject.java
+          cp TMessagesProj/src/main/java/org/telegram/messenger/PushListenerController.java /tmp/telega-preserve/PushListenerController.java
+          cp TMessagesProj/src/main/java/org/telegram/messenger/TelegaInstallReceiver.java /tmp/telega-preserve/TelegaInstallReceiver.java
           cp /tmp/telega-changelog.txt /tmp/telega-preserve/telega_changelog.txt
           git fetch --depth=1 https://github.com/DrKLO/Telegram.git master
           git read-tree --reset FETCH_HEAD
@@ -120,6 +122,11 @@ jobs:
           cp /tmp/telega-preserve/TelegaOtaUpdater.java TMessagesProj/src/main/java/org/telegram/messenger/TelegaOtaUpdater.java
           cp /tmp/telega-preserve/ProfileActivity.java TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
           cp /tmp/telega-preserve/ChatMessageCell.java TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
+          cp /tmp/telega-preserve/MessageObject.java TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+          cp /tmp/telega-preserve/PushListenerController.java TMessagesProj/src/main/java/org/telegram/messenger/PushListenerController.java
+          cp /tmp/telega-preserve/TelegaInstallReceiver.java TMessagesProj/src/main/java/org/telegram/messenger/TelegaInstallReceiver.java
+          # Apply visible Telega branding after restoring directly edited source files.
+          python3 .github/patches/telega_branding.py
           mkdir -p TMessagesProj/src/main/assets
           cp /tmp/telega-preserve/telega_changelog.txt TMessagesProj/src/main/assets/telega_changelog.txt
 
@@ -158,10 +165,19 @@ jobs:
           assert "TelegaInstallReceiver" in Path("TMessagesProj/src/main/AndroidManifest.xml").read_text(encoding="utf-8"), "PackageInstaller result receiver is missing"
           dialog_cell = Path("TMessagesProj/src/main/java/org/telegram/ui/Cells/DialogCell.java").read_text(encoding="utf-8")
           message_cell = Path("TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java").read_text(encoding="utf-8")
+          message_object = Path("TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java").read_text(encoding="utf-8")
+          push_controller = Path("TMessagesProj/src/main/java/org/telegram/messenger/PushListenerController.java").read_text(encoding="utf-8")
+          install_receiver = Path("TMessagesProj/src/main/java/org/telegram/messenger/TelegaInstallReceiver.java").read_text(encoding="utf-8")
           download_queue = Path("TMessagesProj/src/main/java/org/telegram/messenger/FileLoaderPriorityQueue.java").read_text(encoding="utf-8")
           assert "TelegaBadgeRendering.decorateDialogName" in dialog_cell, "shared badge/status row rendering is missing"
           assert "TelegaMessageEffects.onMessageBound(this," in message_cell, "message effect hook is missing"
           assert "Telega turbo downloads" in download_queue, "turbo download queue toggle is not wired"
+          assert "applyTelegaEditHistory(messageText)" in message_object, "edited-message previous-text display is missing"
+          assert "scheduleTokenRetry()" in push_controller, "Firebase push registration retry is missing"
+          assert "archiveVersion <= installedVersion" in ota and "params.setSize(file.length())" in ota, "OTA APK validation/session sizing is missing"
+          assert "clearPendingUpdate(context);" in install_receiver, "OTA APK cleanup after installer result is missing"
+          assert 'addToggle(context, list, "Auto Proxy"' not in settings, "Auto Proxy toggle must remain removed"
+          assert "Стеклянные чаты" not in settings, "Glass chats toggle must remain removed"
           assert "TelegaLocalStatus.updateBio(" in Path("TMessagesProj/src/main/java/org/telegram/ui/ChangeBioActivity.java").read_text(encoding="utf-8"), "BIO metadata would be lost while editing the profile"
           assert "readTelegaChangelog()" in launch and "telega_changelog.txt" in launch, "in-app changelog must use this build's generated notes"
           assert "Не удалось открыть системный установщик" not in ota, "confusing installer toast must stay removed"
@@ -169,7 +185,7 @@ jobs:
           assert "telegaTimeX" in message_cell, "deleted-message trash marker must be positioned relative to the timestamp"
           assert "ПРОИЗВОДИТЕЛЬНОСТЬ" in settings, "grouped Telega settings UI is missing"
           assert Path("TMessagesProj/src/main/assets/telega_changelog.txt").is_file(), "per-build changelog asset is missing"
-          print("Patch syntax, Android XML, Telega branding, Unicode emoji cursor, shared profile sync/color mapper, themed OTA, installer permission, OTA versioning, badge/status transport, message effects, turbo downloads and release ABI configuration validated.")
+          print("Patch syntax, Android XML, Telega branding, edit-history display, Firebase push retry, OTA package validation/cleanup, Unicode emoji cursor, shared profile sync/color mapper, installer permission, badge/status transport, message effects, turbo downloads and release ABI configuration validated.")
           PY
 
           sed -i 's/<string name="AppName">Telegram<\/string>/<string name="AppName">Telega<\/string>/' TMessagesProj/src/main/res/values/strings.xml
