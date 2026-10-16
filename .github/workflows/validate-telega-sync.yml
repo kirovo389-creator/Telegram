@@ -34,10 +34,17 @@ jobs:
           settings = Path("TMessagesProj/src/main/java/org/telegram/ui/TelegaSettingsActivity.java").read_text(encoding="utf-8")
 
           assert ".github/patches/telega_sync.py" in build
+          assert "root = Path(\"TMessagesProj/src/main/java/org/telegram\")" in sync_patch
           assert "applyRemoteUnicodeCatalog" in sync_patch
           assert "MAX_BYTES = 4 * 1024 * 1024" in sync_patch
           assert "findCustomEmojiDocumentId" in custom_patch
           assert "TelegaRemoteCatalog" in settings
 
-          print("TelegaSync integration static checks passed.")
+          print("TelegaSync static source checks passed.")
           PY
+
+          # Execute the generator itself on checked-out sources so NameError/path-anchor mistakes fail before merge.
+          python3 .github/patches/telega_sync.py
+          test -f TMessagesProj/src/main/java/org/telegram/messenger/TelegaRemoteCatalog.java
+          grep -q "applyRemoteUnicodeCatalog" TMessagesProj/src/main/java/org/telegram/messenger/EmojiData.java
+          grep -q "TelegaRemoteCatalog.syncIfStale(applicationContext)" TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java
