@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   build-release:
+    if: false # Temporarily hold builds until the requested source fixes are committed.
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
