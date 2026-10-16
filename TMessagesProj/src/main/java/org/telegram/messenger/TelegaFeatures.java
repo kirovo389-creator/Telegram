@@ -122,20 +122,6 @@ public final class TelegaFeatures {
         }
     }
 
-    /** Optional translucent cards in the dialog list. Disabled by default. */
-    public static boolean isGlassChatsEnabled() {
-        return prefs().getBoolean("glass_chats", false);
-    }
-    public static void setGlassChatsEnabled(boolean enabled) {
-        prefs().edit().putBoolean("glass_chats", enabled).apply();
-        AndroidUtilities.runOnUIThread(() -> {
-            try {
-                NotificationCenter.getGlobalInstance().postNotificationName(
-                        NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
-            } catch (Throwable ignored) {}
-        });
-    }
-
     public static boolean isTurboDownloadEnabled() {
         return prefs().getBoolean("turbo_downloads", false);
     }

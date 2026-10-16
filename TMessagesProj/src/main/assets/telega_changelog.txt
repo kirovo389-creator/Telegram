@@ -1,9 +1,1 @@
-• ui: redesign Telega settings with grouped sections
-• fix: remove confusing APK installer startup toast
-• fix: restore per-build in-app changelog and defer startup work
-• perf: defer OTA and reaction sync until startup settles
-• fix: place deleted-message trash marker before timestamp
-• fix: persist and render local emoji status reliably
-• fix: show changelog generated for this exact build
-• fix: remove confusing APK installer startup toast
-• ui: redesign Telega settings with grouped sections
+• ui: remove Glass Chats and Auto Proxy controls
