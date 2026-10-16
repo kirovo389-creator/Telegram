@@ -1,0 +1,22 @@
+name: Stop active Telega build
+
+on:
+  push:
+    branches: [telega-sync-integration]
+    paths:
+      - ".github/workflows/stop-build-profile-sync.yml"
+
+# Same concurrency key as build.yml; this run supersedes/cancels the active build
+# without compiling Android sources itself.
+concurrency:
+  group: telega-beta-build
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  stop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Superseded active Telega Android build before profile-sync changes."
