@@ -137,6 +137,11 @@ new = '''                    try {
                         innerTextChange = 2;
                         String fallbackEmoji = emoticon == null ? "\\uD83D\\uDE00" : emoticon;
                         long customDocumentId = document != null ? document.id : documentId;
+                        if (customDocumentId <= 0) {
+                            // Curated TelegaSync IDs are only a fallback; Telegram's selected document ID wins.
+                            customDocumentId = TelegaRemoteCatalog.findCustomEmojiDocumentId(
+                                    ApplicationLoader.applicationContext, fallbackEmoji);
+                        }
                         SpannableStringBuilder inserted = new SpannableStringBuilder(fallbackEmoji);
                         if (customDocumentId > 0) {
                             // Keep the animated span while typing; invisible metadata is appended after the visible grapheme.
