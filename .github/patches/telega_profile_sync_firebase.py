@@ -102,14 +102,43 @@ profile_path = ui_root / "ProfileActivity.java"
 profile = profile_path.read_text(encoding="utf-8")
 
 def matching_brace(text, opening):
+    # Ignore braces inside Java comments and string/character literals.
     depth = 0
-    for index in range(opening, len(text)):
-        if text[index] == "{":
-            depth += 1
-        elif text[index] == "}":
-            depth -= 1
-            if depth == 0:
-                return index
+    state = "code"
+    index = opening
+    while index < len(text):
+        ch = text[index]
+        nxt = text[index + 1] if index + 1 < len(text) else ""
+        if state == "line_comment":
+            if ch == "\n":
+                state = "code"
+        elif state == "block_comment":
+            if ch == "*" and nxt == "/":
+                state = "code"
+                index += 1
+        elif state == "string" or state == "char":
+            if ch == "\\":
+                index += 1
+            elif (state == "string" and ch == '"') or (state == "char" and ch == "'"):
+                state = "code"
+        else:
+            if ch == "/" and nxt == "/":
+                state = "line_comment"
+                index += 1
+            elif ch == "/" and nxt == "*":
+                state = "block_comment"
+                index += 1
+            elif ch == '"':
+                state = "string"
+            elif ch == "'":
+                state = "char"
+            elif ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    return index
+        index += 1
     return -1
 
 for needle in (
