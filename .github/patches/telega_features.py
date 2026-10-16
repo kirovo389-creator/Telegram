@@ -550,7 +550,7 @@ if "getNameColor(String about)" not in st:
 # Merge style fields independently instead of overwriting profile settings when name color changes.
 pc = peer_color_path.read_text(encoding="utf-8")
 helper_start = pc.find("    private void saveTelegaProfileStyle(")
-if helper_start >= 0 and "TelegaLocalStatus.updateAllStyles" not in pc[helper_start:helper_start + 5000]:
+if helper_start >= 0 and "TelegaLocalStatus.updateAllStyles" not in pc[helper_start:helper_start + 5000] and "TelegaProfileSync.saveProfileStyle" not in pc:
     about_line = '        String about = full.about == null ? "" : full.about;\n        String newAbout = TelegaLocalStatus.updateProfileStyle(about, color, backgroundEmojiId);'
     about_new = '''        String about = full.about == null ? "" : full.about;
         int sharedProfileColor = applyingProfile ? color : TelegaLocalStatus.getProfileColor(about);
