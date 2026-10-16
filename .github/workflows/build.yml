@@ -17,7 +17,6 @@ concurrency:
 
 jobs:
   build-release:
-    if: false # Temporarily paused while shared profile-sync implementation is prepared.
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -92,6 +91,10 @@ jobs:
           sed -i "s/^APP_VERSION_CODE=.*/APP_VERSION_CODE=${TELEGA_BASE_VERSION_CODE}/" gradle.properties
           sed -i "s/^APP_VERSION_NAME=.*/APP_VERSION_NAME=${TELEGA_VERSION_NAME}/" gradle.properties
 
+          # Restore directly edited UI sources before running patches, so later patch steps
+          # (including Firestore profile-style loading) are not overwritten by the preserved copy.
+          cp /tmp/telega-preserve/ProfileActivity.java TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+
           patches=(
             .github/patches/retain_deleted_messages.py
             .github/patches/telega_local_premium.py
@@ -99,6 +102,7 @@ jobs:
             .github/patches/telega_custom_emoji.py
             .github/patches/telega_profile_style.py
             .github/patches/telega_profile_style_fix.py
+            .github/patches/telega_profile_sync_firebase.py
             .github/patches/telega_local_gifts.py
             .github/patches/telega_channel_prompt.py
             .github/patches/telega_features.py
@@ -121,7 +125,6 @@ jobs:
           cp /tmp/telega-preserve/LaunchActivity.java TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
           cp /tmp/telega-preserve/TelegaSettingsActivity.java TMessagesProj/src/main/java/org/telegram/ui/TelegaSettingsActivity.java
           cp /tmp/telega-preserve/TelegaOtaUpdater.java TMessagesProj/src/main/java/org/telegram/messenger/TelegaOtaUpdater.java
-          cp /tmp/telega-preserve/ProfileActivity.java TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
           cp /tmp/telega-preserve/ChatMessageCell.java TMessagesProj/src/main/java/org/telegram/ui/Cells/ChatMessageCell.java
           cp /tmp/telega-preserve/MessageObject.java TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
           cp /tmp/telega-preserve/PushListenerController.java TMessagesProj/src/main/java/org/telegram/messenger/PushListenerController.java
@@ -180,6 +183,10 @@ jobs:
           assert 'addToggle(context, list, "Auto Proxy"' not in settings, "Auto Proxy toggle must remain removed"
           assert "Стеклянные чаты" not in settings, "Glass chats toggle must remain removed"
           assert "TelegaLocalStatus.updateBio(" in Path("TMessagesProj/src/main/java/org/telegram/ui/ChangeBioActivity.java").read_text(encoding="utf-8"), "BIO metadata would be lost while editing the profile"
+          assert "TelegaProfileSync.saveProfileStyle" in peer_color, "Firestore profile-style save is missing"
+          assert "TelegaProfileSync.loadProfileStyle" in profile, "Firestore profile-style load is missing"
+          assert "TelegaSyncFirebase.initialize(this);" in Path("TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java").read_text(encoding="utf-8"), "secondary Firebase initialization is missing"
+          assert Path("TMessagesProj/src/main/assets/telega-sync-google-services.json").is_file(), "secondary Firebase config asset is missing"
           assert "readTelegaChangelog()" in launch and "telega_changelog.txt" in launch, "in-app changelog must use this build's generated notes"
           assert "Не удалось открыть системный установщик" not in ota, "confusing installer toast must stay removed"
           assert 'getSharedPreferences("telega_local_status"' in profile, "local emoji status fallback is missing"

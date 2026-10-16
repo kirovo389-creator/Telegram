@@ -1,0 +1,25 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    match /profile_styles/{documentId} {
+      // Any authenticated TelegaSync client can read profile styles to display other users' profiles.
+      allow get, list: if signedIn();
+
+      // Any authenticated client can publish a cosmetic profile style. Validate field types and
+      // require server time to prevent malformed documents and client-chosen timestamps.
+      allow create, update: if signedIn()
+        && request.resource.data.telegramUserId is int
+        && request.resource.data.profileColor is int
+        && request.resource.data.backgroundEmojiId is int
+        && request.resource.data.updatedAt == request.time;
+
+      // Deleting styles is not needed for normal synchronization.
+      allow delete: if false;
+    }
+  }
+}
