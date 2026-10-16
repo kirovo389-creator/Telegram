@@ -1,1 +1,4 @@
-• fix: move deleted-message trash marker after timestamp
+± Исправлено: validate new Telegram-style OTA progress UI
++Добавлено: localize changelog entries
+± Исправлено: explain OTA installer failures in Russian
++Добавлено: Telegram-style OTA download progress
