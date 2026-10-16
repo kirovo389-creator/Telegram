@@ -159,23 +159,39 @@ if legacy_style_start in profile:
         sys.exit(1)
     profile = profile[:start] + profile[closing + 1:]
 
+def find_bio_wrapper(text, occurrence):
+    # Search older matching guards too: the nearest textual guard may have ended
+    # before this occurrence and therefore cannot own the call.
+    search_before = occurrence
+    while True:
+        start = text.rfind("if (userInfo != null) {", 0, search_before)
+        if start < 0:
+            return None
+        opening = text.find("{", start)
+        closing = matching_brace(text, opening)
+        if closing >= occurrence:
+            return start, closing
+        search_before = start
+
 for needle in (
     "TelegaLocalStatus.getProfileColor(userInfo.about)",
     "TelegaLocalStatus.getProfileColor(about)",
     "TelegaLocalStatus.getProfileEmoji(userInfo.about)",
 ):
-    while needle in profile:
-        occurrence = profile.find(needle)
-        start = profile.rfind("if (userInfo != null) {", 0, occurrence)
-        if start < 0:
-            print(f"ERROR: could not locate bio metadata wrapper for {needle}", file=sys.stderr)
-            sys.exit(1)
-        opening = profile.find("{", start)
-        closing = matching_brace(profile, opening)
-        if closing < 0 or closing < occurrence:
-            print(f"ERROR: malformed bio metadata wrapper for {needle}", file=sys.stderr)
-            sys.exit(1)
+    search_from = 0
+    while True:
+        occurrence = profile.find(needle, search_from)
+        if occurrence < 0:
+            break
+        wrapper = find_bio_wrapper(profile, occurrence)
+        if wrapper is None:
+            # This is not inside one of the old guarded wrappers. The unwrapped
+            # legacy block is handled separately above, so leave unrelated code alone.
+            search_from = occurrence + len(needle)
+            continue
+        start, closing = wrapper
         profile = profile[:start] + profile[closing + 1:]
+        search_from = 0
 
 guard = """if (avatarContainer == null || nameTextView == null || getParentActivity() == null) {
             return;
