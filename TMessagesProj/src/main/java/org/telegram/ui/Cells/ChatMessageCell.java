@@ -18532,6 +18532,15 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             }
         }
         timeTextWidth = timeWidth = (int) Math.ceil(Theme.chat_timePaint.measureText(currentTimeString, 0, currentTimeString == null ? 0 : currentTimeString.length()));
+        if (currentMessageObject != null && currentMessageObject.messageOwner != null
+                && org.telegram.messenger.TelegaDeletedMessages.isDeleted(
+                    org.telegram.messenger.UserConfig.selectedAccount,
+                    currentMessageObject.messageOwner.dialog_id,
+                    currentMessageObject.messageOwner.id)) {
+            // Reserve space for the trash marker so it can never cover the last
+            // character of a message; the timestamp itself remains right-aligned.
+            timeWidth += dp(16);
+        }
         if (currentMessageObject.scheduled && currentMessageObject.messageOwner.date == 0x7FFFFFFE || currentMessageObject.notime) {
             timeWidth -= dp(8);
         }
