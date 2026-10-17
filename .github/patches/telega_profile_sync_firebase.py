@@ -105,7 +105,7 @@ if "import org.telegram.messenger.TelegaProfileSync;" not in color:
         print("ERROR: PeerColorActivity import anchor not found for TelegaProfileSync", file=sys.stderr)
         sys.exit(1)
     color = color.replace(import_anchor, import_anchor + "\nimport org.telegram.messenger.TelegaProfileSync;", 1)
-    color_path.write_text(color, encoding="utf-8")
+color_path.write_text(color, encoding="utf-8")
 
 # Remove both bio-reading wrappers inserted by the older patch, using balanced braces so nested
 # blocks are removed safely and no unrelated ProfileActivity code is touched.
