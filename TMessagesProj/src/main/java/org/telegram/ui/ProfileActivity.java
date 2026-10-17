@@ -163,7 +163,8 @@ import org.telegram.messenger.R;
 import org.telegram.messenger.SendMessagesHelper;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.SvgHelper;
-import org.telegram.messenger.UserConfig;\nimport org.telegram.messenger.TelegaProfileSync;
+import org.telegram.messenger.UserConfig;
+import org.telegram.messenger.TelegaProfileSync;
 import org.telegram.messenger.TelegaLocalStatus;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
@@ -6842,20 +6843,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     emojiStatus = status;
                 }
                 emojiStatusGiftId = gift != null ? gift.id : null;
-                if (currentChat == null && gift == null) {
-                    saveTelegaLocalStatus(documentId == null ? 0L : documentId, until == null ? 0 : until);
-                } else {
-                    if (currentChat == null && gift == null) {
-                    saveTelegaLocalStatus(documentId == null ? 0L : documentId, until == null ? 0 : until);
-                } else {
-                    if (currentChat == null && gift == null) {
+                                if (currentChat == null && gift == null) {
                     saveTelegaLocalStatus(documentId == null ? 0L : documentId, until == null ? 0 : until);
                 } else {
                     getMessagesController().updateEmojiStatus(currentChat == null ? 0 : -currentChat.id, emojiStatus, gift);
                 }
-                }
-                }
-                for (int a = 0; a < 2; ++a) {
+for (int a = 0; a < 2; ++a) {
                     if (emojiStatusDrawable[a] != null) {
                         if (documentId == null && currentChat == null) {
                             emojiStatusDrawable[a].set(getPremiumCrossfadeDrawable(a), true);
@@ -11418,6 +11411,45 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         }
 
 
+        
+ 
+        if (userInfo != null && userId != 0) {
+            TLRPC.User telegaNameUser = getMessagesController().getUser(userId);
+            int telegaNameColor = TelegaLocalStatus.getNameColor(userInfo.about);
+            long telegaNameEmoji = TelegaLocalStatus.getNameEmoji(userInfo.about);
+            boolean telegaHasLocalNameStyle = false;
+            if (telegaNameUser != null && userId == UserConfig.getInstance(currentAccount).getClientUserId()) {
+                android.content.SharedPreferences telegaNamePrefs = ApplicationLoader.applicationContext.getSharedPreferences("telega_profile_style_" + userId, 0);
+                telegaHasLocalNameStyle = telegaNamePrefs.contains("nameColor");
+                if (telegaHasLocalNameStyle) {
+                    telegaNameColor = telegaNamePrefs.getInt("nameColor", -1);
+                    telegaNameEmoji = telegaNamePrefs.getLong("nameEmoji", 0);
+                }
+            }
+            if (telegaNameUser != null && (telegaNameColor >= 0 || telegaNameEmoji > 0 || telegaHasLocalNameStyle)
+                    && !(telegaNameUser.color instanceof TLRPC.TL_peerColorCollectible)) {
+                if (telegaNameUser.color == null || !(telegaNameUser.color instanceof TLRPC.TL_peerColor)) {
+                    telegaNameUser.color = new TLRPC.TL_peerColor();
+                }
+                TLRPC.TL_peerColor telegaPeerNameColor = (TLRPC.TL_peerColor) telegaNameUser.color;
+                if (telegaNameColor >= 0) {
+                    telegaPeerNameColor.flags |= 1;
+                    telegaPeerNameColor.color = telegaNameColor;
+                } else if (telegaHasLocalNameStyle) {
+                    telegaPeerNameColor.flags &= ~1;
+                    telegaPeerNameColor.color = 0;
+                }
+                if (telegaNameEmoji > 0) {
+                    telegaPeerNameColor.flags |= 2;
+                    telegaPeerNameColor.background_emoji_id = telegaNameEmoji;
+                } else if (telegaHasLocalNameStyle) {
+                    telegaPeerNameColor.flags &= ~2;
+                    telegaPeerNameColor.background_emoji_id = 0;
+                }
+            }
+        }
+
+
         if (userId != 0) {
             TelegaProfileSync.loadProfileStyle(ApplicationLoader.applicationContext, userId, telegaCloudStyle -> {
                 if (telegaCloudStyle == null || getParentActivity() == null) {
@@ -11553,6 +11585,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             if (user == null) {
                 return;
             }
+            
+
             
 
 

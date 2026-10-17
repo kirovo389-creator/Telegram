@@ -1,3 +1,7 @@
+± Исправлено: persist normalized Firebase profile imports
+± Исправлено: normalize repeated Telega status patch output
+± Исправлено: make Telega shared status patch idempotent
+± Исправлено: correct Firebase patch newline escaping
 ± Исправлено: tolerate upstream profile emoji rendering changes
 ± Изменено: Fix Firebase sync imports and annotation dependency
 ± Изменено: Avoid duplicate local status method in regenerated builds
