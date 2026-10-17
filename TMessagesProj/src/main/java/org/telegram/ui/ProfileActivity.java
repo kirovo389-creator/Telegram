@@ -6748,37 +6748,6 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         }), ConnectionsManager.RequestFlagFailOnServerErrors);
     }
 
-    private void saveTelegaLocalStatus(long documentId, int until) {
-        if (getParentActivity() == null) return;
-        long selfId = UserConfig.getInstance(currentAccount).getClientUserId();
-        TLRPC.UserFull full = userInfo != null ? userInfo : getMessagesController().getUserFull(selfId);
-        String oldAbout = full == null || full.about == null ? "" : full.about;
-        String newAbout = TelegaLocalStatus.update(oldAbout, documentId, until);
-        if (oldAbout.equals(newAbout)) return;
-
-        TL_account.updateProfile request = new TL_account.updateProfile();
-        request.flags |= 4;
-        request.about = newAbout;
-        ConnectionsManager.getInstance(currentAccount).sendRequest(request, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
-            if (error != null) {
-                FileLog.e("Telega shared status save failed: " + error.text);
-                if (getParentActivity() != null) {
-                    org.telegram.ui.Components.AlertsCreator.processError(currentAccount, error, ProfileActivity.this, request);
-                }
-                return;
-            }
-            if (full != null) full.about = newAbout;
-            if (response instanceof TLRPC.User) {
-                TLRPC.User updatedUser = (TLRPC.User) response;
-                if (full != null) {
-                    NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.userInfoDidLoad, updatedUser.id, full);
-                }
-            }
-            updateProfileData(true);
-            getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_ALL);
-        }), ConnectionsManager.RequestFlagFailOnServerErrors);
-    }
-
     public void showStatusSelect() {
         if (selectAnimatedEmojiDialog != null) {
             return;
