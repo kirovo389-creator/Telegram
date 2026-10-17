@@ -1,3 +1,4 @@
+± Исправлено: remove duplicate local status method from ProfileActivity
 ± Исправлено: add JSR-305 Nullable dependency to Android build
 ± Исправлено: persist normalized Firebase profile imports
 ± Исправлено: normalize repeated Telega status patch output
