@@ -125,9 +125,26 @@ replacement = """if (currentChat == null && gift == null) {
                 } else {
                     getMessagesController().updateEmojiStatus(currentChat == null ? 0 : -currentChat.id, emojiStatus, gift);
                 }"""
-# ProfileActivity is preserved across automated upstream refreshes. Avoid wrapping the
-# native update call again when a previous build already installed this Telega status branch.
-if "saveTelegaLocalStatus(documentId == null ? 0L : documentId, until == null ? 0 : until);" not in s:
+# ProfileActivity is preserved across automated upstream refreshes. Normalize older
+# generated files back to one status branch instead of wrapping the native call again.
+status_save_call = "saveTelegaLocalStatus(documentId == null ? 0L : documentId, until == null ? 0 : until);"
+if status_save_call in s:
+    selection_anchor = "emojiStatusGiftId = gift != null ? gift.id : null;"
+    marker_pos = s.find(selection_anchor)
+    branch_start = s.find("if (currentChat == null && gift == null) {", marker_pos)
+    branch_end = s.find("for (int a = 0; a < 2; ++a)", branch_start)
+    if marker_pos >= 0 and branch_start >= 0 and branch_end > branch_start and call in s[branch_start:branch_end]:
+        line_start = s.rfind("\n", 0, branch_start) + 1
+        indent = s[line_start:branch_start]
+        normalized_branch = (
+            indent + "if (currentChat == null && gift == null) {\n"
+            + indent + "    " + status_save_call + "\n"
+            + indent + "} else {\n"
+            + indent + "    " + call + "\n"
+            + indent + "}\n"
+        )
+        s = s[:branch_start] + normalized_branch + s[branch_end:]
+else:
     if call not in s:
         print("ERROR: status-selection update call not found; upstream source layout changed", file=sys.stderr)
         sys.exit(1)
