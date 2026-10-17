@@ -78,6 +78,8 @@ if "TelegaSyncFirebase.initialize(this);" not in loader:
 # must not read or write that metadata. Replace only the profile-style persistence method.
 color_path = ui_root / "PeerColorActivity.java"
 color = color_path.read_text(encoding="utf-8")
+# Normalize malformed imports produced by older generated revisions.
+color = color.replace(r"\nimport org.telegram.messenger.TelegaProfileSync;", "\nimport org.telegram.messenger.TelegaProfileSync;")
 method_start = color.find("    private void syncTelegaProfileStyleMetadata(")
 method_end = color.find("    private int telegaClosestPeerColorId(", method_start)
 if method_start < 0 or method_end < 0:
@@ -102,13 +104,15 @@ if "import org.telegram.messenger.TelegaProfileSync;" not in color:
     if import_anchor not in color:
         print("ERROR: PeerColorActivity import anchor not found for TelegaProfileSync", file=sys.stderr)
         sys.exit(1)
-    color = color.replace(import_anchor, import_anchor + "\\nimport org.telegram.messenger.TelegaProfileSync;", 1)
+    color = color.replace(import_anchor, import_anchor + "\nimport org.telegram.messenger.TelegaProfileSync;", 1)
     color_path.write_text(color, encoding="utf-8")
 
 # Remove both bio-reading wrappers inserted by the older patch, using balanced braces so nested
 # blocks are removed safely and no unrelated ProfileActivity code is touched.
 profile_path = ui_root / "ProfileActivity.java"
 profile = profile_path.read_text(encoding="utf-8")
+# Normalize malformed imports produced by older generated revisions.
+profile = profile.replace(r"\nimport org.telegram.messenger.TelegaProfileSync;", "\nimport org.telegram.messenger.TelegaProfileSync;")
 
 def matching_brace(text, opening):
     # Ignore braces inside Java comments and string/character literals.
@@ -249,7 +253,7 @@ if "import org.telegram.messenger.TelegaProfileSync;" not in profile:
     if import_anchor not in profile:
         print("ERROR: ProfileActivity import anchor not found for TelegaProfileSync", file=sys.stderr)
         sys.exit(1)
-    profile = profile.replace(import_anchor, import_anchor + "\\nimport org.telegram.messenger.TelegaProfileSync;", 1)
+    profile = profile.replace(import_anchor, import_anchor + "\nimport org.telegram.messenger.TelegaProfileSync;", 1)
 profile_path.write_text(profile, encoding="utf-8")
 
 # Upstream uses javax.annotation.Nullable in several Java sources; include its
@@ -263,7 +267,7 @@ if "javax.annotation-api" not in gradle and "jsr305" not in gradle:
         print("ERROR: TMessagesProj/build.gradle dependencies block not found", file=sys.stderr)
         sys.exit(1)
     insert_at = index + len(anchor)
-    gradle = gradle[:insert_at] + "\\n    implementation 'javax.annotation:javax.annotation-api:1.3.2'\\n" + gradle[insert_at:]
+    gradle = gradle[:insert_at] + "\n    implementation 'javax.annotation:javax.annotation-api:1.3.2'\n" + gradle[insert_at:]
     gradle_path.write_text(gradle, encoding="utf-8")
 
 print("Secondary TelegaSync Firebase installed; profile accent/background emoji sync no longer uses profile-bio metadata.")
