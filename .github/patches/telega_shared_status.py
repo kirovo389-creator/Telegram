@@ -167,7 +167,10 @@ method = r'''    private void saveTelegaLocalStatus(long documentId, int until) 
 if anchor not in s:
     print("ERROR: showStatusSelect anchor not found", file=sys.stderr)
     sys.exit(1)
-s = s.replace(anchor, method + anchor, 1)
+# ProfileActivity may already be preserved from the Telega source branch. Do not
+# inject the same method twice when the build re-applies this patch.
+if "private void saveTelegaLocalStatus(long documentId, int until)" not in s:
+    s = s.replace(anchor, method + anchor, 1)
 
 # In the profile header, prefer the server status; if absent, show the shared
 # Telega status decoded from the viewed user's profile bio.
