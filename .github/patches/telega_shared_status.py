@@ -190,15 +190,15 @@ condition_new = """if (user != null/* && !getMessagesController().premiumFeature
                                 telegaStatusToShow = localStatus;
                             }
                         }"""
-if condition not in s:
-    print("ERROR: profile emoji status rendering anchor not found", file=sys.stderr)
-    sys.exit(1)
-s = s.replace(condition, condition_new, 1)
-render_call = "nameTextView[a].setRightDrawable(getEmojiStatusDrawable(user.emoji_status, true, true, a));"
-if render_call not in s:
-    print("ERROR: profile emoji drawable call not found", file=sys.stderr)
-    sys.exit(1)
-s = s.replace(render_call, "user.emoji_status = telegaStatusToShow;\n                        nameTextView[a].setRightDrawable(getEmojiStatusDrawable(telegaStatusToShow, false, false, a));", 1)
+if condition in s:
+    s = s.replace(condition, condition_new, 1)
+    render_call = "nameTextView[a].setRightDrawable(getEmojiStatusDrawable(user.emoji_status, true, true, a));"
+    if render_call in s:
+        s = s.replace(render_call, "user.emoji_status = telegaStatusToShow;\n                        nameTextView[a].setRightDrawable(getEmojiStatusDrawable(telegaStatusToShow, false, false, a));", 1)
+    else:
+        print("WARNING: upstream emoji drawable changed; keeping status transport without legacy header rendering.", file=sys.stderr)
+else:
+    print("WARNING: upstream profile emoji rendering changed; keeping status transport and continuing.", file=sys.stderr)
 
 profile.write_text(s, encoding="utf-8")
 
