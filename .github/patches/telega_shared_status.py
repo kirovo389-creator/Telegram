@@ -125,10 +125,13 @@ replacement = """if (currentChat == null && gift == null) {
                 } else {
                     getMessagesController().updateEmojiStatus(currentChat == null ? 0 : -currentChat.id, emojiStatus, gift);
                 }"""
-if call not in s:
-    print("ERROR: status-selection update call not found; upstream source layout changed", file=sys.stderr)
-    sys.exit(1)
-s = s.replace(call, replacement, 1)
+# ProfileActivity is preserved across automated upstream refreshes. Avoid wrapping the
+# native update call again when a previous build already installed this Telega status branch.
+if "saveTelegaLocalStatus(documentId == null ? 0L : documentId, until == null ? 0 : until);" not in s:
+    if call not in s:
+        print("ERROR: status-selection update call not found; upstream source layout changed", file=sys.stderr)
+        sys.exit(1)
+    s = s.replace(call, replacement, 1)
 
 # Insert the profile-bio transport helper before showStatusSelect.
 anchor = "    public void showStatusSelect() {"
