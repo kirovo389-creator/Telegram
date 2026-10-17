@@ -9,6 +9,9 @@ source_root = root / "TMessagesProj" / "src" / "main"
 java_root = source_root / "java" / "org" / "telegram" / "messenger"
 ui_root = source_root / "java" / "org" / "telegram" / "ui"
 
+# Firebase sync classes live in org.telegram.messenger; add explicit imports to
+# the UI classes patched below so the generated upstream tree compiles.
+
 for required in (
     template_dir / "TelegaSyncFirebase.java",
     template_dir / "TelegaProfileSync.java",
@@ -94,7 +97,13 @@ replacement = """    private void syncTelegaProfileStyleMetadata(TLRPC.UserFull 
 
 """
 color = color[:method_start] + replacement + color[method_end:]
-color_path.write_text(color, encoding="utf-8")
+if "import org.telegram.messenger.TelegaProfileSync;" not in color:
+    import_anchor = "import org.telegram.messenger.UserConfig;"
+    if import_anchor not in color:
+        print("ERROR: PeerColorActivity import anchor not found for TelegaProfileSync", file=sys.stderr)
+        sys.exit(1)
+    color = color.replace(import_anchor, import_anchor + "\\nimport org.telegram.messenger.TelegaProfileSync;", 1)
+    color_path.write_text(color, encoding="utf-8")
 
 # Remove both bio-reading wrappers inserted by the older patch, using balanced braces so nested
 # blocks are removed safely and no unrelated ProfileActivity code is touched.
@@ -235,6 +244,26 @@ if "TelegaProfileSync.loadProfileStyle(ApplicationLoader.applicationContext, use
         print("ERROR: ProfileActivity profile redraw guard not found", file=sys.stderr)
         sys.exit(1)
     profile = profile.replace(guard, guard + "\n\n        " + cloud_loader, 1)
+if "import org.telegram.messenger.TelegaProfileSync;" not in profile:
+    import_anchor = "import org.telegram.messenger.UserConfig;"
+    if import_anchor not in profile:
+        print("ERROR: ProfileActivity import anchor not found for TelegaProfileSync", file=sys.stderr)
+        sys.exit(1)
+    profile = profile.replace(import_anchor, import_anchor + "\\nimport org.telegram.messenger.TelegaProfileSync;", 1)
 profile_path.write_text(profile, encoding="utf-8")
+
+# Upstream uses javax.annotation.Nullable in several Java sources; include its
+# API explicitly because the current upstream dependency graph does not provide it.
+gradle_path = root / "TMessagesProj" / "build.gradle"
+gradle = gradle_path.read_text(encoding="utf-8")
+if "javax.annotation-api" not in gradle and "jsr305" not in gradle:
+    anchor = "dependencies {"
+    index = gradle.find(anchor)
+    if index < 0:
+        print("ERROR: TMessagesProj/build.gradle dependencies block not found", file=sys.stderr)
+        sys.exit(1)
+    insert_at = index + len(anchor)
+    gradle = gradle[:insert_at] + "\\n    implementation 'javax.annotation:javax.annotation-api:1.3.2'\\n" + gradle[insert_at:]
+    gradle_path.write_text(gradle, encoding="utf-8")
 
 print("Secondary TelegaSync Firebase installed; profile accent/background emoji sync no longer uses profile-bio metadata.")
