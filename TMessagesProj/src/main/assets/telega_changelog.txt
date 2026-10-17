@@ -1,3 +1,4 @@
+± Исправлено: add JSR-305 Nullable dependency to Android build
 ± Исправлено: persist normalized Firebase profile imports
 ± Исправлено: normalize repeated Telega status patch output
 ± Исправлено: make Telega shared status patch idempotent
