@@ -256,18 +256,23 @@ if "import org.telegram.messenger.TelegaProfileSync;" not in profile:
     profile = profile.replace(import_anchor, import_anchor + "\nimport org.telegram.messenger.TelegaProfileSync;", 1)
 profile_path.write_text(profile, encoding="utf-8")
 
-# Upstream uses javax.annotation.Nullable in several Java sources; include its
-# API explicitly because the current upstream dependency graph does not provide it.
+# Upstream imports javax.annotation.Nullable, which is provided by JSR-305
+# (com.google.code.findbugs:jsr305), not by javax.annotation-api alone.
 gradle_path = root / "TMessagesProj" / "build.gradle"
 gradle = gradle_path.read_text(encoding="utf-8")
-if "javax.annotation-api" not in gradle and "jsr305" not in gradle:
+annotation_dependencies = []
+if "javax.annotation-api" not in gradle:
+    annotation_dependencies.append("    implementation 'javax.annotation:javax.annotation-api:1.3.2'")
+if "com.google.code.findbugs:jsr305" not in gradle:
+    annotation_dependencies.append("    implementation 'com.google.code.findbugs:jsr305:3.0.2'")
+if annotation_dependencies:
     anchor = "dependencies {"
     index = gradle.find(anchor)
     if index < 0:
         print("ERROR: TMessagesProj/build.gradle dependencies block not found", file=sys.stderr)
         sys.exit(1)
     insert_at = index + len(anchor)
-    gradle = gradle[:insert_at] + "\n    implementation 'javax.annotation:javax.annotation-api:1.3.2'\n" + gradle[insert_at:]
+    gradle = gradle[:insert_at] + "\n" + "\n".join(annotation_dependencies) + "\n" + gradle[insert_at:]
     gradle_path.write_text(gradle, encoding="utf-8")
 
 print("Secondary TelegaSync Firebase installed; profile accent/background emoji sync no longer uses profile-bio metadata.")
