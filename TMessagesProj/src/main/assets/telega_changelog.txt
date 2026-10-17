@@ -1,3 +1,6 @@
+± Исправлено: tolerate upstream profile emoji rendering changes
+± Изменено: Fix Firebase sync imports and annotation dependency
+± Изменено: Avoid duplicate local status method in regenerated builds
 ± Изменено: Keep Firestore profile sync separate from legacy bio metadata merge
 ± Изменено: Select only balanced profile-bio metadata wrappers for removal
 ± Изменено: Remove legacy profile-bio style block before Firestore sync patch
