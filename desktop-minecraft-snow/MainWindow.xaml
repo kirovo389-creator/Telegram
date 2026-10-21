@@ -1,0 +1,15 @@
+<Window x:Class="PixelSnowOverlay.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Pixel Snow Overlay"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        Topmost="True"
+        ShowActivated="False">
+    <Grid Background="Transparent" IsHitTestVisible="False">
+        <Canvas x:Name="SnowCanvas" Background="Transparent" IsHitTestVisible="False" />
+    </Grid>
+</Window>
