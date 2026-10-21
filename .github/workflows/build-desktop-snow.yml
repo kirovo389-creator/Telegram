@@ -1,0 +1,33 @@
+name: Build Pixel Snow Overlay (Windows)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - desktop-minecraft-snow-prototype
+    paths:
+      - "desktop-minecraft-snow/**"
+      - ".github/workflows/build-desktop-snow.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Publish single-file Windows app
+        run: dotnet publish desktop-minecraft-snow/PixelSnowOverlay.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: PixelSnowOverlay-Windows-x64
+          path: desktop-minecraft-snow/bin/Release/net8.0-windows/win-x64/publish/PixelSnowOverlay.exe
+          if-no-files-found: error
+          retention-days: 14
