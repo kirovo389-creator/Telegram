@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
-using System.Windows.Threading;
 
 namespace PixelSnowOverlay;
 
@@ -24,6 +23,7 @@ public partial class MainWindow : Window
     private readonly Random _random = new();
     private HwndSource? _source;
     private bool _hotkeyRegistered;
+    private DateTime _lastFrame;
 
     public MainWindow()
     {
@@ -78,7 +78,6 @@ public partial class MainWindow : Window
         var dt = Math.Clamp((now - _lastFrame).TotalSeconds, 0, 0.05);
         _lastFrame = now;
 
-        SnowCanvas.Children.Clear();
         foreach (var flake in _flakes)
         {
             flake.Y += flake.Speed * dt;
@@ -97,21 +96,21 @@ public partial class MainWindow : Window
                 flake.Spin = replacement.Spin;
                 flake.Opacity = replacement.Opacity;
             }
-            DrawPixelFlake(flake);
         }
+        InvalidateVisual();
     }
 
-    private void DrawPixelFlake(Flake f)
+    protected override void OnRender(DrawingContext dc)
     {
-        // Chunky 8-bit snowflake silhouette; no external image assets needed.
-        var s = f.Size;
-        var brush = new SolidColorBrush(Color.FromArgb((byte)(255 * f.Opacity), 238, 247, 255));
-        brush.Freeze();
-        var visual = new DrawingVisual();
-        using (var dc = visual.RenderOpen())
+        base.OnRender(dc);
+        foreach (var f in _flakes)
         {
+            var s = f.Size;
+            var brush = new SolidColorBrush(Color.FromArgb((byte)(255 * f.Opacity), 238, 247, 255));
+            brush.Freeze();
             dc.PushTransform(new TranslateTransform(f.X, f.Y));
             dc.PushTransform(new RotateTransform(f.Rotation * 180 / Math.PI));
+            // Chunky 8-bit snowflake silhouette.
             dc.DrawRectangle(brush, null, new Rect(-s / 2, -s * 1.5, s, s * 3));
             dc.DrawRectangle(brush, null, new Rect(-s * 1.5, -s / 2, s * 3, s));
             dc.DrawRectangle(brush, null, new Rect(-s, -s, s, s));
@@ -121,20 +120,7 @@ public partial class MainWindow : Window
             dc.Pop();
             dc.Pop();
         }
-        var image = new System.Windows.Controls.Image
-        {
-            Source = new DrawingImage(visual.Drawing),
-            Width = s * 4,
-            Height = s * 4,
-            IsHitTestVisible = false,
-            Opacity = 0.96
-        };
-        Canvas.SetLeft(image, f.X - s * 2);
-        Canvas.SetTop(image, f.Y - s * 2);
-        SnowCanvas.Children.Add(image);
     }
-
-    private DateTime _lastFrame;
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
